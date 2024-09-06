@@ -24,15 +24,20 @@ namespace csc {
 // xxx template
 class Node {
 public:
-	Node(int element) : _element(element), _next(nullptr) {}
+	Node(int element) : _element(element), _next(nullptr), _prev(nullptr) {}
+	Node(int element, Node* next, Node* prev) : 
+		_element(element), _next(nullptr), _prev(nullptr) {}
 	~Node() {}
 	int get_element() const { return _data; }
 	Node* get_next() const { return _next; }
+	Node* get_prev() const { return _prev; }
 	void set_element(int element) { _element = element; }
 	void set_next(Node* next) { _next = next; }
+	void set_prev(Node* prev) { _prev = pref; }
 private:
 	int _element;
 	Node* _next;
+	Node* _prev;
 };
 
 /**
@@ -109,7 +114,8 @@ public:
 	 * @param int element
 	 * The element to be inserted.
 	 * @param int index
-	 * The index to insert at (inserted after the index).
+	 * The index to insert at (inserted before the index, so that the newly 
+	 * inserted element is at the specified index).
 	 */
 	void insert(int element, int index);	
 
@@ -189,6 +195,7 @@ private:
 	void copy_lists_same_length(const List& src);
 	void copy_calling_list_longer(const List& src);
 	void copy_calling_list_short(const List& src);
+	void index_out_of_range(int index);
 
 	Node* _head;
 	Node* _tail;

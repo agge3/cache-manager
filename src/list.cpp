@@ -9,7 +9,7 @@
  * LinkedList implementation.
  */
 
-#include "linked-list.h"
+#include "list.h"
 
 #include <iostream>
 #include <exception>
@@ -210,7 +210,7 @@ int List::size() const
 int List::front() const
 {
 	if (_head != nullptr) {
-		return *_head;
+		return _head->get_element();
 	}
     else {
         throw std::out_of_range(
@@ -222,7 +222,7 @@ int List::front() const
 int List::back() const
 {
 	if (_tail != nullptr) {
-		return *_tail;
+		return _tail->get_element();
 	} else {
         throw std::out_of_range(
 			"Attempted to access the back element of an empty list.");
@@ -240,45 +240,111 @@ void List::push_front(int element)
 		node->set_next(_head);
 		_head = node;
 	}
+	// Increment _count, node has been added.
+    ++_count;	
 }
 
-void List::pop_front()
+int List::pop_front()
 {
-	// xxx 
+	if (empty()) {
+		throw std::out_of_range("Attempted to pop an empty list.");
+	}
+
+	int result = front();
+	if (_head == _tail) {
+		clear();
+	} else {
+		result = front();
+		Node* curr = _head->get_next();
+		delete _head;
+		_head = curr;
+		_head->set_prev(nullptr);
+		--_count;
+		curr = nullptr;
+	}
+	return result;
 }
 
 void List::push_back(int element)
 {
 	if (_head == nullptr) {
-		_head = new Node(element, nullptr);
+		_head = new Node(element, nullptr, nullptr);
 		_head = _tail;
 	} else {
-		_tail->set_next(new Node(element, nullptr));
+		_tail->set_next(new Node(element, nullptr, _tail->get_prev()));
 		_tail = tail->get_next();
 	}
     // Increment _count, node has been added.
     ++_count;
 }
 
-void List::pop_back()
+int List::pop_back()
 {
-	// xxx 
+	if (empty()) {
+		throw std::out_of_range("Attempted to pop an empty list.");
+	}
+
+	int result = back();
+	if (_head == _tail) {
+		clear();
+	} else {
+	Node* curr = _tail->get_prev();
+	delete _tail;
+	_tail = curr;
+	_tail->set_next(nullptr);
+	--_count;
+	curr = nullptr;
+	}
+	return result;
 }
 
 void List::insert(int element, int index)
 {
-	// xxx 
+	index_out_of_range(int index);
+	// Insert at _head.
+	if (index == 0) {
+		push_front(element);
+	// Insert at _tail.
+	} else if (index == _count) {
+		push_back(element);
+		// Swap the elements so the inserted element is before _tail.
+		auto addr = &_tail->get_prev()->get_element();
+		std::swap(_tail->get_element(), *addr);
+	} else {
+		Node* curr = _head->get_next();
+		int i = 1
+		while (i != index) {
+			curr->get_next();
+			++i;
+		}
+		Node* curr_next = curr->get_next();
+		curr->set_next(new Node(element, curr_next, curr));
+		curr_next->set_prev(curr->get_next());
+		++_count;
+		curr = curr_next = nullptr;
+	}
 }
+
+void List::index_out_of_range(int index)
+{
+	if (index < 0) {
+		throw std::out_of_range("Index cannot be negative");
+	}
+	if (index > _count) {
+		throw std::out_of_range("Index out of range");
+	}
+}
+
 
 bool List::remove(int element)
 {
-	// Only delementte if list has nodes.
+	// Only delete if list has nodes.
 	if (_head != nullptr) {
 		// If node to delementte is the head, don't loop.
 		if (_head->get_element() == element) {
 			Node* tmp = _head;
 			_head = tmp->get_next();
-			delementte tmp;
+			delete tmp;
 			tmp = nullptr;
 		} else {
 			Node* curr = _head;
@@ -287,12 +353,12 @@ bool List::remove(int element)
 				curr = curr->get_next();
 			}
 			if (curr->get_next() == nullptr) {
-				// At tail and elementue not found.
+				// At tail and element not found.
 				return false;
 			}
 			Node* tmp = curr->get_next();
 			curr->set_next(tmp->get_next());
-			delementte tmp;
+			delete tmp;
 			tmp = nullptr;
 		}
 		return true;
@@ -318,21 +384,28 @@ void List::print() const
 	}
 }
 
-int List::get(int idx) const
+int List::get(int index) const
 {
-	if (idx < 0) {
-		throw std::out_of_range("Index cannot be negative");
+	index_out_of_range(int index);
+	// Check _head.
+	if (index == 0) {
+		return _head->get_element();
 	}
-	int _count = 0;
-	Node* curr = _head;
-	while (curr != nullptr) {
-		if (_count == idx) {
+	// Check _tail.
+	if (index == _count) {
+		return _tail->get_element();
+	}
+	// _head already checked, _tail already checked.
+	Node* curr = _head->get_next();
+	int i = 1;
+	while (i < _count - 1) {
+		if (i == index) {
 			return curr->get_element();
 		}
-		++_count;
 		curr = curr->get_next();
 	}
-	throw std::out_of_range("Index out of range");
+	// Cases where the element is not in the list are front-loaded; nothing else
+	// to do.
 }
 
 std::unique_ptr<Node> List::get(int element) const
