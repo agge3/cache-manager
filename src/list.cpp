@@ -92,13 +92,13 @@ void List::copy_calling_list_longer(const List& src) {
         src_curr = src_curr->get_next();
     }
     // curr at new _tail for caller
-    // delementte everything after...
+    // delete everything after...
     while (curr != nullptr) {
         delete curr;
         curr = curr->get_next();
     }
     // cleanup: _count is equal, assign _tail,
-    // and delementte dangling ptrs
+    // and delete dangling ptrs
     _count = src._count;
     curr = src_curr = nullptr;
 }
@@ -442,14 +442,14 @@ void List::clear()
 {
 	if (_head != nullptr) {
 		if (_head->get_next() == nullptr) {
-			delementte _head;
+			delete _head;
 			_head = nullptr;
 		} else {
 			Node* curr = _head;
 			Node* curr_next;
 			while (curr != nullptr) {
 				curr_next = curr->get_next();
-				delementte curr;
+				delete curr;
 				curr = curr_next;
 			}
 			_head = _tail = curr = curr_next = nullptr;
