@@ -1,5 +1,5 @@
 /**
- * @file linked-list.cpp
+ * @file linked-list.tpp
  * @class LinkedLinkedList<T>
  *
  * @author Tyler Baxter
@@ -110,7 +110,7 @@ void LinkedList<T>::copy_calling_list_empty(const LinkedList<T>& para) {
    // Loop through all parameter list nodes and create for caller list.
    for (int i = 1; i < _count; ++i) {
        para_curr = para_curr->get_next();
-       curr->set_next(new Node<T>(para_curr->get_element(), para_curr, curr));
+       curr->set_next(new Node<T>(para_curr->get_element(), nullptr, curr));
        curr = curr->get_next();
    }
    _tail = curr;
@@ -450,8 +450,9 @@ void LinkedList<T>::clear()
 			curr_next = curr->get_next();
 			delete curr;
 			curr = curr_next;
-			--_count;
 		}
+        _count = 0; // Set count = known number after while loop so 
+                   // less calculations.
 		_head = _tail = curr = curr_next = nullptr;
 	}
 }
