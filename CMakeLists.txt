@@ -17,12 +17,13 @@ add_executable(cache-manager)
 
 # add src
 target_sources(cache-manager PRIVATE src/main.cpp
+	src/util.cpp
+	src/test.cpp
 	src/linked-list.cpp
-	src/bst.cpp
 )
 
 # include dir
-target_include_directories(linked-list PRIVATE
+target_include_directories(cache-manager PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/
     )
 

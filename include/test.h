@@ -1,0 +1,58 @@
+/**
+ * @file test.h
+ * @namespace test
+ *
+ * @author Tyler Baxter
+ * @version 1.0
+ * @since 2024-08-30
+ *
+ * Namespace for running tests.
+ */
+
+#pragma once
+
+#include "linked-list.h"
+
+namespace csc {
+	class Node;
+	class LinkedList;
+}
+
+namespace test {
+
+/**
+ * @struct Dataset
+ * A struct to carry constants for the randomly generated data: the amount 
+ * of data points, the minimum value, and the maximum value.
+ */ 
+struct Dataset {
+	int amt = 10;
+	int min = 0;
+	int max = 10;
+};
+
+/**
+* Unit tests for Node.
+*
+* @credit OpenAI's ChatGPT
+* Prompt: "Write me test cases for this class, with no frameworks, in cpp."
+*/
+void node();
+
+/**
+* Unit tests for LinkedList.
+*
+* @credit OpenAI's ChatGPT
+* Prompt: "Write me test cases for this class, with no frameworks, in cpp."
+*/
+void linked_list();
+
+/**
+* Unit tests for HashMap.
+*
+* @credit OpenAI's ChatGPT
+* Prompt: "Write me test cases for this class, with no frameworks, in cpp."
+*/
+void hash_map();
+
+}
