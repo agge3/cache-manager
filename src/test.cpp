@@ -27,7 +27,7 @@ using namespace csc;
 void test::node()
 {
     // Test Node creation
-    Node node1(10);
+    Node<int> node1(10);
     assert(node1.get_element() == 10);
     assert(node1.get_next() == nullptr);
     assert(node1.get_prev() == nullptr);
@@ -37,7 +37,7 @@ void test::node()
     assert(node1.get_element() == 20);
 
     // Test setting and getting next and previous nodes
-    Node node2(30);
+    Node<int> node2(30);
     node1.set_next(&node2);
     node2.set_prev(&node1);
     assert(node1.get_next() == &node2);
@@ -53,7 +53,7 @@ void test::node()
 void test::linked_list()
 {
     // Create a LinkedList instance.
-	auto list = std::make_unique<LinkedList>();
+	auto list = std::make_unique<LinkedList<int>>();
 
     // Test empty list
     assert(list->empty() == true);
@@ -137,14 +137,14 @@ void test::linked_list()
     // Test copy constructor
     list->push_front(6);
     list->push_back(7);
-    auto listCopy = std::make_unique<LinkedList>(*list);
+    auto listCopy = std::make_unique<LinkedList<int>>(*list);
     assert(listCopy->front() == 6);
     assert(listCopy->back() == 7);
     assert(listCopy->size() == 2);
 	std::cout << "Copy constructor passed.\n";
 
     // Test copy assignment operator
-    auto listAssigned = std::make_unique<LinkedList>();
+    auto listAssigned = std::make_unique<LinkedList<int>>();
     *listAssigned = *list;
     assert(listAssigned->front() == 6);
     assert(listAssigned->back() == 7);
@@ -152,7 +152,7 @@ void test::linked_list()
 	std::cout << "Copy assignment operator passed.\n";
 
     // Test move constructor
-    auto listMoved = std::make_unique<LinkedList>(std::move(*list));
+    auto listMoved = std::make_unique<LinkedList<int>>(std::move(*list));
     assert(listMoved->front() == 6);
     assert(listMoved->back() == 7);
     assert(listMoved->size() == 2);
@@ -160,7 +160,7 @@ void test::linked_list()
 	std::cout << "Move constructor passed.\n";
 
     // Test move assignment operator
-    auto listMovedAssign = std::make_unique<LinkedList>();
+    auto listMovedAssign = std::make_unique<LinkedList<int>>();
     *listMovedAssign = std::move(*listAssigned);
     assert(listMovedAssign->front() == 6);
     assert(listMovedAssign->back() == 7);
@@ -173,13 +173,13 @@ void test::linked_list()
     assert(listMoved->contains(8) == false);
 	std::cout << "contains() passed.\n";
 
-    const Node* beginNode = listMoved->begin();
+    const Node<int>* beginNode = listMoved->begin();
     assert(beginNode != nullptr); // Check if beginNode is not null
     assert(beginNode->get_element() == 6);
 	beginNode = nullptr;
 	std::cout << "begin() passed.\n";
     
-    const Node* endNode = listMoved->end();
+    const Node<int>* endNode = listMoved->end();
     assert(endNode != nullptr); // Check if endNode is not null
     assert(endNode->get_element() == 7);
 	endNode = nullptr;

@@ -1,6 +1,6 @@
 /**
  * @file linked-list.h
- * @class LinkedLinkedList
+ * @class LinkedList
  *
  * @author Tyler Baxter
  * @version 1.0
@@ -10,6 +10,8 @@
  */
 
 #pragma once
+
+#include <cstddef>
 
 /**
 * @namespace csc
@@ -21,20 +23,21 @@ namespace csc {
 * @class Node
 * Node(s) for the linked list.
 */
+template <typename T>
 class Node {
 public:
-	Node(int element) : _element(element), _next(nullptr), _prev(nullptr) {}
-	Node(int element, Node* next, Node* prev) : 
+	Node(T element) : _element(element), _next(nullptr), _prev(nullptr) {}
+	Node(T element, Node* next, Node* prev) : 
 		_element(element), _next(next), _prev(prev) {}
 	~Node() {}
-	int get_element() const { return _element; }
+	T get_element() const { return _element; }
 	Node* get_next() const { return _next; }
 	Node* get_prev() const { return _prev; }
-	void set_element(int element) { _element = element; }
+	void set_element(T element) { _element = element; }
 	void set_next(Node* next) { _next = next; }
 	void set_prev(Node* prev) { _prev = prev; }
 private:
-	int _element;
+	T _element;
 	Node* _next;
 	Node* _prev;
 };
@@ -43,44 +46,50 @@ private:
 * @class LinkedList
 * A double-linked list.
 */
+template <typename T>
 class LinkedList {
 public:
 	/**
 	 * Default constructor.
 	 */
 	LinkedList() : _head(nullptr), _tail(nullptr), _count(0) {}
+
+	/**
+	 * Copy constructor.
+	 */
+	LinkedList(const LinkedList<T>& para);
+
+	/*
+	 * Move constructor.
+	 */
+	LinkedList(LinkedList<T>&& para) noexcept;
+
 	/** 
 	 * Destructor.
 	 */
 	~LinkedList();
+
 	/**
 	 * Assignment operator.
 	 */
-	LinkedList& operator=(const LinkedList& rhs);
-	/**
-	 * Copy constructor.
-	 */
-	LinkedList(const LinkedList& para);
-	/*
-	 * Move constructor.
-	 */
-	LinkedList(LinkedList&& para) noexcept;
+	LinkedList<T>& operator=(const LinkedList<T>& rhs);
+
 	/**
 	 * Move assignment operator.
 	 */
-	LinkedList& operator=(LinkedList&& rhs) noexcept;
+	LinkedList<T>& operator=(LinkedList<T>&& rhs) noexcept;
 
 	/**
 	 * Returns the element at the front of the list. Throws an exception if the 
 	 * list is empty.
 	 */
-	int front() const;
+	T front() const;
 
 	/**
 	 * Returns the element at the back of the list. Throws an exception if the
 	 * list is empty.
 	 */
-	int back() const;
+	T back() const;
 
 	/**
 	 * Adds a new node at the beginning of the list.
@@ -88,13 +97,13 @@ public:
 	 * @param int element
 	 * The element to be inserted.
 	 */
-	void push_front(int element);
+	void push_front(T element);
 
 	/**
 	 * Returns and removes the element at the front of the list. Throws an 
 	 * exception if the list is empty.
 	 */
-	int pop_front();
+	T pop_front();
 
 	/**
 	 * Adds a new node at the end of the list.
@@ -102,13 +111,13 @@ public:
 	 * @param int element
 	 * The element to be inserted.
 	 */
-	void push_back(int element);
+	void push_back(T element);
 
 	/**
 	 * Returns and removes the element at the back of the list. Throws an 
 	 * exception if the list is empty.
 	 */
-	int pop_back();
+	T pop_back();
 
 	/**
 	 * Inserts an element at the specified index.
@@ -119,7 +128,7 @@ public:
 	 * The index to insert at (inserted before the index, so that the newly 
 	 * inserted element is at the specified index).
 	 */
-	void insert(int element, int index);	
+	bool insert(T element, int index);	
 
 	/**
 	 * Searches for a node with a specific elementue and deletes it from the list.
@@ -129,7 +138,7 @@ public:
 	 *
 	 * @return TRUE if deleted, FALSE if not deleted
 	 */
-	bool remove(int element);
+	bool remove(T element);
 
 	/**
 	 * Prints the entire list.
@@ -142,7 +151,7 @@ public:
 	 * @param int index
 	 * The index to get the element.
 	 */
-	int get(int index) const;
+	T get(int index) const;
 
 	/**
 	 * Returns a read-only pointer to the node containing the element, if the 
@@ -154,7 +163,7 @@ public:
 	 * @return A read-only pointer to the node, or nullptr if the element is not
 	 * contained in the list.
 	 */
-	const Node* find(int element) const;
+	const Node<T>* find(T element) const;
 
 	/**
 	 * Checks whether the list contains the element.
@@ -162,17 +171,17 @@ public:
 	 * @return TRUE if the list contains the element. FALSE if the list does not
 	 * contain the element.
 	 */
-	bool contains(int element) const;
+	bool contains(T element) const;
 
 	/**
 	 * Returns a read-only pointer to the beginning node (head) of the list.
 	 */
-	const Node* begin() const;
+	const Node<T>* begin() const;
 
 	/**
 	 * Returns a read-only pointer to the end node (tail) of the list.
 	 */
-	const Node* end() const;
+	const Node<T>* end() const;
 
 	/**
 	 * Checks whether the list is empty.
@@ -184,7 +193,7 @@ public:
 	/**
 	 * Returns the number of elements in the list.
 	 */
-	int size() const;
+	std::size_t size() const;
 
 	/**
 	 * Clears the contents of the list.
@@ -194,14 +203,15 @@ public:
 	// Non-member functions:
 	// operator==operator!=operator<operator<=operator>operator>=operator<=>	
 private:
-	void copy_calling_list_empty(const LinkedList& para);
-	void copy_lists_same_length(const LinkedList& para);
-	void copy_calling_list_longer(const LinkedList& para);
-	void copy_calling_list_shorter(const LinkedList& para);
+	void copy_calling_list_empty(const LinkedList<T>& para);
+	void copy_lists_same_length(const LinkedList<T>& para);
+	void copy_calling_list_longer(const LinkedList<T>& para);
+	void copy_calling_list_shorter(const LinkedList<T>& para);
 	void index_out_of_range(int index) const;
 
-	Node* _head;
-	Node* _tail;
-	int _count;
+	Node<T>* _head;
+	Node<T>* _tail;
+	std::size_t _count;
 };
 }
+#include "linked-list.tpp"

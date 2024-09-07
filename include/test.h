@@ -11,10 +11,10 @@
 
 #pragma once
 
-#include "linked-list.h"
-
 namespace csc {
+	template <typename T>
 	class Node;
+	template <typename T>
 	class LinkedList;
 }
 

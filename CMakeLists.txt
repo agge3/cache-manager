@@ -19,12 +19,14 @@ add_executable(cache-manager)
 target_sources(cache-manager PRIVATE src/main.cpp
 	src/util.cpp
 	src/test.cpp
-	src/linked-list.cpp
 )
 
 # include dir
 target_include_directories(cache-manager PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/
+    )
+target_include_directories(cache-manager PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/
     )
 
 # build doc with doxygen
