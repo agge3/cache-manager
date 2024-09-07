@@ -64,11 +64,11 @@ public:
 	/*
 	 * Move constructor.
 	 */
-	LinkedList(LinkedList&& para);
+	LinkedList(LinkedList&& para) noexcept;
 	/**
 	 * Move assignment operator.
 	 */
-	LinkedList& operator=(LinkedList&& rhs);
+	LinkedList& operator=(LinkedList&& rhs) noexcept;
 
 	/**
 	 * Returns the element at the front of the list. Throws an exception if the 

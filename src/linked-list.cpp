@@ -151,20 +151,24 @@ LinkedList::LinkedList(const LinkedList& para)
     }
 }
 
-LinkedList::LinkedList(LinkedList&& para) :
-	// Steal the r-value list's resources.
-	_head(para._head), _tail(para._tail), _count(para._count)
+LinkedList::LinkedList(LinkedList&& para) noexcept :
+	_head(nullptr), _tail(nullptr), _count(0)
 {
-	// NULL the r-value list.
-	para._head = para._tail = nullptr;
-	para._count = 0;
+	//// Steal the r-value list's resources.
+	//_head = para._head;
+	//_tail = para._tail;
+	//_count = para._count;
+	//// NULL the r-value list.
+	//para._head = nullptr;
+	//para._tail = nullptr;
+	//para._count = 0;
+	*this = std::move(para);
 }
 
-LinkedList& LinkedList::operator=(LinkedList&& rhs)
+LinkedList& LinkedList::operator=(LinkedList&& rhs) noexcept
 {
 	// Check for self-assignment.
-	if (this != &rhs)
-	{
+	if (this != &rhs) {
 		// Release the l-value list's resources.
 		clear();
 		// Steal the r-value list's resources.
@@ -173,7 +177,7 @@ LinkedList& LinkedList::operator=(LinkedList&& rhs)
 		_count = rhs._count;
 		// NULL the r-value list.
 		rhs._head = rhs._tail = nullptr;
-		rhs._count;
+		rhs._count = 0;
 	}
 	// Return l-value list.
 	return *this;
@@ -295,11 +299,12 @@ void LinkedList::insert(int element, int index)
 	} else if (index == _count) {
 		push_back(element);
 	} else {
-		Node* curr = _head->get_next();
-		int i = 1;
-		while (i != index) {
+		Node* curr = _head;
+		int i = 0;
+		// We want to stop one before the index we want to insert, so we can 
+		// use set_next() to insert at that index.
+		while (++i != index) {
 			curr->get_next();
-			++i;
 		}
 		Node* curr_next = curr->get_next();
 		curr->set_next(new Node(element, curr_next, curr));
@@ -335,6 +340,7 @@ bool LinkedList::remove(int element)
 		_head = tmp->get_next();
 		delete tmp;
 		tmp = nullptr;
+		--_count;
 	} else {
 		Node* curr = _head;
 		while (curr->get_next() != nullptr && 
@@ -349,6 +355,7 @@ bool LinkedList::remove(int element)
 		curr->set_next(tmp->get_next());
 		delete tmp;
 		tmp = nullptr;
+		--_count;
 	}
 	return true;
 }
@@ -384,14 +391,10 @@ int LinkedList::get(int index) const
 	// _head already checked, _tail already checked.
 	Node* curr = _head->get_next();
 	int i = 1;
-	while (i < _count - 1) {
-		if (i == index) {
-			return curr->get_element();
-		}
+	while (i++ != index) {
 		curr = curr->get_next();
-		++i;
 	}
-	throw std::runtime_error("Element is not in the list.");
+	return curr->get_element();
 }
 
 const Node* LinkedList::find(int element) const
@@ -417,25 +420,20 @@ bool LinkedList::contains(int element) const
 
 void LinkedList::clear()
 {
-	if (_head == _tail) {
-		delete _head;
-		_count = 0;
-		_head = _tail = nullptr;
-	} else if (!empty()) {
+	if (!empty()) {
 		Node* curr = _head;
 		Node* curr_next;
 		while (curr != nullptr) {
 			curr_next = curr->get_next();
 			delete curr;
 			curr = curr_next;
+			--_count;
 		}
-		_count = 0;
 		_head = _tail = curr = curr_next = nullptr;
 	}
 }
 
 LinkedList::~LinkedList()
 {
-	// clear() has simple-case conditions built in.
 	clear();
 }

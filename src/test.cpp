@@ -52,59 +52,66 @@ void test::node()
 */
 void test::linked_list()
 {
-    // Create a LinkedList instance
-    LinkedList list;
+    // Create a LinkedList instance.
+	auto list = std::make_unique<LinkedList>();
 
     // Test empty list
-    assert(list.empty() == true);
+    assert(list->empty() == true);
 	std::cout << "empty() passed.\n";
-    assert(list.size() == 0);
+    assert(list->size() == 0);
 	std::cout << "size() passed.\n";
 
     // Test push_front
-    list.push_front(1);
-    assert(list.front() == 1);
-    assert(list.back() == 1);
-    assert(list.size() == 1);
+    list->push_front(1);
+    assert(list->front() == 1);
+    assert(list->back() == 1);
+    assert(list->size() == 1);
 	std::cout << "push_front() passed.\n";
 
     // Test push_back
-    list.push_back(2);
-    assert(list.front() == 1);
-    assert(list.back() == 2);
-    assert(list.size() == 2);
+    list->push_back(2);
+    assert(list->front() == 1);
+    assert(list->back() == 2);
+    assert(list->size() == 2);
 	std::cout << "push_back() passed.\n";
 
+	// Test get
+	assert(list->get(0) == 1);
+    assert(list->get(1) == 2);
+	std::cout << "get() passed.\n";
+
     // Test insert
-    list.insert(3, 1); // Insert 3 at index 1
-    assert(list.get(0) == 1);
-    assert(list.get(1) == 3);
-    assert(list.get(2) == 2);
-    assert(list.size() == 3);
+    list->insert(3, 1); // Insert 3 at index 1
+	std::cout << "Element inserted into the list.\n";
+    assert(list->get(0) == 1);
+    assert(list->get(1) == 3);
+    assert(list->get(2) == 2);
+    assert(list->size() == 3);
 	std::cout << "insert() passed.\n";
 
     // Test remove
-    assert(list.remove(3) == true);
-    assert(list.size() == 2);
-    assert(list.get(0) == 1);
-    assert(list.get(1) == 2);
+    assert(list->remove(3) == true);
+	std::cout << "Element removed from the list.\n";
+    assert(list->size() == 2);
+    assert(list->get(0) == 1);
+    assert(list->get(1) == 2);
 	std::cout << "remove() passed.\n";
 
     // Test pop_front
-    list.pop_front();
-    assert(list.size() == 1);
-    assert(list.front() == 2);
+    list->pop_front();
+    assert(list->size() == 1);
+    assert(list->front() == 2);
 	std::cout << "pop_front() passed.\n";
 
     // Test pop_back
-    list.pop_back();
-    assert(list.empty() == true);
-    assert(list.size() == 0);
+    list->pop_back();
+    assert(list->empty() == true);
+    assert(list->size() == 0);
 	std::cout << "pop_back() passed.\n";
 
     // Test exception handling for empty list
     try {
-        list.front(); // Should throw exception
+        list->front(); // Should throw exception
         assert(false); // Should not reach this line
     } catch (const std::out_of_range& e) {
 		std::cout << "front() out of range exception passed. " << e.what() << 
@@ -112,7 +119,7 @@ void test::linked_list()
     }
 
     try {
-        list.back(); // Should throw exception
+        list->back(); // Should throw exception
         assert(false); // Should not reach this line
     } catch (const std::out_of_range& e) {
 		std::cout << "back() out of range exception passed. " << e.what() << 
@@ -120,61 +127,74 @@ void test::linked_list()
     }
 
     // Test clear
-    list.push_front(4);
-    list.push_back(5);
-    list.clear();
-    assert(list.empty() == true);
-    assert(list.size() == 0);
+    list->push_front(4);
+    list->push_back(5);
+    list->clear();
+    assert(list->empty() == true);
+    assert(list->size() == 0);
 	std::cout << "clear() passed.\n";
 
     // Test copy constructor
-    list.push_front(6);
-    list.push_back(7);
-    LinkedList listCopy(list);
-    assert(listCopy.front() == 6);
-    assert(listCopy.back() == 7);
-    assert(listCopy.size() == 2);
+    list->push_front(6);
+    list->push_back(7);
+    auto listCopy = std::make_unique<LinkedList>(*list);
+    assert(listCopy->front() == 6);
+    assert(listCopy->back() == 7);
+    assert(listCopy->size() == 2);
 	std::cout << "Copy constructor passed.\n";
 
     // Test copy assignment operator
-    LinkedList listAssigned;
-    listAssigned = list;
-    assert(listAssigned.front() == 6);
-    assert(listAssigned.back() == 7);
-    assert(listAssigned.size() == 2);
+    auto listAssigned = std::make_unique<LinkedList>();
+    *listAssigned = *list;
+    assert(listAssigned->front() == 6);
+    assert(listAssigned->back() == 7);
+    assert(listAssigned->size() == 2);
 	std::cout << "Copy assignment operator passed.\n";
 
     // Test move constructor
-    LinkedList listMoved(std::move(list));
-    assert(listMoved.front() == 6);
-    assert(listMoved.back() == 7);
-    assert(listMoved.size() == 2);
-    assert(list.empty() == true); // Ensure list is empty after move
+    auto listMoved = std::make_unique<LinkedList>(std::move(*list));
+    assert(listMoved->front() == 6);
+    assert(listMoved->back() == 7);
+    assert(listMoved->size() == 2);
+    assert(list->empty() == true); // Ensure list is empty after move
 	std::cout << "Move constructor passed.\n";
 
     // Test move assignment operator
-    LinkedList listMovedAssign;
-    listMovedAssign = std::move(listAssigned);
-    assert(listMovedAssign.front() == 6);
-    assert(listMovedAssign.back() == 7);
-    assert(listMovedAssign.size() == 2);
-    assert(listAssigned.empty() == true); // Ensure listAssigned is empty after move
+    auto listMovedAssign = std::make_unique<LinkedList>();
+    *listMovedAssign = std::move(*listAssigned);
+    assert(listMovedAssign->front() == 6);
+    assert(listMovedAssign->back() == 7);
+    assert(listMovedAssign->size() == 2);
+    assert(listAssigned->empty() == true); // Ensure listAssigned is empty after move
 	std::cout << "Move assignment operator passed.\n";
 
     // Test contains
-    assert(listMoved.contains(6) == true);
-    assert(listMoved.contains(8) == false);
+    assert(listMoved->contains(6) == true);
+    assert(listMoved->contains(8) == false);
 	std::cout << "contains() passed.\n";
 
-    const Node* beginNode = listMoved.begin();
+    const Node* beginNode = listMoved->begin();
     assert(beginNode != nullptr); // Check if beginNode is not null
     assert(beginNode->get_element() == 6);
+	beginNode = nullptr;
 	std::cout << "begin() passed.\n";
     
-    const Node* endNode = listMoved.end();
+    const Node* endNode = listMoved->end();
     assert(endNode != nullptr); // Check if endNode is not null
     assert(endNode->get_element() == 7);
+	endNode = nullptr;
 	std::cout << "end() passed.\n";
+
+	list.reset();
+	std::cout << "Destructor of list passed.\n";
+	listCopy.reset();
+	std::cout << "Destructor of copy constructor list passed.\n";
+	listAssigned.reset();
+	std::cout << "Destructor of copy assignment operator list passed.\n";
+	listMoved.reset();
+	std::cout << "Destructor of move constructor list passed.\n";
+    listMovedAssign.reset();
+	std::cout << "Destructor of move assignment operator list passed.\n";
 
     std::cout << "All tests passed!" << std::endl;
 }
