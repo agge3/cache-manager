@@ -53,7 +53,7 @@ void test::node()
 void test::linked_list()
 {
     // Create a LinkedList instance.
-	auto list = std::make_unique<LinkedList<int>>();
+    auto list = std::make_unique<LinkedList<int>>();
 
     // Test empty list
     assert(list->empty() == true);
