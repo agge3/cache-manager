@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include <cstddef>
+
 /**
 * @namespace csc
 * csc is the project namespace, for project-specific implementations.
@@ -32,13 +34,60 @@ private:
 	V value;
 	// Next bucket with same key.
 	HashNode* _next;
+    // Disallow copy and assignment.
+    HashNode(const HashNode &);
+    HashNode & operator=(const HashNode &);
 };
 
-template <typename K>
-struct KeyHash {
-	unsigned long operator()(const K& key) const
+namespace hash {
+	std::size_t djb(const std::string& str)
 	{
-		return reinterpret_cast<unsigned long>(key) % TABLE_SIZE;
+		std::size_t hash = 5381;
+		for (char c : str) {
+			hash = hash * 33 + static_cast<unsigned char>(c);
+		}
+		return hash;
+	}
+}
+
+template <typename K>
+/**
+ * @struct KeyHash
+ * KeyHash uses the double hashing technique.
+ */
+struct KeyHash {
+	/**
+	 * Primary hash function.
+	 */
+	std::size_t primary_hash(const K& key) const
+	{
+		return hash::djb(key) % TABLE_SIZE;
+	}
+
+	/**
+	 * Secondary hash function.
+	 */
+	std::size_t secondary_hash(const K& key) const
+	{
+		return 1 + (hash::djb(key) % (TABLE_SIZE - 1));
+	}
+
+	/**
+	 * Main hash function, combining both.
+	 */
+	std::size_t operator()(const K& key) const
+	{
+		return primary_hash(key) % TABLE_SIZE;
+	}
+
+	/**
+	 * Double hashing function to get the next probe position.
+	 */
+	std::size_t double_hash(const K& key, std::size_t attempt) const
+	{
+		std::size_t hash1 = primary_hash(key) % TABLE_SIZE;
+		std::size_t hash2 = secondary_hash(key);
+		return (hash1 + attempt * hash2) % TABLE_SIZE;
 	}
 };
 
@@ -190,10 +239,20 @@ public:
 	// Non-member functions:
 	// operator==operator!=operator<operator<=operator>operator>=operator<=>	
 private:
+	// Power of two for DJR % 2^k.
+	constexpr std::size_t TABLE_SIZE = 16; 
+	// Double the size when resizing.
+	constexpr std::size_t RESIZE_FACTOR = 2;
+	// Resize when load factor exceeds this threshold.
+	constexpr float LOAD_FACTOR_THRESHOLD = 0.75; 
+
 	/**
 	 * Regenerates the hash table.
 	 */
 	void rehash();
+
+	void resize();
+
 	/**
 	 * Returns function used to hash the keys.
 	 */
@@ -203,6 +262,7 @@ private:
 	 */
 	void key_eq() const;
 
-	std::size_t _count;
+	HashNode<K, V>** _table;
+	F _hash
 };
 }
