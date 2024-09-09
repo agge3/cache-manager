@@ -2,6 +2,55 @@
 
 using namespace csc;
 
+BTree::BTree()
+{
+	_root = new BTreeNode();
+	_leaf = true;
+	_num = 0;
+}
+
+int BTree:search_key(int n, const int *a, int key)
+{
+	int lo;
+	int hi;
+	int mid;
+
+	lo = -1;
+	hi = n;
+
+	while(++lo < hi) {
+		mid = (lo + hi) / 2;
+		if (a[mid] == key) {
+			return mid;
+		} else if (a[mid] < key) {
+			low = mid;
+		} else {
+			hi = mid;
+		}
+	}
+
+	return hi;
+}
+
+int BTree::search(int key)
+{
+
+
+bool BTree::empty() const
+{
+	return _root == nullptr;
+}
+
+std::size_t BTree::size() const
+{
+	return _num;
+}
+
+V BTree::get(const K& key) const
+{
+	return search(_root, key, height);
+}
+
 BTreeNode::BTreeNode(int degree, bool leaf) :
 	_degree(degree), _leaf(leaf)
 {
