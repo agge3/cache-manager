@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "hash.h"
+
 #include <cstddef>
 
 /**
@@ -38,18 +40,7 @@ private:
     HashNode(const HashNode &);
     HashNode & operator=(const HashNode &);
 };
-
-namespace hash {
-	std::size_t djb(const std::string& str)
-	{
-		std::size_t hash = 5381;
-		for (char c : str) {
-			hash = hash * 33 + static_cast<unsigned char>(c);
-		}
-		return hash;
-	}
-}
-
+ 
 template <typename K>
 /**
  * @struct KeyHash
@@ -61,7 +52,7 @@ struct KeyHash {
 	 */
 	std::size_t primary_hash(const K& key) const
 	{
-		return hash::djb(key) % TABLE_SIZE;
+		return Hash<K>{}(key) % TABLE_SIZE;
 	}
 
 	/**
@@ -69,7 +60,7 @@ struct KeyHash {
 	 */
 	std::size_t secondary_hash(const K& key) const
 	{
-		return 1 + (hash::djb(key) % (TABLE_SIZE - 1));
+		return 1 + (Hash<K>{}(key) % (TABLE_SIZE - 1));
 	}
 
 	/**
@@ -93,7 +84,7 @@ struct KeyHash {
 
 /**
 * @class HashMap
-* A hash map.
+* HashMap is implemented with open addressing and double hashing.
 */
 class HashMap {
 public:
@@ -244,7 +235,7 @@ private:
 	// Double the size when resizing.
 	constexpr std::size_t RESIZE_FACTOR = 2;
 	// Resize when load factor exceeds this threshold.
-	constexpr float LOAD_FACTOR_THRESHOLD = 0.75; 
+	constexpr float LOAD_FACTOR_THRESHOLD = 0.7f; 
 
 	/**
 	 * Regenerates the hash table.
