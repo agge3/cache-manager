@@ -38,7 +38,7 @@ private:
 	HashNode* _next;
     // Disallow copy and assignment.
     HashNode(const HashNode &);
-    HashNode & operator=(const HashNode &);
+    HashNode& operator=(const HashNode &);
 };
  
 template <typename K>

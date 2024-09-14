@@ -30,9 +30,11 @@ public:
 	Node(T element, Node* next, Node* prev) : 
 		_element(element), _next(next), _prev(prev) {}
 	~Node() {}
+
 	T get_element() const { return _element; }
 	Node* get_next() const { return _next; }
 	Node* get_prev() const { return _prev; }
+
 	void set_element(T element) { _element = element; }
 	void set_next(Node* next) { _next = next; }
 	void set_prev(Node* prev) { _prev = prev; }
