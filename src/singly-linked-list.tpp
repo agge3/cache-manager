@@ -11,6 +11,8 @@
 
 #include "singly-linked-list.h"
 
+#include <exception>
+
 using namespace csc;
 
 SLLIterator<T>& SLLIterator<T>::operator++()
@@ -43,6 +45,11 @@ void SLLIterator::add(const T& element)
 
 void SLLIterator::delete()
 {
+	// xxx don't think this syntax is going to work. likely going to need to (1)
+	// create a copy of the list and get one before our position, or (2) pass a
+	// reference to the list as the parameter. (2) is not a solution, that gives
+	// the client a ton of bookkeeping. Hopefully other solutions? We need our
+	// binded list instance
 	SLLNode<T> *node = SinglyLinkedList::search(element);
 	node->set_next() = _node->get_next();
 	delete _node;
