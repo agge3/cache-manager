@@ -1,12 +1,12 @@
 /**
- * @file linked-list.tpp
- * @class LinkedLinkedList<T>
+ * @file doubly-linked-list.tpp
+ * @class DoublyLinkedList
  *
  * @author Tyler Baxter
  * @version 1.0
  * @since 2024-08-30
  *
- * LinkedLinkedList<T> implementation.
+ * DoublyLinkedList implementation.
  */
 
 #include "linked-list.h"
@@ -17,7 +17,7 @@
 using namespace csc;
 
 template <typename T>
-LinkedList<T>::LinkedList(const LinkedList<T>& para)
+DoublyLinkedList<T>::DoublyLinkedList(const DoublyLinkedList<T>& para)
 {
     // Check if list to be copied has any nodes.
     if (!para.empty()) {
@@ -26,7 +26,7 @@ LinkedList<T>::LinkedList(const LinkedList<T>& para)
 }
 
 template <typename T>
-LinkedList<T>::LinkedList(LinkedList<T>&& para) noexcept :
+DoublyLinkedList<T>::DoublyLinkedList(DoublyLinkedList<T>&& para) noexcept :
 	// Steal the r-value list's resources.
 	_head(para._head), _tail(para._tail), _count(para._count)
 {
@@ -40,13 +40,13 @@ LinkedList<T>::LinkedList(LinkedList<T>&& para) noexcept :
 }
 
 template <typename T>
-LinkedList<T>::~LinkedList()
+DoublyLinkedList<T>::~DoublyLinkedList()
 {
 	clear();
 }
 
 template <typename T>
-LinkedList<T>& LinkedList<T>::operator=(const LinkedList<T>& rhs)
+DoublyLinkedList<T>& DoublyLinkedList<T>::operator=(const DoublyLinkedList<T>& rhs)
 {
 	// Check if both lists have the same address; then they're the same.
     if (&rhs == this) {
@@ -78,7 +78,7 @@ LinkedList<T>& LinkedList<T>::operator=(const LinkedList<T>& rhs)
 }
 
 template <typename T>
-LinkedList<T>& LinkedList<T>::operator=(LinkedList<T>&& rhs) noexcept
+DoublyLinkedList<T>& DoublyLinkedList<T>::operator=(DoublyLinkedList<T>&& rhs) noexcept
 {
 	// Check for self-assignment.
 	if (this != &rhs) {
@@ -98,19 +98,19 @@ LinkedList<T>& LinkedList<T>::operator=(LinkedList<T>&& rhs) noexcept
 }
 
 template <typename T>
-void LinkedList<T>::copy_calling_list_empty(const LinkedList<T>& para) {
+void DoublyLinkedList<T>::copy_calling_list_empty(const DoublyLinkedList<T>& para) {
    // It's assumed calling object is empty, so we don't need to check.
    // Assign caller _count as parameter _count.
    _count = para._count;
    // Create _head for caller.
-   _head = new Node<T>(para._head->get_element());
+   _head = new DLLNode<T>(para._head->get_element());
    // curr at _head, para_curr at para _head
-   Node<T>* curr = _head;
-   Node<T>* para_curr = para._head;
+   DLLNode<T>* curr = _head;
+   DLLNode<T>* para_curr = para._head;
    // Loop through all parameter list nodes and create for caller list.
    for (int i = 1; i < _count; ++i) {
        para_curr = para_curr->get_next();
-       curr->set_next(new Node<T>(para_curr->get_element(), nullptr, curr));
+       curr->set_next(new DLLNode<T>(para_curr->get_element(), nullptr, curr));
        curr = curr->get_next();
    }
    _tail = curr;
@@ -119,9 +119,9 @@ void LinkedList<T>::copy_calling_list_empty(const LinkedList<T>& para) {
 }
 
 template <typename T>
-void LinkedList<T>::copy_lists_same_length(const LinkedList<T>& para) {
-    Node<T>* curr = _head;
-    Node<T>* para_curr = para._head;
+void DoublyLinkedList<T>::copy_lists_same_length(const DoublyLinkedList<T>& para) {
+    DLLNode<T>* curr = _head;
+    DLLNode<T>* para_curr = para._head;
     while (curr != nullptr) {
         curr->set_element(para_curr->get_element());
         curr = curr->get_next();
@@ -132,10 +132,10 @@ void LinkedList<T>::copy_lists_same_length(const LinkedList<T>& para) {
 }
 
 template <typename T>
-void LinkedList<T>::copy_calling_list_longer(const LinkedList<T>& para) {
+void DoublyLinkedList<T>::copy_calling_list_longer(const DoublyLinkedList<T>& para) {
     // Create curr for caller and parameter _head.
-    Node<T>* curr = _head;
-    Node<T>* para_curr = para._head;
+    DLLNode<T>* curr = _head;
+    DLLNode<T>* para_curr = para._head;
     // Iterate through, stopping at _tail node of parameter.
     while (para_curr != nullptr) {
         curr->set_element(para_curr->get_element());
@@ -158,9 +158,9 @@ void LinkedList<T>::copy_calling_list_longer(const LinkedList<T>& para) {
 }
 
 template <typename T>
-void LinkedList<T>::copy_calling_list_shorter(const LinkedList<T>& para) {
-    Node<T>* curr = _head;
-    Node<T>* para_curr = para._head;
+void DoublyLinkedList<T>::copy_calling_list_shorter(const DoublyLinkedList<T>& para) {
+    DLLNode<T>* curr = _head;
+    DLLNode<T>* para_curr = para._head;
     while (curr != nullptr) {
         curr->set_element(para_curr->get_element());
         curr = curr->get_next();
@@ -170,7 +170,7 @@ void LinkedList<T>::copy_calling_list_shorter(const LinkedList<T>& para) {
     curr = _tail;
     // Second loop to create new nodes for remaining nodes of caller.
     while (para_curr != nullptr) {
-        curr->set_next(new Node<T>(para_curr->get_element(), nullptr, curr));
+        curr->set_next(new DLLNode<T>(para_curr->get_element(), nullptr, curr));
         curr = curr->get_next();
         para_curr = para_curr->get_next();
     }
@@ -183,33 +183,33 @@ void LinkedList<T>::copy_calling_list_shorter(const LinkedList<T>& para) {
 }
 
 template <typename T>
-const Node<T>* LinkedList<T>::begin() const
+const DLLNode<T>* DoublyLinkedList<T>::begin() const
 {
 	// Return a const_cast pointer to the head node for read-only access.
 	return _head;
 }
 
 template <typename T>
-const Node<T>* LinkedList<T>::end() const
+const DLLNode<T>* DoublyLinkedList<T>::end() const
 {
 	// Return a const_cast pointer to the tail node for read-only access.
 	return _tail;
 }
 
 template <typename T>
-bool LinkedList<T>::empty() const
+bool DoublyLinkedList<T>::empty() const
 {
 	return _head == nullptr && _tail == nullptr && _count == 0;
 }
 
 template <typename T>
-std::size_t LinkedList<T>::size() const
+std::size_t DoublyLinkedList<T>::size() const
 {
 	return _count;
 }
 
 template <typename T>
-T LinkedList<T>::front() const
+T DoublyLinkedList<T>::front() const
 {
 	if (empty()) {
     	throw std::out_of_range(
@@ -219,7 +219,7 @@ T LinkedList<T>::front() const
 }
 
 template <typename T>
-T LinkedList<T>::back() const
+T DoublyLinkedList<T>::back() const
 {
 	if (empty()) {
     	throw std::out_of_range(
@@ -229,13 +229,13 @@ T LinkedList<T>::back() const
 }
 
 template <typename T>
-void LinkedList<T>::push_front(T element)
+void DoublyLinkedList<T>::push_front(T element)
 {
 	if (empty()) {
-		_head = new Node<T>(element);
+		_head = new DLLNode<T>(element);
 		_tail = _head;
 	} else {
-		Node<T>* ptr = new Node<T>(element, _head, nullptr);
+		DLLNode<T>* ptr = new DLLNode<T>(element, _head, nullptr);
 		_head->set_prev(ptr);
 		_head = ptr;
 		ptr = nullptr;
@@ -245,7 +245,7 @@ void LinkedList<T>::push_front(T element)
 }
 
 template <typename T>
-T LinkedList<T>::pop_front()
+T DoublyLinkedList<T>::pop_front()
 {
 	if (empty()) {
 		throw std::out_of_range("Attempted to pop an empty list.");
@@ -254,7 +254,7 @@ T LinkedList<T>::pop_front()
 	if (_head == _tail) {
 		clear();
 	} else {
-		Node<T>* ptr = _head->get_next();
+		DLLNode<T>* ptr = _head->get_next();
 		delete _head;
 		_head = ptr;
 		_head->set_prev(nullptr);
@@ -265,13 +265,13 @@ T LinkedList<T>::pop_front()
 }
 
 template <typename T>
-void LinkedList<T>::push_back(T element)
+void DoublyLinkedList<T>::push_back(T element)
 {
 	if (empty()) {
-		_head = new Node<T>(element);
+		_head = new DLLNode<T>(element);
 		_tail = _head;
 	} else {
-		_tail->set_next(new Node<T>(element, nullptr, _tail));
+		_tail->set_next(new DLLNode<T>(element, nullptr, _tail));
 		_tail = _tail->get_next();
 	}
     // Increment _count, node has been added.
@@ -279,7 +279,7 @@ void LinkedList<T>::push_back(T element)
 }
 
 template <typename T>
-T LinkedList<T>::pop_back()
+T DoublyLinkedList<T>::pop_back()
 {
 	if (empty()) {
 		throw std::out_of_range("Attempted to pop an empty list.");
@@ -288,7 +288,7 @@ T LinkedList<T>::pop_back()
 	if (_head == _tail) {
 		clear();
 	} else {
-	Node<T>* ptr = _tail->get_prev();
+	DLLNode<T>* ptr = _tail->get_prev();
 	delete _tail;
 	_tail = ptr;
 	_tail->set_next(nullptr);
@@ -299,7 +299,7 @@ T LinkedList<T>::pop_back()
 }
 
 template <typename T>
-bool LinkedList<T>::insert(T element, int index)
+bool DoublyLinkedList<T>::insert(T element, int index)
 {
 	// xxx rework the bool
 	index_out_of_range(index);
@@ -316,15 +316,15 @@ bool LinkedList<T>::insert(T element, int index)
 		return true;
 	}
 
-	Node<T>* curr = _head;
+	DLLNode<T>* curr = _head;
 	int i = 0;
 	// We want to stop one before the index we want to insert, so we can 
 	// use set_next() to insert at that index.
 	while (++i != index) {
 		curr->get_next();
 	}
-	Node<T>* curr_next = curr->get_next();
-	curr->set_next(new Node<T>(element, curr_next, curr));
+	DLLNode<T>* curr_next = curr->get_next();
+	curr->set_next(new DLLNode<T>(element, curr_next, curr));
 	// Make sure curr_next isn't nullptr before trying to set prev for it.
 	if (curr_next != nullptr) {
 		curr_next->set_prev(curr->get_next());
@@ -335,7 +335,7 @@ bool LinkedList<T>::insert(T element, int index)
 }
 
 template <typename T>
-void LinkedList<T>::index_out_of_range(int index) const
+void DoublyLinkedList<T>::index_out_of_range(int index) const
 {
 	if (index < 0) {
 		throw std::out_of_range("Index cannot be negative");
@@ -346,7 +346,7 @@ void LinkedList<T>::index_out_of_range(int index) const
 }
 
 template <typename T>
-bool LinkedList<T>::remove(T element)
+bool DoublyLinkedList<T>::remove(T element)
 {
 	// Only delete if list has nodes.
 	if (empty()) {
@@ -354,13 +354,13 @@ bool LinkedList<T>::remove(T element)
 	}
 	// If node to delete is the head, don't loop.
 	if (_head->get_element() == element) {
-		Node<T>* tmp = _head;
+		DLLNode<T>* tmp = _head;
 		_head = tmp->get_next();
 		delete tmp;
 		tmp = nullptr;
 		--_count;
 	} else {
-		Node<T>* curr = _head;
+		DLLNode<T>* curr = _head;
 		while (curr->get_next() != nullptr && 
 			curr->get_next()->get_element() != element) {
 			curr = curr->get_next();
@@ -369,7 +369,7 @@ bool LinkedList<T>::remove(T element)
 			// At tail and element not found.
 			return false;
 		}
-		Node<T>* tmp = curr->get_next();
+		DLLNode<T>* tmp = curr->get_next();
 		curr->set_next(tmp->get_next());
 		delete tmp;
 		tmp = nullptr;
@@ -379,7 +379,7 @@ bool LinkedList<T>::remove(T element)
 }
 
 template <typename T>
-void LinkedList<T>::print() const
+void DoublyLinkedList<T>::print() const
 {
 	if (empty()) {
 		std::cout << "Empty list\n";
@@ -387,7 +387,7 @@ void LinkedList<T>::print() const
 	} else if (_head == _tail) {
 		std::cout << _head->get_element();
 	} else {
-		Node<T>* curr = _head;
+		DLLNode<T>* curr = _head;
 		while (curr != nullptr) {
 			std::cout << curr->get_element() << ", ";
 			curr = curr->get_next();
@@ -397,7 +397,7 @@ void LinkedList<T>::print() const
 }
 
 template <typename T>
-T LinkedList<T>::get(int index) const
+T DoublyLinkedList<T>::get(int index) const
 {
 	index_out_of_range(index);
 	// Check _head.
@@ -409,7 +409,7 @@ T LinkedList<T>::get(int index) const
 		return _tail->get_element();
 	}
 	// _head already checked, _tail already checked.
-	Node<T>* curr = _head->get_next();
+	DLLNode<T>* curr = _head->get_next();
 	int i = 1;
 	while (i++ != index) {
 		curr = curr->get_next();
@@ -418,13 +418,13 @@ T LinkedList<T>::get(int index) const
 }
 
 template <typename T>
-const Node<T>* LinkedList<T>::find(T element) const
+const DLLNode<T>* DoublyLinkedList<T>::find(T element) const
 {
     // Guard if list is empty.
 	if (empty()) {
 		throw std::out_of_range("Attempted to get from an empty list.");
 	}
-	const Node<T>* curr = _head;
+	const DLLNode<T>* curr = _head;
 	while (curr != nullptr) {
 		if (curr->get_element() == element) {
 			return curr;
@@ -435,17 +435,17 @@ const Node<T>* LinkedList<T>::find(T element) const
 }
 
 template <typename T>
-bool LinkedList<T>::contains(T element) const
+bool DoublyLinkedList<T>::contains(T element) const
 {
 	return find(element) != nullptr;
 }
 
 template <typename T>
-void LinkedList<T>::clear()
+void DoublyLinkedList<T>::clear()
 {
 	if (!empty()) {
-		Node<T>* curr = _head;
-		Node<T>* curr_next;
+		DLLNode<T>* curr = _head;
+		DLLNode<T>* curr_next;
 		while (curr != nullptr) {
 			curr_next = curr->get_next();
 			delete curr;

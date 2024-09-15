@@ -1,0 +1,36 @@
+* LRU CacheManager?
+	-> Temporal locality
+__Applications:__
+	* Databases
+	* OS memory pages	
+* Chaining or open addressing HashMap? (If LRU, then chaining.)
+	-> Chaining
+"chaining+LRU: the default Memcached cache config-
+uration, using chaining hash table to index keys and
+LRU for replacement;" - usenix
+"Hash Table To lookup keys quickly, the location of each
+key-value entry is stored in a hash table. Hash collisions
+are resolved by chaining: if more than one key maps
+into the same hash table bucket, they form a linked list.
+Chaining is efficient for inserting or deleting single keys.
+However, lookup may require scanning the entire chain"
+"Cache policy In Memcached, each slab class maintains
+its own objects in an LRU queue (see Figure 1). Each
+access to an object causes that object to move to the head
+of the queue. Thus, when Memcached needs to evict
+an object from the cache, it can find the least recently
+used object at the tail. The queue is implemented as a
+doubly-linked list, so each object has two pointers.
+Threading Memcached was originally single-threaded.
+It uses libevent for asynchronous network I/O call-
+backs [24 ]. Later versions support multi-threading but use
+global locks to protect the core data structures. As a result,
+operations such as index lookup/update and cache evic-
+tion/update are all serialized. Previous work has shown
+that this locking prevents current Memcached from scal-
+ing up on multi-core CPUs [11]."
+
+## Design
+
+## Challenges
+* Handling cache misses

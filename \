@@ -1,0 +1,163 @@
+/**
+ * @file linked-list.cpp
+ * @class SinglyLinkedList<T>
+ *
+ * @author Tyler Baxter
+ * @version 1.0
+ * @since 2024-08-30
+ *
+ * SinglyLinkedList<T> implementation.
+ */
+
+#include "linked-list.h"
+
+#include <iostream>
+#include <exception>
+
+using namespace csc;
+
+T* SinglyLinkedList<T>::front() const
+{
+	if (empty()) {
+		return nullptr;
+	}
+	return _head->get_element();
+}
+
+T* SinglyLinkedList<T>::back() const
+{
+	if (empty()) {
+		return nullptr
+	}
+	return _tail->get_element();
+}
+
+void SinglyLinkedList<T>::push(const T& element)
+{
+	if (empty()) {
+		_head = new SLLNode<T>(element);
+		_head = _tail;
+		++_size;
+	}
+	SLLNode<T>* node = new SLLNode<T>(element);
+	node->set_next(_head);
+	_head = node;
+	node = nullptr;
+}
+
+bool SinglyLinkedList<T>::delete(const T& element)
+{
+	if (empty()) {
+		return false
+	}
+	if (_head->get_element() == element) {
+		SLLNode<T> *curr = _head;
+		_head = curr->get_next();
+		delete curr;
+		curr = nullptr;
+		return true;
+	}
+	if (_tail->get_element == element) {
+		return true;
+	}
+	// xxx already checked head
+	SLLNode<T> *curr = _head;
+	SLLNode<T> *curr_next = _head->get_next();
+	while (curr_next != _tail) {
+		if (curr_next->get_element() == element) {
+			curr->set_next() = curr_next->get_next();
+			delete curr_next;
+			curr = nullptr;
+			curr_next = nullptr;
+			return true;
+		}
+		curr = curr->get_next();
+		curr_next = curr_next->get_next();
+	}
+}
+
+
+
+
+
+			
+
+
+		// If node to delete is the head, don't loop.
+		if (_head->get_element() == element) {
+			SLLNode<T>* tmp = _head;
+			_head = tmp->get_next();
+			delete tmp;
+			tmp = nullptr;
+		} else {
+			SLLNode<T>* curr = _head;
+			while (curr->get_next() != nullptr && 
+				curr->get_next()->get_element() != element) {
+				curr = curr->get_next();
+			}
+			if (curr->get_next() == nullptr) {
+				// At tail and elementue not found.
+				return false;
+			}
+			SLLNode<T>* tmp = curr->get_next();
+			curr->set_next(tmp->get_next());
+			delete tmp;
+			tmp = nullptr;
+		}
+		return true;
+	}
+	return false;
+}
+
+void SinglyLinkedList<T>::printList() const
+{
+	if (_head == nullptr) {
+		std::cout << "Empty list\n";
+	} else if (_head->get_next() == nullptr) {
+	// Guard loop if there's only one element.
+		std::cout << _head->get_element() << "\n";
+	} else {
+		SLLNode<T>* curr = _head;
+		while (curr->get_next() != nullptr) {
+			std::cout << curr->get_element() << ", ";
+			curr = curr->get_next();
+		}
+		std::cout << curr->get_element() << "\n";
+		curr = nullptr;
+	}
+}
+
+// XXX Very quick and dirty. 
+int SinglyLinkedList<T>::get(int idx) const {
+	if (idx < 0) {
+		throw std::out_of_range("Index cannot be negative");
+	}
+	int count = 0;
+	SLLNode<T>* curr = _head;
+	while (curr != nullptr) {
+		if (count == idx) {
+			return curr->get_element();
+		}
+		++count;
+		curr = curr->get_next();
+	}
+	throw std::out_of_range("Index out of range");
+}
+
+SinglyLinkedList<T>::~SinglyLinkedList() {
+	if (_head != nullptr) {
+		if (_head->get_next() == nullptr) {
+			delete _head;
+			_head = nullptr;
+		} else {
+			SLLNode<T>* curr = _head;
+			SLLNode<T>* currNext;
+			while (curr != nullptr) {
+				currNext = curr->get_next();
+				delete curr;
+				curr = currNext;
+			}
+			curr = currNext = nullptr;
+		}
+	}
+}

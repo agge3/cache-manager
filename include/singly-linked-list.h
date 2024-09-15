@@ -1,0 +1,177 @@
+/**
+ * @file singly-linked-list.h
+ * @class SinglyLinkedList
+ *
+ * @author Tyler Baxter
+ * @version 1.0
+ * @since 2024-08-30
+ *
+ * SinglyLinkedList and SinglyLinkedList helpers.
+ */
+
+#pragma once
+
+#include <iostream>
+
+/**
+* @namespace csc
+* Namespace for CacheManager-specific packages.
+*/
+namespace csc {
+
+/**
+* @class SLLNode
+* SinglyLinkedList Node.
+*/
+template <typename T>
+class SLLNode {
+public:
+	SLLNode(const T& element) : _element(element), _next(nullptr) {}
+	SLLNode(const T& element, SLLNode* next) : _element(element), _next(next) {}
+
+	T get_element() const { return _element; }
+	SLLNode* get_next() const { return _next; }
+
+	void set_element(const T& element) { _element = element; }
+	void set_next(Node* next) { _next = next; }
+private:
+	T _element;
+	SLLNode* _next;
+};
+
+template <typename T>
+class STTIterator : public csc::Iterator<T> {
+public:
+	SLLIterator& operator++();
+	SLLIterator operator++(int);
+	T& operator*() const;
+	void add(const T& element);
+	void delete();
+protected:
+	/**
+	* new and delete are protected so heap allocation is disallowed. Must be 
+	* allocated on the stack, for RAII.
+	*/
+	explicit SLLIterator(STTNode<T> node) : _node(node) {}
+private:
+	STTNode<T> *_node;
+};
+
+/**
+* @class SinglyLinkedList
+* SinglyLinkedList, specialized to be used as buckets for HashMap.
+*/
+template <typename T>
+class SinglyLinkedList {
+public:
+	SinglyLinkedList() : _head(nullptr), _size(0) {}
+	~SinglyLinkedList() { clear(); }
+
+	friend class STTIterator<T>;
+
+	/**
+	 * Overloaded ostream operator, '<<'.
+	 */
+	friend ostream& operator<<(ostream& out, const SinglyLinkedList& sll) const;
+
+ 	/**
+	 * Overloaded istream operator, '>>'.
+	 */
+	friend istream& operator>>(istream& in, SinglyLinkedList& sll) const;
+
+	/**
+	 * Returns the first element of SinglyLinkedList.
+	 *
+	 * @return T element The first element.
+	 */
+	T* front() const;
+
+	/**
+	 * Returns the first element of SinglyLinkedList and deletes it from the 
+	 * list.
+	 *
+	 * @return T element The first element.
+	 */
+	T* pop_front();
+
+	/**
+	 * Adds a new element at the beginning of SinglyLinkedList.
+	 *
+	 * @param T element The element to be added.
+	 */
+	void insert(const T& element);
+
+	/**
+	 * Searches for a node with the specified element and deletes it from the 
+	 * list.
+	 *
+	 * @param T element The element to be deleted.
+	 *
+	 * @return TRUE if deleted; FALSE if not deleted.
+	 */
+	bool remove(const T& element);
+
+	/**
+	 * Checks if SinglyLinkedList contains an element.
+	 *
+	 * @param T element The element to check for.
+	 *
+	 * @return TRUE if the list contains the element; FALSE if the list does not
+	 * contain the element.
+	 */
+	bool contains(const T& element) const;
+
+	/**
+	 * Finds an element and returns a pointer to it, or nullptr if the element 
+	 * was not found.
+	 *
+	 * @param T element The element to find.
+	 *
+	 * @return T* element A pointer to the element, or nullptr if not found.
+	 */
+	T* find(const T& element);
+
+	/**
+	* Returns the size of SinglyLinkedList.
+	*
+	* @return std::size_t The size.
+	*/
+	std::size_t size() const;
+
+	/**
+	* Check whether SinglyLinkedList is empty or not.
+	*
+	* @return TRUE if empty; FALSE if not empty.
+	*/
+	bool empty() const;
+
+	/** 
+	 * Returns an Iterator pointing to the beginning (first element) of 
+	 * SinglyLinkedList.
+	 *
+	 * @return SLLIterator iterator An Iterator pointing to begin.
+	 */
+	SLLIterator<T> begin() const;
+
+	/** 
+	 * Returns an Iterator pointing PAST the end (nullptr) of SinglyLinkedList.
+	 *
+	 * @return SLLIterator iterator An Iterator pointing to end.
+	 */
+	SLLIterator<T> end() const;
+private:
+	SLLNode<T>* _head;
+	std::size_t _size;
+
+	/**
+	* Searches for an element and returns the Node before it. The element's node
+	* can be accessed by get_next().
+	*/
+	SLLNode<T>* search(const T& element);
+
+	/**
+	* Clears all SinglyLinkedList's Nodes and deallocates their memory.
+	*/
+	void clear();
+};
+}

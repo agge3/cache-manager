@@ -1,12 +1,12 @@
 /**
- * @file linked-list.h
- * @class LinkedList
+ * @file doubly-linked-list.h
+ * @class DoublyLinkedList
  *
  * @author Tyler Baxter
  * @version 1.0
  * @since 2024-08-30
  *
- * Double-linked list.
+ * DoublyLinkedList and DoublyLinkedList helpers.
  */
 
 #pragma once
@@ -15,71 +15,73 @@
 
 /**
 * @namespace csc
-* csc is the project namespace, for project-specific implementations.
+* Namespace for CacheManager-specific packages.
 */
 namespace csc {
 
 /**
-* @class Node
-* Node(s) for the linked list.
+* @class DLLNode
+* DoublyLinkedList Node.
 */
 template <typename T>
-class Node {
+class DLLNode {
 public:
-	Node(T element) : _element(element), _next(nullptr), _prev(nullptr) {}
-	Node(T element, Node* next, Node* prev) : 
+	Node(const T& element) : 
+		_element(element), _next(nullptr), _prev(nullptr) {}
+	Node(const T& element, DLLNode* next, DLLNode* prev) : 
 		_element(element), _next(next), _prev(prev) {}
 	~Node() {}
 
 	T get_element() const { return _element; }
-	Node* get_next() const { return _next; }
-	Node* get_prev() const { return _prev; }
+	DLLNode* get_next() const { return _next; }
+	DLLNode* get_prev() const { return _prev; }
 
 	void set_element(T element) { _element = element; }
 	void set_next(Node* next) { _next = next; }
 	void set_prev(Node* prev) { _prev = prev; }
 private:
 	T _element;
-	Node* _next;
-	Node* _prev;
+	DLLNode* _next;
+	DLLNode* _prev;
 };
 
 /**
-* @class LinkedList
-* A double-linked list.
+* @class DoublyDoublyLinkedList
+* DoublyLinkedList, specialized as a Queue to be used for keeping track of order 
+* in LRU CacheManager.
 */
 template <typename T>
-class LinkedList {
+class DoublyLinkedList {
 public:
 	/**
 	 * Default constructor.
 	 */
-	LinkedList() : _head(nullptr), _tail(nullptr), _count(0) {}
+	DoublyLinkedList() : _head(nullptr), _tail(nullptr), _count(0) {}
 
 	/**
 	 * Copy constructor.
 	 */
-	LinkedList(const LinkedList<T>& para);
+	DoublyLinkedList(const DoublyLinkedList<T>& para);
 
 	/*
 	 * Move constructor.
 	 */
-	LinkedList(LinkedList<T>&& para) noexcept;
+	DoublyLinkedList(DoublyLinkedList<T>&& para) noexcept;
 
 	/** 
 	 * Destructor.
 	 */
-	~LinkedList();
+	~DoublyLinkedList();
 
 	/**
 	 * Assignment operator.
 	 */
-	LinkedList<T>& operator=(const LinkedList<T>& rhs);
+	DoublyLinkedList<T>& operator=(const DoublyLinkedList<T>& rhs);
 
 	/**
 	 * Move assignment operator.
 	 */
-	LinkedList<T>& operator=(LinkedList<T>&& rhs) noexcept;
+	DoublyLinkedList<T>& operator=(DoublyLinkedList<T>&& rhs) noexcept;
 
 	/**
 	 * Returns the element at the front of the list. Throws an exception if the 
@@ -99,7 +101,7 @@ public:
 	 * @param int element
 	 * The element to be inserted.
 	 */
-	void push_front(T element);
+	void push_front(const T& element);
 
 	/**
 	 * Returns and removes the element at the front of the list. Throws an 
@@ -113,7 +115,7 @@ public:
 	 * @param int element
 	 * The element to be inserted.
 	 */
-	void push_back(T element);
+	void push_back(const T& element);
 
 	/**
 	 * Returns and removes the element at the back of the list. Throws an 
@@ -130,7 +132,7 @@ public:
 	 * The index to insert at (inserted before the index, so that the newly 
 	 * inserted element is at the specified index).
 	 */
-	bool insert(T element, int index);	
+	bool insert(const T& element, int index);	
 
 	/**
 	 * Searches for a node with a specific elementue and deletes it from the list.
@@ -140,7 +142,7 @@ public:
 	 *
 	 * @return TRUE if deleted, FALSE if not deleted
 	 */
-	bool remove(T element);
+	bool remove(const T& element);
 
 	/**
 	 * Prints the entire list.
@@ -165,7 +167,7 @@ public:
 	 * @return A read-only pointer to the node, or nullptr if the element is not
 	 * contained in the list.
 	 */
-	const Node<T>* find(T element) const;
+	const DLLNode<T>* find(T element) const;
 
 	/**
 	 * Checks whether the list contains the element.
@@ -178,12 +180,12 @@ public:
 	/**
 	 * Returns a read-only pointer to the beginning node (head) of the list.
 	 */
-	const Node<T>* begin() const;
+	const DLLNode<T>* begin() const;
 
 	/**
 	 * Returns a read-only pointer to the end node (tail) of the list.
 	 */
-	const Node<T>* end() const;
+	const DLLNode<T>* end() const;
 
 	/**
 	 * Checks whether the list is empty.
@@ -205,15 +207,15 @@ public:
 	// Non-member functions:
 	// operator==operator!=operator<operator<=operator>operator>=operator<=>	
 private:
-	void copy_calling_list_empty(const LinkedList<T>& para);
-	void copy_lists_same_length(const LinkedList<T>& para);
-	void copy_calling_list_longer(const LinkedList<T>& para);
-	void copy_calling_list_shorter(const LinkedList<T>& para);
+	void copy_calling_list_empty(const DoublyLinkedList<T>& para);
+	void copy_lists_same_length(const DoublyLinkedList<T>& para);
+	void copy_calling_list_longer(const DoublyLinkedList<T>& para);
+	void copy_calling_list_shorter(const DoublyLinkedList<T>& para);
 	void index_out_of_range(int index) const;
 
-	Node<T>* _head;
-	Node<T>* _tail;
-	std::size_t _count;
+	DLLNode<T>* _head;
+	DLLNode<T>* _tail;
+	std::size_t _size;
 };
 }
-#include "linked-list.tpp"
+#include "doubly-linked-list.tpp"

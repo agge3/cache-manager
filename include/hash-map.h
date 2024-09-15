@@ -32,8 +32,8 @@ public:
 	HashNode* get_next() const { return _next; }
 	void set_next(HashNode* next) { _next = next; }
 private:
-	K key;
-	V value;
+	K _key;
+	V _value;
 	// Next bucket with same key.
 	HashNode* _next;
     // Disallow copy and assignment.
@@ -167,7 +167,7 @@ public:
 	 * @param int key
 	 * The key to get the value.
 	 */
-	std::unique_ptr<int> get(int key) const;
+	HashIterator get(K key) const;
 
 	/**
 	 * Checks whether the hash map contains the key.
@@ -175,7 +175,7 @@ public:
 	 * @return TRUE if the hash map contains the key. FALSE if the hash map does 
 	 * not contain the key.
 	 */
-	bool contains_key(int key) const;
+	bool contains_key(K key) const;
 
 	/**
 	 * Checks whether the hash map contains the value.
@@ -183,7 +183,7 @@ public:
 	 * @return TRUE if the hash map contains the value. FALSE if the hash map does 
 	 * not contain the value.
 	 */
-	bool contains_value(int value) const;
+	bool contains_value(V value) const;
 
 	/*
 	 * Replaces the entry for the specified key only if it is currently mapped 
@@ -194,7 +194,7 @@ public:
 	 * @param int value
 	 * The new value.
 	 */
-	void replace(int key, int value);
+	void replace(K key, V value);
 
 	/**
 	 * Replaces the entry for the specified key only if currently mapped to the 
@@ -208,7 +208,7 @@ public:
 	 * @param int new_value
 	 * The new value.
 	 */
-	void replace(int key, int old_value, int new_value);
+	void replace(K key, V old_value, V new_value);
 
 	/**
 	 * Checks whether the hash map is empty.

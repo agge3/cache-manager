@@ -1,0 +1,50 @@
+CacheManager* CacheManager::_instance = 0;
+
+template <typename K, typename V>
+CacheManager<K, V>* CacheManager<K, V>::instance()
+{
+	if (_instance == 0) {
+		_instance = new CacheManager;
+	}
+	return _instance;
+}
+	static CacheManager* instance();
+
+    /**
+     * Retrieves the value associated with the key, and updates its position.
+     *
+     * @param key The key to lookup.
+     * @return The value associated with the key, or throws an exception if not found.
+     */
+template <typename K, typename V>
+    V get(const K& key);
+
+    /**
+     * Inserts or updates the key-value pair in the cache.
+     *
+     * @param key The key to insert/update.
+     * @param value The value to associate with the key.
+     */
+template <typename K, typename V>
+    void put(const K& key, const V& value);
+protected:
+    /**
+     * CacheManager is a singleton. Constructor with a specified capacity.
+     *
+     * @param capacity The maximum number of items the cache can hold.
+     */
+	CacheManager(std::size_t capacity) : _capacity(capacity) {}
+private:
+	static CacheManager *_instance;
+	std::size_t _capacity
+	csc::HashMap<K, V> _data;
+	csc::LinkedList<K> _order;
+
+    /**
+     * Removes the least recently used item from the cache.
+     */
+template <typename K, typename V>
+    void evict();
+};
+
+template <typename K, typename V>

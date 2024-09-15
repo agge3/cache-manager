@@ -72,19 +72,30 @@ HashMap& HashMap::operator=(HashMap&& rhs) noexcept {
     return *this;
 }
 
-// Insert method
+// Insert method.
+// DONE.
 void HashMap::insert(const K& key, const V& value)
 {
+	// First, make sure the table isn't over the load factor threshold, and 
+	// resize if neccessary.
+	if (static_cast<float>(_size) / _capacity > LOAD_FACTOR_THRESHOLD) {
+		resize();
+	}
+
 	std::size_t hash_value = _hash(key);
+	std::size_t attempt = 0;
 	HashNode<K, V>* prev = nullptr;
 	HashNode<K, V>* entry = _table[hash_value];
 
 	while (entry != nullptr && entry->get_key() != key) {
-		prev = entry;
-		entry = entry->get_next();
+		hash_value = _hash.double_hash(key, ++attempt);
 	}
 
-	if (entry == nullptr) {
+	if (entry != nullptr) {
+		// If we already have an entry for this key, just replace the value.
+		entry->set_value(value);
+	} else {
+		// We don't already have an entry for this key, create a new HashNode.
 		entry = new HashNode<K, V>(key, value);
 		if (prev == nullptr) {
 			// Insert as first bucket.
@@ -92,9 +103,6 @@ void HashMap::insert(const K& key, const V& value)
 		} else {
 			prev->set_next(entry);
 		}
-	} else {
-		// Just update the value.
-		entry->set_value(value);
 	}
 }
 
