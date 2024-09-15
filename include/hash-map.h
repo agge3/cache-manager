@@ -6,112 +6,124 @@
  * @version 1.0
  * @since 2024-08-30
  *
- * Hash map.
+ * HashMap and HashMap helpers.
  */
 
 #pragma once
 
-#include "hash.h"
+#include "singly-linked-list.h"
 
 #include <cstddef>
+#include <string>
 
 /**
 * @namespace csc
-* csc is the project namespace, for project-specific implementations.
+* Namespace for CacheManager-specific packages.
 */
 namespace csc {
 
+/**
+* C-String Hash function.
+*/
+template <>
+struct Hash<unsigned char*> {
+	std::size_t operator()(unsigned char *str) const;
+};
+
+/**
+* C++ string Hash function.
+*/
+template <>
+struct Hash<std::string> {
+	std::size_t operator()(const std::string& str) const;
+};
+
+/**
+* Generic Hash function.
+*/
+template <typename K>
+struct Hash<K> {
+	std::size_t operator()(const T& key) const;
+};
+
+/**
+ * @class HashNode
+ * HashNode is a key-value pair for HashMap.
+ */
 template <typename K, typename V>
 class HashNode {
 public:
-	HashNode(const K& key, const V& value) :
-		_key(key), _value(value), _next(nullptr) {}
+	HashNode(const K& key, const V& value) : _key(key), _value(value) {}
 	K get_key() const { return _key; }
 	V get_value() const { return _value; }
-	void set_value(V value) { _value = value; }
-	HashNode* get_next() const { return _next; }
-	void set_next(HashNode* next) { _next = next; }
-private:
-	K _key;
-	V _value;
-	// Next bucket with same key.
-	HashNode* _next;
+	void set_value(const V& value) { _value = value; }
+protected:
     // Disallow copy and assignment.
-    HashNode(const HashNode &);
-    HashNode& operator=(const HashNode &);
-};
- 
-template <typename K>
-/**
- * @struct KeyHash
- * KeyHash uses the double hashing technique.
- */
-struct KeyHash {
-	/**
-	 * Primary hash function.
-	 */
-	std::size_t primary_hash(const K& key) const
-	{
-		return Hash<K>{}(key) % TABLE_SIZE;
-	}
-
-	/**
-	 * Secondary hash function.
-	 */
-	std::size_t secondary_hash(const K& key) const
-	{
-		return 1 + (Hash<K>{}(key) % (TABLE_SIZE - 1));
-	}
-
-	/**
-	 * Main hash function, combining both.
-	 */
-	std::size_t operator()(const K& key) const
-	{
-		return primary_hash(key) % TABLE_SIZE;
-	}
-
-	/**
-	 * Double hashing function to get the next probe position.
-	 */
-	std::size_t double_hash(const K& key, std::size_t attempt) const
-	{
-		std::size_t hash1 = primary_hash(key) % TABLE_SIZE;
-		std::size_t hash2 = secondary_hash(key);
-		return (hash1 + attempt * hash2) % TABLE_SIZE;
-	}
+    HashNode(const HashNode& other);
+    HashNode& operator=(const HashNode& other);
+private:
+	const std::size_t _hash;
+	const K _key;
+	V _value;
 };
 
 /**
 * @class HashMap
-* HashMap is implemented with open addressing and double hashing.
+* Chained HashMap.
 */
+template <typename K, typename V, typename F = Hash>
 class HashMap {
 public:
+    /**
+     * @typedef SinglyLinkedList<HashNode<K, V>>* ListPtr
+	 * ListPtr is a pointer to a SinglyLinkedList of HashNodes.
+     */
+    typedef SinglyLinkedList<HashNode<K, V>>* ListPtr;
+
 	/**
 	 * Default constructor.
 	 */
-	HashMap() : _key(nullptr), _value(nullptr), _count(0) {}
+	HashMap();
+
+	/**
+	 * Overloaded constructor for client-specified table buckets.
+	 */
+	HashMap(std::size_t buckets);
+
 	/** 
 	 * Destructor.
 	 */
-	~HashMap();
-	/**
-	 * Assignment operator.
-	 */
-	HashMap& operator=(const HashMap& rhs);
+	~HashMap() { clear(); }
+
 	/**
 	 * Copy constructor.
 	 */
 	HashMap(const HashMap& src);
+
 	/*
 	 * Move constructor.
 	 */
 	HashMap(HashMap&& src);
+
+	/**
+	 * Assignment operator.
+	 */
+	HashMap& operator=(const HashMap& rhs);
+
 	/**
 	 * Move assignment operator.
 	 */
 	HashMap& operator=(HashMap&& rhs);
+
+	/**
+	 * Overloaded ostream operator, '<<'.
+	 */
+	friend ostream& operator<<(ostream& out, const SinglyLinkedList& sll) const;
+
+ 	/**
+	 * Overloaded istream operator, '>>'.
+	 */
+	friend istream& operator>>(istream& in, SinglyLinkedList& sll) const;
 
 	/**
 	 * Associates the specified value with the specified key in this map.
@@ -121,7 +133,7 @@ public:
 	 * @param int value
 	 * The value to be inserted.
 	 */
-	void insert(int key, int value);	
+	void insert(const K& key, const V& value);	
 
 	/**
 	 * Removes the mapping for the specified key from this map if present.
@@ -131,7 +143,7 @@ public:
 	 *
 	 * @return The value that was removed.
 	 */
-	int remove(int key);
+	bool remove(const K& key);
 
 	/**
 	 * Removes the entry for the specified key only if it is currently mapped to 
@@ -145,115 +157,63 @@ public:
 	 * @return TRUE if the key/value was from the hash map. FALSE if the 
 	 * key/value was not removed from the hash map.
 	 */
-	bool remove(int key, int value);
+	bool remove(const K& key, const V& value);
 
 	/**
-	 * Prints the entire hash map.
-	 */
-	void print() const;
-
-	/**
-	 * Returns the value (a copy) to which the specified key is mapped, or xxx
+	 * Gets the value (a copy) associated with the key.
 	 *
-	 * @param int key
-	 * The key to get the value.
+	 * @param K key The key to get the value.
 	 */
-	int get(int key) const;
+	V get(const K& key) const;
 
 	/**
-	 * Returns a pointer to the value (a reference) to which the specified key 
-	 * is mapped, or xxx
+	 * Gets a pointer (a reference) to the value associated with the key.
 	 *
-	 * @param int key
-	 * The key to get the value.
+	 * @param K key The key to get the value.
 	 */
-	HashIterator get(K key) const;
+	V* get(const K& key) const;
 
 	/**
-	 * Checks whether the hash map contains the key.
+	 * Checks whether HashMap contains the key.
 	 *
-	 * @return TRUE if the hash map contains the key. FALSE if the hash map does 
+	 * @return TRUE if the hash map contains the key; FALSE if the hash map does 
 	 * not contain the key.
 	 */
-	bool contains_key(K key) const;
-
-	/**
-	 * Checks whether the hash map contains the value.
-	 *
-	 * @return TRUE if the hash map contains the value. FALSE if the hash map does 
-	 * not contain the value.
-	 */
-	bool contains_value(V value) const;
+	bool contains(const K& key) const;
 
 	/*
-	 * Replaces the entry for the specified key only if it is currently mapped 
-	 * to some value.
+	 * Replaces the value associated with the key.
 	 *
-	 * @param int key
-	 * The key to replace the mapped value.
-	 * @param int value
-	 * The new value.
+	 * @param K key The key to replace the mapped value.
+	 * @param V value The new value.
 	 */
-	void replace(K key, V value);
+	void replace(const K& key, const V& value);
 
 	/**
-	 * Replaces the entry for the specified key only if currently mapped to the 
-	 * specified value.
-	 *
-	 * @param int key
-	 * The key to replace the mapped value.
-	 * @param int old_value
-	 * The specified value to be replaced (only replaced if this is the old 
-	 * value).
-	 * @param int new_value
-	 * The new value.
-	 */
-	void replace(K key, V old_value, V new_value);
+	* Returns the size of HashMap.
+	*
+	* @return std::size_t The size.
+	*/
+	std::size_t size() const;
 
 	/**
-	 * Checks whether the hash map is empty.
-	 *
-	 * @return TRUE if the hash map is empty. FALSE if the hash map is not empty.
-	 */
+	* Check whether HashMap is empty or not.
+	*
+	* @return TRUE if empty; FALSE if not empty.
+	*/
 	bool empty() const;
- 	
+private:
 	/**
-	 * Returns the number of elements in the hash map.
-	 */
-	int size() const;
-
-	/**
-	 * Clears the contents of the hash map.
+	 * Clears the contents and deallocates memory of HashMap.
 	 */
 	void clear();
-	
-	// Non-member functions:
-	// operator==operator!=operator<operator<=operator>operator>=operator<=>	
-private:
-	// Power of two for DJR % 2^k.
-	constexpr std::size_t TABLE_SIZE = 16; 
-	// Double the size when resizing.
-	constexpr std::size_t RESIZE_FACTOR = 2;
-	// Resize when load factor exceeds this threshold.
-	constexpr float LOAD_FACTOR_THRESHOLD = 0.7f; 
 
-	/**
-	 * Regenerates the hash table.
-	 */
-	void rehash();
+	constexpr std::size_t TABLE_BUCKETS = 16;	// Power of two for DJR % 2^k.
 
-	void resize();
-
-	/**
-	 * Returns function used to hash the keys.
-	 */
-	void hash_function() const;
-	/**
-	 * Returns the function used to compare keys for equality.
-	 */
-	void key_eq() const;
-
-	HashNode<K, V>** _table;
-	F _hash
+	std::size_t _buckets;		
+	ListPtr[] _table;
+	std::size_t _size;
+	F _hash;
 };
 }
+#include "hash-map.tpp"

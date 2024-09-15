@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <memory>
 
 template <typename K, typename V>
@@ -26,12 +27,15 @@ public:
      */
     void put(const K& key, const V& value);
 
+	void evict();
+
 	/**
 	 * void set(const K& key, const V& value);
 	 * void add(const K& key, const V& value);
 	 * void replace(const K& key, const V& value);
 	 * V get(const K& key);
 	 * V delete(const K& key);
+	 */
 protected:
     /**
      * CacheManager is a singleton. Constructor with a specified capacity.

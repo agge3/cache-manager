@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <iostream>
 
 /**
@@ -40,7 +41,7 @@ private:
 };
 
 template <typename T>
-class STTIterator : public csc::Iterator<T> {
+class SLLIterator : public csc::Iterator<T> {
 public:
 	SLLIterator& operator++();
 	SLLIterator operator++(int);
@@ -54,7 +55,7 @@ protected:
 	*/
 	explicit SLLIterator(STTNode<T> node) : _node(node) {}
 private:
-	STTNode<T> *_node;
+	SLLNode<T> *_node;
 };
 
 /**
@@ -64,10 +65,37 @@ private:
 template <typename T>
 class SinglyLinkedList {
 public:
+	/**
+	 * Default constructor.
+	 */
 	SinglyLinkedList() : _head(nullptr), _size(0) {}
+
+	/** 
+	 * Destructor.
+	 */
 	~SinglyLinkedList() { clear(); }
 
-	friend class STTIterator<T>;
+	/**
+	 * Copy constructor.
+	 */
+	SinglyLinkedList(const SinglyLinkedList<T>& other);
+
+	/*
+	 * Move constructor.
+	 */
+	SinglyLinkedList(SinglyLinkedList<T>&& other) noexcept;
+
+	/**
+	 * Assignment operator.
+	 */
+	SinglyLinkedList<T>& operator=(const SinglyLinkedList<T>& rhs);
+
+	/**
+	 * Move assignment operator.
+	 */
+	SinglyLinkedList<T>& operator=(SinglyLinkedList<T>&& rhs) noexcept;
+
+	friend class SLLIterator<T>;
 
 	/**
 	 * Overloaded ostream operator, '<<'.
@@ -122,14 +150,15 @@ public:
 	bool contains(const T& element) const;
 
 	/**
-	 * Finds an element and returns a pointer to it, or nullptr if the element 
+	 * Finds an element and returns an Iterator to it, or nullptr if the element 
 	 * was not found.
 	 *
 	 * @param T element The element to find.
 	 *
-	 * @return T* element A pointer to the element, or nullptr if not found.
+	 * @return STTIterator<T> iterator An iterator pointing to the element, or 
+	 * nullptr if not found.
 	 */
-	T* find(const T& element);
+	SLLIterator<T> find(const T& element);
 
 	/**
 	* Returns the size of SinglyLinkedList.
@@ -160,9 +189,6 @@ public:
 	 */
 	SLLIterator<T> end() const;
 private:
-	SLLNode<T>* _head;
-	std::size_t _size;
-
 	/**
 	* Searches for an element and returns the Node before it. The element's node
 	* can be accessed by get_next().
@@ -173,5 +199,9 @@ private:
 	* Clears all SinglyLinkedList's Nodes and deallocates their memory.
 	*/
 	void clear();
+
+	SLLNode<T>* _head;
+	std::size_t _size;
 };
 }
+#include "singly-linked-list.tpp"

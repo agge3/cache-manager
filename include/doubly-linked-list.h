@@ -12,6 +12,7 @@
 #pragma once
 
 #include <cstddef>
+#include <iostream>
 
 /**
 * @namespace csc
@@ -45,6 +46,24 @@ private:
 	DLLNode* _prev;
 };
 
+template <typename T>
+class DLLIterator : public csc::Iterator<T> {
+public:
+	DLLIterator& operator++();
+	DLLIterator operator++(int);
+	T& operator*() const;
+	void add(const T& element);
+	void delete();
+protected:
+	/**
+	* new and delete are protected so heap allocation is disallowed. Must be 
+	* allocated on the stack, for RAII.
+	*/
+	explicit DLLIterator(DLLNode<T> node) : _node(node) {}
+private:
+	DLLNode<T> *_node;
+};
+
 /**
 * @class DoublyDoublyLinkedList
 * DoublyLinkedList, specialized as a Queue to be used for keeping track of order 
@@ -58,20 +77,20 @@ public:
 	 */
 	DoublyLinkedList() : _head(nullptr), _tail(nullptr), _count(0) {}
 
+	/** 
+	 * Destructor.
+	 */
+	~DoublyLinkedList() { clear(); }
+
 	/**
 	 * Copy constructor.
 	 */
-	DoublyLinkedList(const DoublyLinkedList<T>& para);
+	DoublyLinkedList(const DoublyLinkedList<T>& other);
 
 	/*
 	 * Move constructor.
 	 */
-	DoublyLinkedList(DoublyLinkedList<T>&& para) noexcept;
-
-	/** 
-	 * Destructor.
-	 */
-	~DoublyLinkedList();
+	DoublyLinkedList(DoublyLinkedList<T>&& other) noexcept;
 
 	/**
 	 * Assignment operator.
@@ -83,17 +102,39 @@ public:
 	 */
 	DoublyLinkedList<T>& operator=(DoublyLinkedList<T>&& rhs) noexcept;
 
-	/**
-	 * Returns the element at the front of the list. Throws an exception if the 
-	 * list is empty.
-	 */
-	T front() const;
+	friend class DLLIterator<T>;
 
 	/**
-	 * Returns the element at the back of the list. Throws an exception if the
-	 * list is empty.
+	 * Overloaded ostream operator, '<<'.
 	 */
-	T back() const;
+	friend ostream& operator<<(ostream& out, const DoublyLinkedList& dll) const;
+
+ 	/**
+	 * Overloaded istream operator, '>>'.
+	 */
+	friend istream& operator>>(istream& in, DoublyLinkedList& dll) const;
+
+	/**
+	 * Returns the first element of DoublyLinkedList.
+	 *
+	 * @return T element The first element.
+	 */
+	T* front() const;
+
+	/**
+	 * Returns the last element of DoublyLinkedList.
+	 *
+	 * @return T element The last element.
+	 */
+	T* back() const;
+
+	/**
+	 * Returns the first element of DoublyLinkedList and deletes it from the 
+	 * list.
+	 *
+	 * @return T element The first element.
+	 */
+	T* pop_front();
 
 	/**
 	 * Adds a new node at the beginning of the list.
@@ -104,35 +145,18 @@ public:
 	void push_front(const T& element);
 
 	/**
-	 * Returns and removes the element at the front of the list. Throws an 
-	 * exception if the list is empty.
-	 */
-	T pop_front();
-
-	/**
-	 * Adds a new node at the end of the list.
-	 *
-	 * @param int element
-	 * The element to be inserted.
-	 */
-	void push_back(const T& element);
-
-	/**
 	 * Returns and removes the element at the back of the list. Throws an 
 	 * exception if the list is empty.
 	 */
-	T pop_back();
+	T* pop_back();
 
 	/**
-	 * Inserts an element at the specified index.
+	 * Inserts an element after the DLLNode.
 	 *
-	 * @param int element
-	 * The element to be inserted.
-	 * @param int index
-	 * The index to insert at (inserted before the index, so that the newly 
-	 * inserted element is at the specified index).
+	 * @param T element The element to be inserted.
+	 * @param DLLNode<T> node The node to insert after.
 	 */
-	bool insert(const T& element, int index);	
+	void insert(const T& element, DLLNode<T>* node);	
 
 	/**
 	 * Searches for a node with a specific elementue and deletes it from the list.
@@ -145,73 +169,71 @@ public:
 	bool remove(const T& element);
 
 	/**
-	 * Prints the entire list.
-	 */
-	void print() const;
-
-	/**
-	 * Returns the element at the specified index in this list.
+	 * Checks if DoublyLinkedList contains an element.
 	 *
-	 * @param int index
-	 * The index to get the element.
-	 */
-	T get(int index) const;
-
-	/**
-	 * Returns a read-only pointer to the node containing the element, if the 
-	 * element's contained in the list.
+	 * @param T element The element to check for.
 	 *
-	 * @param int element
-	 * The element to get a pointer to its node.
-	 *
-	 * @return A read-only pointer to the node, or nullptr if the element is not
-	 * contained in the list.
-	 */
-	const DLLNode<T>* find(T element) const;
-
-	/**
-	 * Checks whether the list contains the element.
-	 *
-	 * @return TRUE if the list contains the element. FALSE if the list does not
+	 * @return TRUE if the list contains the element; FALSE if the list does not
 	 * contain the element.
 	 */
-	bool contains(T element) const;
+	bool contains(const T& element) const;
 
 	/**
-	 * Returns a read-only pointer to the beginning node (head) of the list.
-	 */
-	const DLLNode<T>* begin() const;
-
-	/**
-	 * Returns a read-only pointer to the end node (tail) of the list.
-	 */
-	const DLLNode<T>* end() const;
-
-	/**
-	 * Checks whether the list is empty.
+	 * Finds an element and returns an Iterator to it, or nullptr if the element 
+	 * was not found.
 	 *
-	 * @return TRUE if the list is empty. FALSE if the list is not empty.
+	 * @param T element The element to find.
+	 *
+	 * @return STTIterator<T> iterator An iterator pointing to the element, or 
+	 * nullptr if not found.
 	 */
-	bool empty() const;
+	DLLIterator<T> find(const T& element);
  	
 	/**
-	 * Returns the number of elements in the list.
-	 */
+	* Returns the size of DoublyLinkedList.
+	*
+	* @return std::size_t The size.
+	*/
 	std::size_t size() const;
 
 	/**
-	 * Clears the contents of the list.
+	* Check whether DoublyLinkedList is empty or not.
+	*
+	* @return TRUE if empty; FALSE if not empty.
+	*/
+	bool empty() const;
+
+	/** 
+	 * Returns an Iterator pointing to the beginning (first element) of 
+	 * DoublyLinkedList.
+	 *
+	 * @return DLLIterator iterator An Iterator pointing to begin.
 	 */
-	void clear();
-	
-	// Non-member functions:
-	// operator==operator!=operator<operator<=operator>operator>=operator<=>	
+	DLLIterator<T> begin() const;
+
+	/** 
+	 * Returns an Iterator pointing to the end (last element) of 
+	 * DoublyLinkedList.
+	 *
+	 * @return DLLIterator iterator An Iterator pointing to end.
+	 */
+	DLLIterator<T> end() const;
 private:
-	void copy_calling_list_empty(const DoublyLinkedList<T>& para);
-	void copy_lists_same_length(const DoublyLinkedList<T>& para);
-	void copy_calling_list_longer(const DoublyLinkedList<T>& para);
-	void copy_calling_list_shorter(const DoublyLinkedList<T>& para);
-	void index_out_of_range(int index) const;
+	void copy_calling_list_empty(const DoublyLinkedList<T>& other);
+	void copy_lists_same_length(const DoublyLinkedList<T>& other);
+	void copy_calling_list_longer(const DoublyLinkedList<T>& other);
+	void copy_calling_list_shorter(const DoublyLinkedList<T>& other);
+
+	/**
+	* Searches for an element and returns the Node before it. The element's node
+	* can be accessed by get_next().
+	*/
+	DLLNode<T>* search(const T& element);
+
+	/**
+	* Clears all SinglyLinkedList's Nodes and deallocates their memory.
+	*/
+	void clear();
 
 	DLLNode<T>* _head;
 	DLLNode<T>* _tail;
