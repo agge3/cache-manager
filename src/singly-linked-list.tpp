@@ -57,6 +57,24 @@ void SLLIterator::delete()
 	node = nullptr;
 }
 
+SinglyLinkedList::SinglyLinkedList(const SinglyLinkedList<T>& other)
+{
+    if (!other.empty()) {
+        _count = other._count;
+        _head = new SLLNode<T>(other._head->get_element(),
+                               other._head->get_next());
+        SLLNode* curr = _head->get_next();
+        SLLNode* other_curr = _head->get_next();
+        while(other_curr != nullptr) {
+            curr->set_next(new SLLNode<T>(other_curr->get_element(),
+                           other_curr->get_next()));
+            other_curr = other_curr->get_next();
+            curr = curr->get_next();
+        }
+        curr = other_curr = nullptr;
+    }
+}
+
 T* SinglyLinkedList<T>::front() const
 {
 	if (empty()) {
@@ -158,7 +176,7 @@ SLLIterator<T> SinglyLinkedList<T>::end() const
 }
 
 // xxx
-ostream& SinglyLinkedList<T>::operator<<(ostream& out, 
+ostream& SinglyLinkedList<T>::operator<<(ostream& out,
 	const SinglyLinkedList<T>& sll) const
 {
 	if (_head == nullptr) {
@@ -178,7 +196,7 @@ ostream& SinglyLinkedList<T>::operator<<(ostream& out,
 }
 
 // xxx
-istream& SinglyLinkedList<T>::operator>>(istream& in, 
+istream& SinglyLinkedList<T>::operator>>(istream& in,
 	const SinglyLinkedList<T>& sll) const
 {
 	if (_head == nullptr) {
