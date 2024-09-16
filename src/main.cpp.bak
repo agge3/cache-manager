@@ -25,31 +25,31 @@ namespace {
 	 * Function to generate 'n' random numbers within a specified range.
 	 *
 	 * CREDIT: OpenAI's ChatGPT
-	 * PROMPT: in cpp give me a random number generator that generates n numbers 
+	 * PROMPT: in cpp give me a random number generator that generates n numbers
 	 */
 	std::vector<int> generateRandomNumbers(int n, int min, int max) {
 	    std::vector<int> numbers;
-	    
+
 	    // Create a random number generator with a random device seed
 	    std::random_device rd;
 	    std::mt19937 gen(rd()); // Mersenne Twister engine
-	    
+
 	    // Define the range for the random numbers
 	    std::uniform_int_distribution<> dis(min, max);
-	
+
 	    // Generate 'n' random numbers
 	    for (int i = 0; i < n; ++i) {
 	        numbers.push_back(dis(gen));
 	    }
-	
+
 	    return numbers;
 	}
 
 	/**
 	 * @struct Dataset
-     * A struct to carry constants for the randomly generated data: the amount 
+     * A struct to carry constants for the randomly generated data: the amount
 	 * of data points, the minimum value, and the maximum value.
-     */ 
+     */
 	struct Dataset {
 		int amt = 10;
 		int min = 0;
@@ -70,7 +70,7 @@ void testSLL()
 	for (auto i = 0; i < 5; ++i) {
 		list->insertAtBeginning(data->at(i));
 		assert(list->get(0) == data->at(i));
-		std::cout << "insertAtBeginning() passed. List head: " << list->get(0) << 
+		std::cout << "insertAtBeginning() passed. List head: " << list->get(0) <<
 			"\n";
 	}
 
@@ -115,7 +115,7 @@ void testSLL()
 	auto stress_test = []() {
 		std::unique_ptr<csc::LinkedList> list(new csc::LinkedList());
 		std::unique_ptr<Dataset> dataset(new Dataset);
-		std::unique_ptr<std::vector<int>> data = 
+		std::unique_ptr<std::vector<int>> data =
 			std::make_unique<std::vector<int>>(
 			generateRandomNumbers(dataset->amt, dataset->min, dataset->max)
 		);
@@ -190,7 +190,7 @@ void testBST()
 
     if (stream >> value && tree->search(value))
         std::cout << "Data found!\n";
-    else 
+    else
         std::cout << "Data not found!\n";
     stream.clear();
     // push a newline

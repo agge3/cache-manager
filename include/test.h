@@ -22,9 +22,9 @@ namespace test {
 
 /**
  * @struct Dataset
- * A struct to carry constants for the randomly generated data: the amount 
+ * A struct to carry constants for the randomly generated data: the amount
  * of data points, the minimum value, and the maximum value.
- */ 
+ */
 struct Dataset {
 	int amt = 10;
 	int min = 0;
@@ -54,5 +54,10 @@ void linked_list();
 * Prompt: "Write me test cases for this class, with no frameworks, in cpp."
 */
 void hash_map();
+
+/**
+ * Unit tests for Iterator.
+ */
+void iterator();
 
 }

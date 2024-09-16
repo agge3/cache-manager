@@ -241,7 +241,7 @@ void LinkedList<T>::push_front(T element)
 		ptr = nullptr;
 	}
 	// Increment count, node has been added.
-    ++_count;	
+    ++_count;
 }
 
 template <typename T>
@@ -318,7 +318,7 @@ bool LinkedList<T>::insert(T element, int index)
 
 	Node<T>* curr = _head;
 	int i = 0;
-	// We want to stop one before the index we want to insert, so we can 
+	// We want to stop one before the index we want to insert, so we can
 	// use set_next() to insert at that index.
 	while (++i != index) {
 		curr->get_next();
@@ -361,7 +361,7 @@ bool LinkedList<T>::remove(T element)
 		--_count;
 	} else {
 		Node<T>* curr = _head;
-		while (curr->get_next() != nullptr && 
+		while (curr->get_next() != nullptr &&
 			curr->get_next()->get_element() != element) {
 			curr = curr->get_next();
 		}
@@ -451,7 +451,7 @@ void LinkedList<T>::clear()
 			delete curr;
 			curr = curr_next;
 		}
-        _count = 0; // Set count = known number after while loop so 
+        _count = 0; // Set count = known number after while loop so
                    // less calculations.
 		_head = _tail = curr = curr_next = nullptr;
 	}

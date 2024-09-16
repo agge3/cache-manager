@@ -27,7 +27,7 @@ template <typename T>
 class Node {
 public:
 	Node(T element) : _element(element), _next(nullptr), _prev(nullptr) {}
-	Node(T element, Node* next, Node* prev) : 
+	Node(T element, Node* next, Node* prev) :
 		_element(element), _next(next), _prev(prev) {}
 	~Node() {}
 	T get_element() const { return _element; }
@@ -41,6 +41,17 @@ private:
 	Node* _next;
 	Node* _prev;
 };
+
+//template <typename T>
+//class ListIterator {
+//public:
+//    ListIterator& operator++();
+//    ListIterator operator++(int);
+//    bool has_next(); -- xxx subject to change
+//    T next(); -- xxx subject to change
+//    bool remove(); -- xxx going to be challenging btw
+//private:
+//};
 
 /**
 * @class LinkedList
@@ -64,7 +75,7 @@ public:
 	 */
 	LinkedList(LinkedList<T>&& para) noexcept;
 
-	/** 
+	/**
 	 * Destructor.
 	 */
 	~LinkedList();
@@ -80,7 +91,7 @@ public:
 	LinkedList<T>& operator=(LinkedList<T>&& rhs) noexcept;
 
 	/**
-	 * Returns the element at the front of the list. Throws an exception if the 
+	 * Returns the element at the front of the list. Throws an exception if the
 	 * list is empty.
 	 */
 	T front() const;
@@ -100,7 +111,7 @@ public:
 	void push_front(T element);
 
 	/**
-	 * Returns and removes the element at the front of the list. Throws an 
+	 * Returns and removes the element at the front of the list. Throws an
 	 * exception if the list is empty.
 	 */
 	T pop_front();
@@ -114,7 +125,7 @@ public:
 	void push_back(T element);
 
 	/**
-	 * Returns and removes the element at the back of the list. Throws an 
+	 * Returns and removes the element at the back of the list. Throws an
 	 * exception if the list is empty.
 	 */
 	T pop_back();
@@ -125,10 +136,10 @@ public:
 	 * @param int element
 	 * The element to be inserted.
 	 * @param int index
-	 * The index to insert at (inserted before the index, so that the newly 
+	 * The index to insert at (inserted before the index, so that the newly
 	 * inserted element is at the specified index).
 	 */
-	bool insert(T element, int index);	
+	bool insert(T element, int index);
 
 	/**
 	 * Searches for a node with a specific elementue and deletes it from the list.
@@ -154,7 +165,7 @@ public:
 	T get(int index) const;
 
 	/**
-	 * Returns a read-only pointer to the node containing the element, if the 
+	 * Returns a read-only pointer to the node containing the element, if the
 	 * element's contained in the list.
 	 *
 	 * @param int element
@@ -163,7 +174,7 @@ public:
 	 * @return A read-only pointer to the node, or nullptr if the element is not
 	 * contained in the list.
 	 */
-	const Node<T>* find(T element) const;
+	ListIterator find(T element) const;
 
 	/**
 	 * Checks whether the list contains the element.
@@ -176,12 +187,14 @@ public:
 	/**
 	 * Returns a read-only pointer to the beginning node (head) of the list.
 	 */
-	const Node<T>* begin() const;
+	ListIterator begin() const;
+    ListIterator rbegin() const;
 
 	/**
 	 * Returns a read-only pointer to the end node (tail) of the list.
 	 */
-	const Node<T>* end() const;
+	ListIterator end() const;
+    ListIterator rend() const;
 
 	/**
 	 * Checks whether the list is empty.
@@ -189,7 +202,7 @@ public:
 	 * @return TRUE if the list is empty. FALSE if the list is not empty.
 	 */
 	bool empty() const;
- 	
+
 	/**
 	 * Returns the number of elements in the list.
 	 */
@@ -199,9 +212,9 @@ public:
 	 * Clears the contents of the list.
 	 */
 	void clear();
-	
+
 	// Non-member functions:
-	// operator==operator!=operator<operator<=operator>operator>=operator<=>	
+	// operator==operator!=operator<operator<=operator>operator>=operator<=>
 private:
 	void copy_calling_list_empty(const LinkedList<T>& para);
 	void copy_lists_same_length(const LinkedList<T>& para);

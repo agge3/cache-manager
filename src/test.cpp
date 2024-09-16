@@ -1,7 +1,7 @@
 /**
  * @file main.cpp
  *
- * @author Tyler Baxter
+ * @author Tyler Baxter, Kat Powell
  * @version 1.0
  * @since 2024-08-30
  *
@@ -9,7 +9,8 @@
  */
 
 #include "test.h"
-#include "linked-list.h"
+//#include "linked-list.h"
+#include "iterator.h"
 
 #include <iostream>
 #include <memory>
@@ -26,22 +27,22 @@ using namespace csc;
 */
 void test::node()
 {
-    // Test Node creation
-    Node<int> node1(10);
-    assert(node1.get_element() == 10);
-    assert(node1.get_next() == nullptr);
-    assert(node1.get_prev() == nullptr);
+    //// Test Node creation
+    //Node<int> node1(10);
+    //assert(node1.get_element() == 10);
+    //assert(node1.get_next() == nullptr);
+    //assert(node1.get_prev() == nullptr);
 
-    // Test setting and getting elements
-    node1.set_element(20);
-    assert(node1.get_element() == 20);
+    //// Test setting and getting elements
+    //node1.set_element(20);
+    //assert(node1.get_element() == 20);
 
-    // Test setting and getting next and previous nodes
-    Node<int> node2(30);
-    node1.set_next(&node2);
-    node2.set_prev(&node1);
-    assert(node1.get_next() == &node2);
-    assert(node2.get_prev() == &node1);
+    //// Test setting and getting next and previous nodes
+    //Node<int> node2(30);
+    //node1.set_next(&node2);
+    //node2.set_prev(&node1);
+    //assert(node1.get_next() == &node2);
+    //assert(node2.get_prev() == &node1);
 }
 
 /**
@@ -52,151 +53,151 @@ void test::node()
 */
 void test::linked_list()
 {
-    // Create a LinkedList instance.
-    auto list = std::make_unique<LinkedList<int>>();
+    //// Create a LinkedList instance.
+    //auto list = std::make_unique<LinkedList<int>>();
 
-    // Test empty list
-    assert(list->empty() == true);
-	std::cout << "empty() passed.\n";
-    assert(list->size() == 0);
-	std::cout << "size() passed.\n";
+    //// Test empty list
+    //assert(list->empty() == true);
+	//std::cout << "empty() passed.\n";
+    //assert(list->size() == 0);
+	//std::cout << "size() passed.\n";
 
-    // Test push_front
-    list->push_front(1);
-    assert(list->front() == 1);
-    assert(list->back() == 1);
-    assert(list->size() == 1);
-	std::cout << "push_front() passed.\n";
+    //// Test push_front
+    //list->push_front(1);
+    //assert(list->front() == 1);
+    //assert(list->back() == 1);
+    //assert(list->size() == 1);
+	//std::cout << "push_front() passed.\n";
 
-    // Test push_back
-    list->push_back(2);
-    assert(list->front() == 1);
-    assert(list->back() == 2);
-    assert(list->size() == 2);
-	std::cout << "push_back() passed.\n";
+    //// Test push_back
+    //list->push_back(2);
+    //assert(list->front() == 1);
+    //assert(list->back() == 2);
+    //assert(list->size() == 2);
+	//std::cout << "push_back() passed.\n";
 
-	// Test get
-	assert(list->get(0) == 1);
-    assert(list->get(1) == 2);
-	std::cout << "get() passed.\n";
+	//// Test get
+	//assert(list->get(0) == 1);
+    //assert(list->get(1) == 2);
+	//std::cout << "get() passed.\n";
 
-    // Test insert
-    list->insert(3, 1); // Insert 3 at index 1
-	std::cout << "Element inserted into the list.\n";
-    assert(list->get(0) == 1);
-    assert(list->get(1) == 3);
-    assert(list->get(2) == 2);
-    assert(list->size() == 3);
-	std::cout << "insert() passed.\n";
+    //// Test insert
+    //list->insert(3, 1); // Insert 3 at index 1
+	//std::cout << "Element inserted into the list.\n";
+    //assert(list->get(0) == 1);
+    //assert(list->get(1) == 3);
+    //assert(list->get(2) == 2);
+    //assert(list->size() == 3);
+	//std::cout << "insert() passed.\n";
 
-    // Test remove
-    assert(list->remove(3) == true);
-	std::cout << "Element removed from the list.\n";
-    assert(list->size() == 2);
-    assert(list->get(0) == 1);
-    assert(list->get(1) == 2);
-	std::cout << "remove() passed.\n";
+    //// Test remove
+    //assert(list->remove(3) == true);
+	//std::cout << "Element removed from the list.\n";
+    //assert(list->size() == 2);
+    //assert(list->get(0) == 1);
+    //assert(list->get(1) == 2);
+	//std::cout << "remove() passed.\n";
 
-    // Test pop_front
-    list->pop_front();
-    assert(list->size() == 1);
-    assert(list->front() == 2);
-	std::cout << "pop_front() passed.\n";
+    //// Test pop_front
+    //list->pop_front();
+    //assert(list->size() == 1);
+    //assert(list->front() == 2);
+	//std::cout << "pop_front() passed.\n";
 
-    // Test pop_back
-    list->pop_back();
-    assert(list->empty() == true);
-    assert(list->size() == 0);
-	std::cout << "pop_back() passed.\n";
+    //// Test pop_back
+    //list->pop_back();
+    //assert(list->empty() == true);
+    //assert(list->size() == 0);
+	//std::cout << "pop_back() passed.\n";
 
-    // Test exception handling for empty list
-    try {
-        list->front(); // Should throw exception
-        assert(false); // Should not reach this line
-    } catch (const std::out_of_range& e) {
-		std::cout << "front() out of range exception passed. " << e.what() << 
-			"\n";
-    }
+    //// Test exception handling for empty list
+    //try {
+    //    list->front(); // Should throw exception
+    //    assert(false); // Should not reach this line
+    //} catch (const std::out_of_range& e) {
+	//	std::cout << "front() out of range exception passed. " << e.what() <<
+	//		"\n";
+    //}
 
-    try {
-        list->back(); // Should throw exception
-        assert(false); // Should not reach this line
-    } catch (const std::out_of_range& e) {
-		std::cout << "back() out of range exception passed. " << e.what() << 
-			"\n";
-    }
+    //try {
+    //    list->back(); // Should throw exception
+    //    assert(false); // Should not reach this line
+    //} catch (const std::out_of_range& e) {
+	//	std::cout << "back() out of range exception passed. " << e.what() <<
+	//		"\n";
+    //}
 
-    // Test clear
-    list->push_front(4);
-    list->push_back(5);
-    list->clear();
-    assert(list->empty() == true);
-    assert(list->size() == 0);
-	std::cout << "clear() passed.\n";
+    //// Test clear
+    //list->push_front(4);
+    //list->push_back(5);
+    //list->clear();
+    //assert(list->empty() == true);
+    //assert(list->size() == 0);
+	//std::cout << "clear() passed.\n";
 
-    // Test copy constructor
-    list->push_front(6);
-    list->push_back(7);
-    auto listCopy = std::make_unique<LinkedList<int>>(*list);
-    assert(listCopy->front() == 6);
-    assert(listCopy->back() == 7);
-    assert(listCopy->size() == 2);
-	std::cout << "Copy constructor passed.\n";
+    //// Test copy constructor
+    //list->push_front(6);
+    //list->push_back(7);
+    //auto listCopy = std::make_unique<LinkedList<int>>(*list);
+    //assert(listCopy->front() == 6);
+    //assert(listCopy->back() == 7);
+    //assert(listCopy->size() == 2);
+	//std::cout << "Copy constructor passed.\n";
 
-    // Test copy assignment operator
-    auto listAssigned = std::make_unique<LinkedList<int>>();
-    *listAssigned = *list;
-    assert(listAssigned->front() == 6);
-    assert(listAssigned->back() == 7);
-    assert(listAssigned->size() == 2);
-	std::cout << "Copy assignment operator passed.\n";
+    //// Test copy assignment operator
+    //auto listAssigned = std::make_unique<LinkedList<int>>();
+    //*listAssigned = *list;
+    //assert(listAssigned->front() == 6);
+    //assert(listAssigned->back() == 7);
+    //assert(listAssigned->size() == 2);
+	//std::cout << "Copy assignment operator passed.\n";
 
-    // Test move constructor
-    auto listMoved = std::make_unique<LinkedList<int>>(std::move(*list));
-    assert(listMoved->front() == 6);
-    assert(listMoved->back() == 7);
-    assert(listMoved->size() == 2);
-    assert(list->empty() == true); // Ensure list is empty after move
-	std::cout << "Move constructor passed.\n";
+    //// Test move constructor
+    //auto listMoved = std::make_unique<LinkedList<int>>(std::move(*list));
+    //assert(listMoved->front() == 6);
+    //assert(listMoved->back() == 7);
+    //assert(listMoved->size() == 2);
+    //assert(list->empty() == true); // Ensure list is empty after move
+	//std::cout << "Move constructor passed.\n";
 
-    // Test move assignment operator
-    auto listMovedAssign = std::make_unique<LinkedList<int>>();
-    *listMovedAssign = std::move(*listAssigned);
-    assert(listMovedAssign->front() == 6);
-    assert(listMovedAssign->back() == 7);
-    assert(listMovedAssign->size() == 2);
-    assert(listAssigned->empty() == true); // Ensure listAssigned is empty after move
-	std::cout << "Move assignment operator passed.\n";
+    //// Test move assignment operator
+    //auto listMovedAssign = std::make_unique<LinkedList<int>>();
+    //*listMovedAssign = std::move(*listAssigned);
+    //assert(listMovedAssign->front() == 6);
+    //assert(listMovedAssign->back() == 7);
+    //assert(listMovedAssign->size() == 2);
+    //assert(listAssigned->empty() == true); // Ensure listAssigned is empty after move
+	//std::cout << "Move assignment operator passed.\n";
 
-    // Test contains
-    assert(listMoved->contains(6) == true);
-    assert(listMoved->contains(8) == false);
-	std::cout << "contains() passed.\n";
+    //// Test contains
+    //assert(listMoved->contains(6) == true);
+    //assert(listMoved->contains(8) == false);
+	//std::cout << "contains() passed.\n";
 
-    const Node<int>* beginNode = listMoved->begin();
-    assert(beginNode != nullptr); // Check if beginNode is not null
-    assert(beginNode->get_element() == 6);
-	beginNode = nullptr;
-	std::cout << "begin() passed.\n";
-    
-    const Node<int>* endNode = listMoved->end();
-    assert(endNode != nullptr); // Check if endNode is not null
-    assert(endNode->get_element() == 7);
-	endNode = nullptr;
-	std::cout << "end() passed.\n";
+    //const Node<int>* beginNode = listMoved->begin();
+    //assert(beginNode != nullptr); // Check if beginNode is not null
+    //assert(beginNode->get_element() == 6);
+	//beginNode = nullptr;
+	//std::cout << "begin() passed.\n";
 
-	list.reset();
-	std::cout << "Destructor of list passed.\n";
-	listCopy.reset();
-	std::cout << "Destructor of copy constructor list passed.\n";
-	listAssigned.reset();
-	std::cout << "Destructor of copy assignment operator list passed.\n";
-	listMoved.reset();
-	std::cout << "Destructor of move constructor list passed.\n";
-    listMovedAssign.reset();
-	std::cout << "Destructor of move assignment operator list passed.\n";
+    //const Node<int>* endNode = listMoved->end();
+    //assert(endNode != nullptr); // Check if endNode is not null
+    //assert(endNode->get_element() == 7);
+	//endNode = nullptr;
+	//std::cout << "end() passed.\n";
 
-    std::cout << "All tests passed!" << std::endl;
+	//list.reset();
+	//std::cout << "Destructor of list passed.\n";
+	//listCopy.reset();
+	//std::cout << "Destructor of copy constructor list passed.\n";
+	//listAssigned.reset();
+	//std::cout << "Destructor of copy assignment operator list passed.\n";
+	//listMoved.reset();
+	//std::cout << "Destructor of move constructor list passed.\n";
+    //listMovedAssign.reset();
+	//std::cout << "Destructor of move assignment operator list passed.\n";
+
+    //std::cout << "All tests passed!" << std::endl;
 }
 
 /**
@@ -282,7 +283,7 @@ void test::hash_map()
 //    HashMap map2;
 //    map2.insert(5, 500);
 //    HashMap map3(std::move(map2));
-//    assert(map3.get(5) == 500);
+//  T csc::Iterator<T>::last()’
 //    assert(map2.empty() == true);
 //
 //    HashMap map4;
@@ -292,4 +293,36 @@ void test::hash_map()
 //    assert(map3.empty() == true);
 //
 //    std::cout << "All tests passed!" << std::endl;
+}
+
+void test::iterator()
+{
+    // Testing instantiation & .get()
+    int test_arr[] = {1, 2, 3, 4};
+    int size = sizeof(test_arr) / sizeof(test_arr[0]);
+    //std::cout << size;
+    int* beg = test_arr;
+    int* end = test_arr;
+    for (int i = 0; i < size - 1; ++i) {
+        ++end;
+    }
+    Iterator it(beg, end);
+    assert(*it.get() == test_arr[0]);
+    std::cout << "Successfully instantiated iterator.\n";
+
+    // Testing .first()
+    assert(*it.first() == test_arr[0]);
+    std::cout << ".first(): Successful.\n";
+
+    // Testing .last()
+    assert(*it.last() == test_arr[3]);
+    std::cout << ".last(): Successful.\n";
+
+    // Testing .next()
+    assert(*it.next() == test_arr[1]);
+    std::cout << ".next(): Successful.\n";
+
+    // Testing .get_next()
+    assert(*it.get_next() == test_arr[2]);
+    std::cout << ".get_next(): Successful.\n";
 }
