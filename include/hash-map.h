@@ -15,6 +15,7 @@
 
 #include <cstddef>
 #include <string>
+#include <memory>
 
 /**
 * @namespace csc
@@ -43,7 +44,7 @@ struct Hash<std::string> {
 */
 template <typename K>
 struct Hash<K> {
-	std::size_t operator()(const T& key) const;
+	std::size_t operator()(const K& key) const;
 };
 
 /**
@@ -53,6 +54,7 @@ struct Hash<K> {
 template <typename K, typename V>
 class HashNode {
 public:
+	HashNode(const K& key) : _key(key), _value(nullptr) {}
 	HashNode(const K& key, const V& value) : _key(key), _value(value) {}
 	K get_key() const { return _key; }
 	V get_value() const { return _value; }
@@ -75,10 +77,11 @@ template <typename K, typename V, typename F = Hash>
 class HashMap {
 public:
     /**
-     * @typedef SinglyLinkedList<HashNode<K, V>>* ListPtr
-	 * ListPtr is a pointer to a SinglyLinkedList of HashNodes.
+     * @typedef std::unique_ptr<SinglyLinkedList<HashNode<K, V>>> ListPtr
+	 * ListPtr is a pointer to a SinglyLinkedList of HashNodes. HashMap has
+	 * exclusive ownership of any ListPtrs.
      */
-    typedef SinglyLinkedList<HashNode<K, V>>* ListPtr;
+    typedef std::unique_ptr<DoublyLinkedList<HashNode<K, V>>> ListPtr;
 
 	/**
 	 * Default constructor.

@@ -134,38 +134,83 @@ HashMap& HashMap::operator=(HashMap&& rhs) noexcept {
 }
 
 template <typename K, typename V, typename F = Hash>
-bool HashMap<K, V, F>::insert(const K& key, const V& value) const
+void HashMap<K, V, F>::insert(const K& key, const V& value) const
 {
 	ListPtr ptr = _table[_hash{}(key) % _buckets];
-	// xxx 
+	if (!ptr) {
+		ptr = std::make_unique<SinglyLinkedList<HashNode<K, V>>>();
+	}
+	ptr->insert(HashNode<K, V>(key, value));
 }
 
 template <typename K, typename V, typename F = Hash>
 bool HashMap<K, V, F>::remove(const K& key) const
 {
+	if (empty()) {
+		return false;
+	}
 	ListPtr ptr = _table[_hash{}(key) % _buckets];
-	// xxx 
+	if (!ptr) {
+		return false;
+	}
+	return ptr->remove(HashNode<K, V>(key));
 }
 
 template <typename K, typename V, typename F = Hash>
 V* HashMap<K, V, F>::get(const K& key) const
 {
+	if (empty()) {
+		return nullptr;
+	}
+
 	ListPtr ptr = _table[_hash{}(key) % _buckets];
-	// xxx 
+	if (!ptr) {
+		return nullptr;
+	}
+
+	HashNode<K, V> *node = ptr->find(HashNode<K, V>(key));
+	if (node == nullptr) {
+		return nullptr;
+	}
+
+	V *v = node->get_value();
+	node = nullptr;
+	return v;
 }
 
 template <typename K, typename V, typename F = Hash>
 bool HashMap<K, V, F>::contains(const K& key) const
 {
+	if (empty()) {
+		return false;
+	}
 	ListPtr ptr = _table[_hash{}(key) % _buckets];
-	// xxx 
+	if (!ptr) {
+		return false;
+	}
+	return ptr->contains(HashNode<K, V>(key));
 }
 
 template <typename K, typename V, typename F = Hash>
 bool HashMap<K, V, F>::replace(const K& key, const V& value)
 {
+	if (empty()) {
+		return false;
+	}
+
 	ListPtr ptr = _table[_hash{}(key) % _buckets];
-	// xxx
+	if (!ptr) {
+		return false;
+	}
+
+	HashNode<K, V> *node = ptr->find(HashNode<K, V>(key));
+	if (node == nullptr) {
+		return false;
+	}
+
+	node->set_value(value);
+	node == nullptr;
+	return true;
 }
 
 template <typename K, typename V, typename F = Hash>
@@ -184,12 +229,8 @@ template <typename K, typename V, typename F = Hash>
 void HashMap<K, V, F>::clear()
 {
 	if (!empty()) {
-		// Destroy all buckets one by one.
-		for (int i = 0; i < _buckets; ++i) {
-			delete _table[i];
-			_table[i] = nullptr;
-		}
-		// Destroy the hash table.
+		// When table is deleted, its smart ListPtrs will lose scope and call
+		// their destructors.
 		delete[] _table;
 		_table = nullptr;
 	}
