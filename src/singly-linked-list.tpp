@@ -57,7 +57,7 @@ void SLLIterator::delete()
 	node = nullptr;
 }
 
-SinglyLinkedList::SinglyLinkedList(const SinglyLinkedList<T>& other)
+SinglyLinkedList<T>::SinglyLinkedList(const SinglyLinkedList<T>& other)
 {
     if (!other.empty()) {
         _count = other._count;
@@ -73,6 +73,13 @@ SinglyLinkedList::SinglyLinkedList(const SinglyLinkedList<T>& other)
         }
         curr = other_curr = nullptr;
     }
+}
+
+SinglyLinkedList<T>::SinglyLinkedList(SinglyLinkedList<T>&& other) noexcept :
+    _head(other._head), _count(other._count)
+{
+    other._head = nullptr;
+    other._count = 0;
 }
 
 T* SinglyLinkedList<T>::front() const
