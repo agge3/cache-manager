@@ -2,7 +2,7 @@
  * @file singly-linked-list.cpp
  * @class SinglyLinkedList<T>
  *
- * @author Tyler Baxter
+ * @author Tyler Baxter, Kat Powell
  * @version 1.0
  * @since 2024-08-30
  *
@@ -15,6 +15,7 @@
 
 using namespace csc;
 
+template <typename T>
 SLLIterator<T>& SLLIterator<T>::operator++()
 {
 	if (_node) {
@@ -23,6 +24,7 @@ SLLIterator<T>& SLLIterator<T>::operator++()
 	return *this;
 }
 
+template <typename T>
 SLLIterator<T> SLLIterator::operator++(int)
 {
 	SLLIterator tmp = *this;
@@ -30,6 +32,7 @@ SLLIterator<T> SLLIterator::operator++(int)
 	return tmp;
 }
 
+template <typename T>
 T& operator*() const
 {
 	if (!_node) {
@@ -38,11 +41,13 @@ T& operator*() const
 	return _node->get_element();
 }
 
+template <typename T>
 void SLLIterator::add(const T& element)
 {
 	_node->set_next(new SLLNode<T>(element, _node->get_next()));
 }
 
+template <typename T>
 void SLLIterator::delete()
 {
 	// xxx don't think this syntax is going to work. likely going to need to (1)
@@ -57,6 +62,7 @@ void SLLIterator::delete()
 	node = nullptr;
 }
 
+template <typename T>
 SinglyLinkedList<T>::SinglyLinkedList(const SinglyLinkedList<T>& other)
 {
     if (!other.empty()) {
@@ -75,6 +81,7 @@ SinglyLinkedList<T>::SinglyLinkedList(const SinglyLinkedList<T>& other)
     }
 }
 
+template <typename T>
 SinglyLinkedList<T>::SinglyLinkedList(SinglyLinkedList<T>&& other) noexcept :
     _head(other._head), _count(other._count)
 {
@@ -82,6 +89,7 @@ SinglyLinkedList<T>::SinglyLinkedList(SinglyLinkedList<T>&& other) noexcept :
     other._count = 0;
 }
 
+template <typename T>
 SinglyLinkedList<T>& operator=(const SinglyLinkedList<T>& rhs)
 {
     if (&rhs == this) {
@@ -108,6 +116,23 @@ SinglyLinkedList<T>& operator=(const SinglyLinkedList<T>& rhs)
     curr = rhs_curr = nullptr;
 }
 
+template <typename T>
+SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(SinglyLinkedList<T>&& rhs)
+{
+    if (this != &rhs) {
+        clear();
+
+        _head = rhs._head;
+        _count = rhs._count;
+
+        rhs._head = nullptr;
+        rhs._count = 0;
+    }
+
+    return *this;
+}
+
+template <typename T>
 T* SinglyLinkedList<T>::front() const
 {
 	if (empty()) {
@@ -116,6 +141,7 @@ T* SinglyLinkedList<T>::front() const
 	return _head->get_element();
 }
 
+template <typename T>
 void SinglyLinkedList<T>::insert(const T& element)
 {
 	if (empty()) {
@@ -126,6 +152,7 @@ void SinglyLinkedList<T>::insert(const T& element)
 	++_size;
 }
 
+template <typename T>
 bool SinglyLinkedList<T>::remove(const T& element)
 {
 	SLLNode<T> *curr = search();
@@ -139,6 +166,7 @@ bool SinglyLinkedList<T>::remove(const T& element)
 	return true;
 }
 
+template <typename T>
 SLLNode<T>* SinglyLinkedList<T>::search(const T& element)
 {
 	// List is empty, return nullptr.
@@ -166,16 +194,19 @@ SLLNode<T>* SinglyLinkedList<T>::search(const T& element)
 	return nullptr;
 }
 
+template <typename T>
 bool SinglyLinkedList<T>::contains(const T& element)
 {
 	return search() != nullptr;
 }
 
+template <typename T>
 T* SinglyLinkedList<T>::find(const T& element)
 {
 	return search()->get_next();
 }
 
+template <typename T>
 T* SinglyLinkedList<T>::pop_front()
 {
 	// Guard if the list is empty.
@@ -198,17 +229,20 @@ T* SinglyLinkedList<T>::pop_front()
 	return ptr;
 }
 
+template <typename T>
 SLLIterator<T> SinglyLinkedList<T>::begin() const
 {
 	return SLLIterator<T>(_head);
 }
 
+template <typename T>
 SLLIterator<T> SinglyLinkedList<T>::end() const
 {
 	return SLLIterator<T>(nullptr);
 }
 
 // xxx
+template <typename T>
 ostream& SinglyLinkedList<T>::operator<<(ostream& out,
 	const SinglyLinkedList<T>& sll) const
 {
@@ -229,6 +263,7 @@ ostream& SinglyLinkedList<T>::operator<<(ostream& out,
 }
 
 // xxx
+template <typename T>
 istream& SinglyLinkedList<T>::operator>>(istream& in,
 	const SinglyLinkedList<T>& sll) const
 {
@@ -248,16 +283,19 @@ istream& SinglyLinkedList<T>::operator>>(istream& in,
 	}
 }
 
+template <typename T>
 std::size_t SinglyLinkedList<T>::size() const
 {
 	return _size;
 }
 
+template <typename T>
 bool SinglyLinkedList<T>::empty() const
 {
 	return _head == nullptr && _size == 0;
 }
 
+template <typename T>
 void SinglyLinkedList<T>::clear()
 {
 	while (!empty()) {
