@@ -82,6 +82,32 @@ SinglyLinkedList<T>::SinglyLinkedList(SinglyLinkedList<T>&& other) noexcept :
     other._count = 0;
 }
 
+SinglyLinkedList<T>& operator=(const SinglyLinkedList<T>& rhs)
+{
+    if (&rhs == this) {
+        std::cerr << "Attempted assignment to self.";
+        return *this;
+    }
+
+    if (rhs.empty()) {
+        this->clear();
+    }
+
+    _head = rhs._head;
+    _count = rhs._count;
+    SLLNode* curr = _head;
+    SLLNode* rhs_curr = rhs._head->get_next();
+
+    // XXX test this condition
+    while (curr != nullptr && rhs_curr != nullptr) {
+        curr->set_next(new SLLNode(rhs_curr, rhs_curr->get_next());
+        rhs_curr = rhs_curr->get_next();
+        curr = curr->get_next();
+    }
+
+    curr = rhs_curr = nullptr;
+}
+
 T* SinglyLinkedList<T>::front() const
 {
 	if (empty()) {
