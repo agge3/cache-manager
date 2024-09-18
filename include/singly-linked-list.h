@@ -73,7 +73,7 @@ public:
 	/**
 	 * Destructor.
 	 */
-	~SinglyLinkedList() { clear(); }
+	~SinglyLinkedList();
 
 	/**
 	 * Copy constructor.

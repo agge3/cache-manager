@@ -89,6 +89,19 @@ SinglyLinkedList<T>::SinglyLinkedList(SinglyLinkedList<T>&& other) noexcept :
     other._count = 0;
 }
 
+SinglyLinkedList<T>::~SinglyLinkedList()
+{
+    SLLNode* curr = _head->get_next();
+    SLLNode* prev = _head;
+    while (curr != nullptr) {
+        delete prev;
+        prev = curr;
+        curr = curr->get_next();
+    }
+    _head = curr = prev = nullptr;
+    _count = 0;
+}
+
 template <typename T>
 SinglyLinkedList<T>& operator=(const SinglyLinkedList<T>& rhs)
 {
