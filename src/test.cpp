@@ -9,7 +9,7 @@
  */
 
 #include "test.h"
-#include "linked-list.h"
+#include "singly-linked-list.h"
 
 #include <iostream>
 #include <memory>
@@ -24,25 +24,25 @@ using namespace csc;
 * @credit OpenAI's ChatGPT
 * Prompt: "Write me test cases for this class, with no frameworks, in cpp."
 */
-void test::node()
-{
-    // Test Node creation
-    Node<int> node1(10);
-    assert(node1.get_element() == 10);
-    assert(node1.get_next() == nullptr);
-    assert(node1.get_prev() == nullptr);
-
-    // Test setting and getting elements
-    node1.set_element(20);
-    assert(node1.get_element() == 20);
-
-    // Test setting and getting next and previous nodes
-    Node<int> node2(30);
-    node1.set_next(&node2);
-    node2.set_prev(&node1);
-    assert(node1.get_next() == &node2);
-    assert(node2.get_prev() == &node1);
-}
+//void test::node()
+//{
+//    // Test Node creation
+//    Node<int> node1(10);
+//    assert(node1.get_element() == 10);
+//    assert(node1.get_next() == nullptr);
+//    assert(node1.get_prev() == nullptr);
+//
+//    // Test setting and getting elements
+//    node1.set_element(20);
+//    assert(node1.get_element() == 20);
+//
+//    // Test setting and getting next and previous nodes
+//    Node<int> node2(30);
+//    node1.set_next(&node2);
+//    node2.set_prev(&node1);
+//    assert(node1.get_next() == &node2);
+//    assert(node2.get_prev() == &node1);
+//}
 
 /**
 * Unit tests for List.
@@ -50,10 +50,10 @@ void test::node()
 * @credit OpenAI's ChatGPT
 * Prompt: "Write me test cases for this class, with no frameworks, in cpp."
 */
-void test::linked_list()
+void test::singly_linked_list()
 {
     // Create a LinkedList instance.
-    auto list = std::make_unique<LinkedList<int>>();
+    auto list = std::make_unique<SinglyLinkedList<int>>();
 
     // Test empty list
     assert(list->empty() == true);
@@ -114,7 +114,7 @@ void test::linked_list()
         list->front(); // Should throw exception
         assert(false); // Should not reach this line
     } catch (const std::out_of_range& e) {
-		std::cout << "front() out of range exception passed. " << e.what() << 
+		std::cout << "front() out of range exception passed. " << e.what() <<
 			"\n";
     }
 
@@ -122,7 +122,7 @@ void test::linked_list()
         list->back(); // Should throw exception
         assert(false); // Should not reach this line
     } catch (const std::out_of_range& e) {
-		std::cout << "back() out of range exception passed. " << e.what() << 
+		std::cout << "back() out of range exception passed. " << e.what() <<
 			"\n";
     }
 
@@ -137,14 +137,14 @@ void test::linked_list()
     // Test copy constructor
     list->push_front(6);
     list->push_back(7);
-    auto listCopy = std::make_unique<LinkedList<int>>(*list);
+    auto listCopy = std::make_unique<SinglyLinkedList<int>>(*list);
     assert(listCopy->front() == 6);
     assert(listCopy->back() == 7);
     assert(listCopy->size() == 2);
 	std::cout << "Copy constructor passed.\n";
 
     // Test copy assignment operator
-    auto listAssigned = std::make_unique<LinkedList<int>>();
+    auto listAssigned = std::make_unique<SinglyLinkedList<int>>();
     *listAssigned = *list;
     assert(listAssigned->front() == 6);
     assert(listAssigned->back() == 7);
@@ -152,7 +152,7 @@ void test::linked_list()
 	std::cout << "Copy assignment operator passed.\n";
 
     // Test move constructor
-    auto listMoved = std::make_unique<LinkedList<int>>(std::move(*list));
+    auto listMoved = std::make_unique<SinglyLinkedList<int>>(std::move(*list));
     assert(listMoved->front() == 6);
     assert(listMoved->back() == 7);
     assert(listMoved->size() == 2);
@@ -160,7 +160,7 @@ void test::linked_list()
 	std::cout << "Move constructor passed.\n";
 
     // Test move assignment operator
-    auto listMovedAssign = std::make_unique<LinkedList<int>>();
+    auto listMovedAssign = std::make_unique<SinglyLinkedList<int>>();
     *listMovedAssign = std::move(*listAssigned);
     assert(listMovedAssign->front() == 6);
     assert(listMovedAssign->back() == 7);
@@ -173,13 +173,13 @@ void test::linked_list()
     assert(listMoved->contains(8) == false);
 	std::cout << "contains() passed.\n";
 
-    const Node<int>* beginNode = listMoved->begin();
+    const SLLNode<int>* beginNode = listMoved->begin();
     assert(beginNode != nullptr); // Check if beginNode is not null
     assert(beginNode->get_element() == 6);
 	beginNode = nullptr;
 	std::cout << "begin() passed.\n";
-    
-    const Node<int>* endNode = listMoved->end();
+
+    const SLLNode<int>* endNode = listMoved->end();
     assert(endNode != nullptr); // Check if endNode is not null
     assert(endNode->get_element() == 7);
 	endNode = nullptr;
