@@ -2,7 +2,7 @@
  * @file singly-linked-list.h
  * @class SinglyLinkedList
  *
- * @author Tyler Baxter
+ * @author Tyler Baxter, Kat Powell
  * @version 1.0
  * @since 2024-08-30
  *
@@ -10,6 +10,8 @@
  */
 
 #pragma once
+
+#include "iterator.h"
 
 #include <cstddef>
 #include <iostream>
@@ -34,26 +36,26 @@ public:
 	SLLNode* get_next() const { return _next; }
 
 	void set_element(const T& element) { _element = element; }
-	void set_next(Node* next) { _next = next; }
+	void set_next(SLLNode* next) { _next = next; }
 private:
 	T _element;
 	SLLNode* _next;
 };
 
 template <typename T>
-class SLLIterator : public csc::Iterator<T> {
+class SLLIterator : public Iterator<T> {
 public:
 	SLLIterator& operator++();
 	SLLIterator operator++(int);
-	T& operator*() const;
+	T& operator*();
 	void add(const T& element);
-	void delete();
+	void deleteIt(); // XXX TEMP NAME
 protected:
 	/**
-	* new and delete are protected so heap allocation is disallowed. Must be 
+	* new and delete are protected so heap allocation is disallowed. Must be
 	* allocated on the stack, for RAII.
 	*/
-	explicit SLLIterator(STTNode<T> node) : _node(node) {}
+	explicit SLLIterator(SLLNode<T> node) : _node(node) {}
 private:
 	SLLNode<T> *_node;
 };
@@ -70,10 +72,10 @@ public:
 	 */
 	SinglyLinkedList() : _head(nullptr), _size(0) {}
 
-	/** 
+	/**
 	 * Destructor.
 	 */
-	~SinglyLinkedList() { clear(); }
+	~SinglyLinkedList();
 
 	/**
 	 * Copy constructor.
@@ -100,12 +102,12 @@ public:
 	/**
 	 * Overloaded ostream operator, '<<'.
 	 */
-	friend ostream& operator<<(ostream& out, const SinglyLinkedList& sll) const;
+	friend std::ostream& operator<<(std::ostream& out, const SinglyLinkedList& sll);
 
  	/**
 	 * Overloaded istream operator, '>>'.
 	 */
-	friend istream& operator>>(istream& in, SinglyLinkedList& sll) const;
+	friend std::istream& operator>>(std::istream& in, SinglyLinkedList& sll);
 
 	/**
 	 * Returns the first element of SinglyLinkedList.
@@ -115,7 +117,7 @@ public:
 	T* front() const;
 
 	/**
-	 * Returns the first element of SinglyLinkedList and deletes it from the 
+	 * Returns the first element of SinglyLinkedList and deletes it from the
 	 * list.
 	 *
 	 * @return T element The first element.
@@ -130,7 +132,7 @@ public:
 	void insert(const T& element);
 
 	/**
-	 * Searches for a node with the specified element and deletes it from the 
+	 * Searches for a node with the specified element and deletes it from the
 	 * list.
 	 *
 	 * @param T element The element to be deleted.
@@ -150,12 +152,12 @@ public:
 	bool contains(const T& element) const;
 
 	/**
-	 * Finds an element and returns an Iterator to it, or nullptr if the element 
+	 * Finds an element and returns an Iterator to it, or nullptr if the element
 	 * was not found.
 	 *
 	 * @param T element The element to find.
 	 *
-	 * @return STTIterator<T> iterator An iterator pointing to the element, or 
+	 * @return STTIterator<T> iterator An iterator pointing to the element, or
 	 * nullptr if not found.
 	 */
 	SLLIterator<T> find(const T& element);
@@ -174,15 +176,15 @@ public:
 	*/
 	bool empty() const;
 
-	/** 
-	 * Returns an Iterator pointing to the beginning (first element) of 
+	/**
+	 * Returns an Iterator pointing to the beginning (first element) of
 	 * SinglyLinkedList.
 	 *
 	 * @return SLLIterator iterator An Iterator pointing to begin.
 	 */
 	SLLIterator<T> begin() const;
 
-	/** 
+	/**
 	 * Returns an Iterator pointing PAST the end (nullptr) of SinglyLinkedList.
 	 *
 	 * @return SLLIterator iterator An Iterator pointing to end.
