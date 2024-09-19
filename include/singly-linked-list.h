@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include "iterator.h"
+
 #include <cstddef>
 #include <iostream>
 
@@ -34,26 +36,26 @@ public:
 	SLLNode* get_next() const { return _next; }
 
 	void set_element(const T& element) { _element = element; }
-	void set_next(Node* next) { _next = next; }
+	void set_next(SLLNode* next) { _next = next; }
 private:
 	T _element;
 	SLLNode* _next;
 };
 
 template <typename T>
-class SLLIterator : public csc::Iterator<T> {
+class SLLIterator : public Iterator<T> {
 public:
 	SLLIterator& operator++();
 	SLLIterator operator++(int);
-	T& operator*() const;
+	T& operator*();
 	void add(const T& element);
-	void delete();
+	void deleteIt(); // XXX TEMP NAME
 protected:
 	/**
 	* new and delete are protected so heap allocation is disallowed. Must be
 	* allocated on the stack, for RAII.
 	*/
-	explicit SLLIterator(STTNode<T> node) : _node(node) {}
+	explicit SLLIterator(SLLNode<T> node) : _node(node) {}
 private:
 	SLLNode<T> *_node;
 };
@@ -100,12 +102,12 @@ public:
 	/**
 	 * Overloaded ostream operator, '<<'.
 	 */
-	friend ostream& operator<<(ostream& out, const SinglyLinkedList& sll) const;
+	friend std::ostream& operator<<(std::ostream& out, const SinglyLinkedList& sll);
 
  	/**
 	 * Overloaded istream operator, '>>'.
 	 */
-	friend istream& operator>>(istream& in, SinglyLinkedList& sll) const;
+	friend std::istream& operator>>(std::istream& in, SinglyLinkedList& sll);
 
 	/**
 	 * Returns the first element of SinglyLinkedList.
