@@ -22,9 +22,9 @@ namespace test {
 
 /**
  * @struct Dataset
- * A struct to carry constants for the randomly generated data: the amount 
+ * A struct to carry constants for the randomly generated data: the amount
  * of data points, the minimum value, and the maximum value.
- */ 
+ */
 struct Dataset {
 	int amt = 10;
 	int min = 0;
@@ -46,6 +46,14 @@ void node();
 * Prompt: "Write me test cases for this class, with no frameworks, in cpp."
 */
 void linked_list();
+
+/**
+* Unit tests for SinglyLinkedList.
+*
+* @credit OpenAI's ChatGPT
+* Prompt: "Write me test cases for this class, with no frameworks, in cpp."
+*/
+void singly_linked_list();
 
 /**
 * Unit tests for HashMap.
