@@ -173,7 +173,7 @@ V* HashMap<K, V, F>::get(const K& key) const
 		return nullptr;
 	}
 
-	V *v = node->get_value();
+	V *v = node->getValue();
 	node = nullptr;
 	return v;
 }
@@ -208,7 +208,7 @@ bool HashMap<K, V, F>::replace(const K& key, const V& value)
 		return false;
 	}
 
-	node->set_value(value);
+	node->setValue(value);
 	node == nullptr;
 	return true;
 }

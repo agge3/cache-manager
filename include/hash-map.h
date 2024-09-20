@@ -56,9 +56,9 @@ class HashNode {
 public:
 	HashNode(const K& key) : _key(key), _value(nullptr) {}
 	HashNode(const K& key, const V& value) : _key(key), _value(value) {}
-	K get_key() const { return _key; }
-	V get_value() const { return _value; }
-	void set_value(const V& value) { _value = value; }
+	K getKey() const { return _key; }
+	V getValue() const { return _value; }
+	void setValue(const V& value) { _value = value; }
 protected:
     // Disallow copy and assignment.
     HashNode(const HashNode& other);

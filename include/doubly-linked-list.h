@@ -33,13 +33,13 @@ public:
 		_element(element), _next(next), _prev(prev) {}
 	~Node() {}
 
-	T get_element() const { return _element; }
-	DLLNode* get_next() const { return _next; }
-	DLLNode* get_prev() const { return _prev; }
+	T getElement() const { return _element; }
+	DLLNode* getNext() const { return _next; }
+	DLLNode* getPrev() const { return _prev; }
 
-	void set_element(T element) { _element = element; }
-	void set_next(Node* next) { _next = next; }
-	void set_prev(Node* prev) { _prev = prev; }
+	void setElement(T element) { _element = element; }
+	void setNext(Node* next) { _next = next; }
+	void setPrev(Node* prev) { _prev = prev; }
 private:
 	T _element;
 	DLLNode* _next;
@@ -134,7 +134,7 @@ public:
 	 *
 	 * @return T element The first element.
 	 */
-	T* pop_front();
+	T* popFront();
 
 	/**
 	 * Adds a new node at the beginning of the list.
@@ -142,13 +142,13 @@ public:
 	 * @param int element
 	 * The element to be inserted.
 	 */
-	void push_front(const T& element);
+	void pushFront(const T& element);
 
 	/**
 	 * Returns and removes the element at the back of the list. Throws an 
 	 * exception if the list is empty.
 	 */
-	T* pop_back();
+	T* popBack();
 
 	/**
 	 * Inserts an element after the DLLNode.
@@ -159,14 +159,22 @@ public:
 	void insert(const T& element, DLLNode<T>* node);	
 
 	/**
-	 * Searches for a node with a specific elementue and deletes it from the list.
+	 * Searches for a node with a specific element and deletes it from the list.
 	 *
-	 * @param int element
-	 * The element to be deleted.
+	 * @param T element The element to be deleted.
 	 *
-	 * @return TRUE if deleted, FALSE if not deleted
+	 * @return TRUE if deleted; FALSE if not deleted (it was not in the list).
 	 */
 	bool remove(const T& element);
+
+	/**
+	 * Searches for a node and deletes it from the list.
+	 *
+	 * @param DLLNode<T>* node The node to be deleted.
+	 *
+	 * @return TRUE if deleted; FALSE if not deleted (it was not in the list).
+	 */
+	bool removeNode(const DLLNode<T>* node);
 
 	/**
 	 * Checks if DoublyLinkedList contains an element.
@@ -226,7 +234,7 @@ private:
 
 	/**
 	* Searches for an element and returns the Node before it. The element's node
-	* can be accessed by get_next().
+	* can be accessed by getNext().
 	*/
 	DLLNode<T>* search(const T& element);
 

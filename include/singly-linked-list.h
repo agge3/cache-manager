@@ -30,11 +30,11 @@ public:
 	SLLNode(const T& element) : _element(element), _next(nullptr) {}
 	SLLNode(const T& element, SLLNode* next) : _element(element), _next(next) {}
 
-	T get_element() const { return _element; }
-	SLLNode* get_next() const { return _next; }
+	T getElement() const { return _element; }
+	SLLNode* getNext() const { return _next; }
 
-	void set_element(const T& element) { _element = element; }
-	void set_next(Node* next) { _next = next; }
+	void setElement(const T& element) { _element = element; }
+	void setNext(Node* next) { _next = next; }
 private:
 	T _element;
 	SLLNode* _next;
@@ -120,7 +120,7 @@ public:
 	 *
 	 * @return T element The first element.
 	 */
-	T* pop_front();
+	T* popFront();
 
 	/**
 	 * Adds a new element at the beginning of SinglyLinkedList.
@@ -191,7 +191,7 @@ public:
 private:
 	/**
 	* Searches for an element and returns the Node before it. The element's node
-	* can be accessed by get_next().
+	* can be accessed by getNext().
 	*/
 	SLLNode<T>* search(const T& element);
 

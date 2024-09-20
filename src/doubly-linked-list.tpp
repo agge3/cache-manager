@@ -103,15 +103,15 @@ void DoublyLinkedList<T>::copy_calling_list_empty(const DoublyLinkedList<T>& par
    // Assign caller _count as parameter _count.
    _count = para._count;
    // Create _head for caller.
-   _head = new DLLNode<T>(para._head->get_element());
+   _head = new DLLNode<T>(para._head->getElement());
    // curr at _head, para_curr at para _head
    DLLNode<T>* curr = _head;
    DLLNode<T>* para_curr = para._head;
    // Loop through all parameter list nodes and create for caller list.
    for (int i = 1; i < _count; ++i) {
-       para_curr = para_curr->get_next();
-       curr->set_next(new DLLNode<T>(para_curr->get_element(), nullptr, curr));
-       curr = curr->get_next();
+       para_curr = para_curr->getNext();
+       curr->setNext(new DLLNode<T>(para_curr->getElement(), nullptr, curr));
+       curr = curr->getNext();
    }
    _tail = curr;
    // Cleanup dangling pointers.
@@ -123,9 +123,9 @@ void DoublyLinkedList<T>::copy_lists_same_length(const DoublyLinkedList<T>& para
     DLLNode<T>* curr = _head;
     DLLNode<T>* para_curr = para._head;
     while (curr != nullptr) {
-        curr->set_element(para_curr->get_element());
-        curr = curr->get_next();
-        para_curr = para_curr->get_next();
+        curr->setElement(para_curr->getElement());
+        curr = curr->getNext();
+        para_curr = para_curr->getNext();
     }
    // Cleanup dangling pointers.
    curr = para_curr = nullptr;
@@ -138,19 +138,19 @@ void DoublyLinkedList<T>::copy_calling_list_longer(const DoublyLinkedList<T>& pa
     DLLNode<T>* para_curr = para._head;
     // Iterate through, stopping at _tail node of parameter.
     while (para_curr != nullptr) {
-        curr->set_element(para_curr->get_element());
-        if (para_curr->get_next() == nullptr) {
+        curr->setElement(para_curr->getElement());
+        if (para_curr->getNext() == nullptr) {
            _tail = curr;
-           curr->set_next(nullptr);
+           curr->setNext(nullptr);
         }
-        curr = curr->get_next();
-        para_curr = para_curr->get_next();
+        curr = curr->getNext();
+        para_curr = para_curr->getNext();
     }
     // curr at new _tail for caller.
     // Delete everything after...
     while (curr != nullptr) {
         delete curr;
-        curr = curr->get_next();
+        curr = curr->getNext();
     }
     // Cleanup: _count is equal, assign _tail, and delete dangling pointers.
     _count = para._count;
@@ -162,21 +162,21 @@ void DoublyLinkedList<T>::copy_calling_list_shorter(const DoublyLinkedList<T>& p
     DLLNode<T>* curr = _head;
     DLLNode<T>* para_curr = para._head;
     while (curr != nullptr) {
-        curr->set_element(para_curr->get_element());
-        curr = curr->get_next();
-        para_curr = para_curr->get_next();
+        curr->setElement(para_curr->getElement());
+        curr = curr->getNext();
+        para_curr = para_curr->getNext();
     }
     // Reset current to be at _tail.
     curr = _tail;
     // Second loop to create new nodes for remaining nodes of caller.
     while (para_curr != nullptr) {
-        curr->set_next(new DLLNode<T>(para_curr->get_element(), nullptr, curr));
-        curr = curr->get_next();
-        para_curr = para_curr->get_next();
+        curr->setNext(new DLLNode<T>(para_curr->getElement(), nullptr, curr));
+        curr = curr->getNext();
+        para_curr = para_curr->getNext();
     }
     // New _tail is next of current node.
     _tail = curr;
-    _tail->set_next(nullptr);
+    _tail->setNext(nullptr);
     _count = para._count;
     // Cleanup dangling pointers.
     curr = para_curr = nullptr;
@@ -215,7 +215,7 @@ T DoublyLinkedList<T>::front() const
     	throw std::out_of_range(
 			"Attempted to access the front element of an empty list.");
 	}
-	return _head->get_element();
+	return _head->getElement();
 }
 
 template <typename T>
@@ -225,18 +225,18 @@ T DoublyLinkedList<T>::back() const
     	throw std::out_of_range(
 			"Attempted to access the back element of an empty list.");
 	}
-	return _tail->get_element();
+	return _tail->getElement();
 }
 
 template <typename T>
-void DoublyLinkedList<T>::push_front(T element)
+void DoublyLinkedList<T>::pushFront(T element)
 {
 	if (empty()) {
 		_head = new DLLNode<T>(element);
 		_tail = _head;
 	} else {
 		DLLNode<T>* ptr = new DLLNode<T>(element, _head, nullptr);
-		_head->set_prev(ptr);
+		_head->setPrev(ptr);
 		_head = ptr;
 		ptr = nullptr;
 	}
@@ -245,7 +245,7 @@ void DoublyLinkedList<T>::push_front(T element)
 }
 
 template <typename T>
-T DoublyLinkedList<T>::pop_front()
+T DoublyLinkedList<T>::popFront()
 {
 	if (empty()) {
 		throw std::out_of_range("Attempted to pop an empty list.");
@@ -254,10 +254,10 @@ T DoublyLinkedList<T>::pop_front()
 	if (_head == _tail) {
 		clear();
 	} else {
-		DLLNode<T>* ptr = _head->get_next();
+		DLLNode<T>* ptr = _head->getNext();
 		delete _head;
 		_head = ptr;
-		_head->set_prev(nullptr);
+		_head->setPrev(nullptr);
 		--_count;
 		ptr = nullptr;
 	}
@@ -271,15 +271,15 @@ void DoublyLinkedList<T>::push_back(T element)
 		_head = new DLLNode<T>(element);
 		_tail = _head;
 	} else {
-		_tail->set_next(new DLLNode<T>(element, nullptr, _tail));
-		_tail = _tail->get_next();
+		_tail->setNext(new DLLNode<T>(element, nullptr, _tail));
+		_tail = _tail->getNext();
 	}
     // Increment _count, node has been added.
     ++_count;
 }
 
 template <typename T>
-T DoublyLinkedList<T>::pop_back()
+T DoublyLinkedList<T>::popBack()
 {
 	if (empty()) {
 		throw std::out_of_range("Attempted to pop an empty list.");
@@ -288,10 +288,10 @@ T DoublyLinkedList<T>::pop_back()
 	if (_head == _tail) {
 		clear();
 	} else {
-	DLLNode<T>* ptr = _tail->get_prev();
+	DLLNode<T>* ptr = _tail->getPrev();
 	delete _tail;
 	_tail = ptr;
-	_tail->set_next(nullptr);
+	_tail->setNext(nullptr);
 	--_count;
 	ptr = nullptr;
 	}
@@ -306,7 +306,7 @@ bool DoublyLinkedList<T>::insert(T element, int index)
 
 	// Insert at _head.
 	if (index == 0) {
-		push_front(element);
+		pushFront(element);
 		return true;
 	}
 
@@ -319,15 +319,15 @@ bool DoublyLinkedList<T>::insert(T element, int index)
 	DLLNode<T>* curr = _head;
 	int i = 0;
 	// We want to stop one before the index we want to insert, so we can 
-	// use set_next() to insert at that index.
+	// use setNext() to insert at that index.
 	while (++i != index) {
-		curr->get_next();
+		curr->getNext();
 	}
-	DLLNode<T>* curr_next = curr->get_next();
-	curr->set_next(new DLLNode<T>(element, curr_next, curr));
+	DLLNode<T>* curr_next = curr->getNext();
+	curr->setNext(new DLLNode<T>(element, curr_next, curr));
 	// Make sure curr_next isn't nullptr before trying to set prev for it.
 	if (curr_next != nullptr) {
-		curr_next->set_prev(curr->get_next());
+		curr_next->setPrev(curr->getNext());
 	}
 	++_count;
 	curr = curr_next = nullptr;
@@ -353,24 +353,24 @@ bool DoublyLinkedList<T>::remove(T element)
 		throw std::out_of_range("Attempted to remove from an empty list.");
 	}
 	// If node to delete is the head, don't loop.
-	if (_head->get_element() == element) {
+	if (_head->getElement() == element) {
 		DLLNode<T>* tmp = _head;
-		_head = tmp->get_next();
+		_head = tmp->getNext();
 		delete tmp;
 		tmp = nullptr;
 		--_count;
 	} else {
 		DLLNode<T>* curr = _head;
-		while (curr->get_next() != nullptr && 
-			curr->get_next()->get_element() != element) {
-			curr = curr->get_next();
+		while (curr->getNext() != nullptr && 
+			curr->getNext()->getElement() != element) {
+			curr = curr->getNext();
 		}
-		if (curr->get_next() == nullptr) {
+		if (curr->getNext() == nullptr) {
 			// At tail and element not found.
 			return false;
 		}
-		DLLNode<T>* tmp = curr->get_next();
-		curr->set_next(tmp->get_next());
+		DLLNode<T>* tmp = curr->getNext();
+		curr->setNext(tmp->getNext());
 		delete tmp;
 		tmp = nullptr;
 		--_count;
@@ -385,12 +385,12 @@ void DoublyLinkedList<T>::print() const
 		std::cout << "Empty list\n";
 	// Guard loop if there's only one element.
 	} else if (_head == _tail) {
-		std::cout << _head->get_element();
+		std::cout << _head->getElement();
 	} else {
 		DLLNode<T>* curr = _head;
 		while (curr != nullptr) {
-			std::cout << curr->get_element() << ", ";
-			curr = curr->get_next();
+			std::cout << curr->getElement() << ", ";
+			curr = curr->getNext();
 		}
 		curr = nullptr;
 	}
@@ -402,19 +402,19 @@ T DoublyLinkedList<T>::get(int index) const
 	index_out_of_range(index);
 	// Check _head.
 	if (index == 0) {
-		return _head->get_element();
+		return _head->getElement();
 	}
 	// Check _tail.
 	if (index == _count) {
-		return _tail->get_element();
+		return _tail->getElement();
 	}
 	// _head already checked, _tail already checked.
-	DLLNode<T>* curr = _head->get_next();
+	DLLNode<T>* curr = _head->getNext();
 	int i = 1;
 	while (i++ != index) {
-		curr = curr->get_next();
+		curr = curr->getNext();
 	}
-	return curr->get_element();
+	return curr->getElement();
 }
 
 template <typename T>
@@ -426,10 +426,10 @@ const DLLNode<T>* DoublyLinkedList<T>::find(T element) const
 	}
 	const DLLNode<T>* curr = _head;
 	while (curr != nullptr) {
-		if (curr->get_element() == element) {
+		if (curr->getElement() == element) {
 			return curr;
    		}
-		curr = curr->get_next();
+		curr = curr->getNext();
 	}
     return nullptr;
 }
@@ -447,7 +447,7 @@ void DoublyLinkedList<T>::clear()
 		DLLNode<T>* curr = _head;
 		DLLNode<T>* curr_next;
 		while (curr != nullptr) {
-			curr_next = curr->get_next();
+			curr_next = curr->getNext();
 			delete curr;
 			curr = curr_next;
 		}
