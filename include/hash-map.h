@@ -81,7 +81,7 @@ public:
 	 * ListPtr is a pointer to a SinglyLinkedList of HashNodes. HashMap has
 	 * exclusive ownership of any ListPtrs.
      */
-    typedef std::unique_ptr<DoublyLinkedList<HashNode<K, V>>> ListPtr;
+    typedef std::unique_ptr<SinglyLinkedList<HashNode<K, V>>> ListPtr;
 
 	/**
 	 * Default constructor.
@@ -219,4 +219,4 @@ private:
 	F _hash;
 };
 }
-#include "hash-map.tpp"
+#include "hash-map.cpp"

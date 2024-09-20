@@ -100,12 +100,15 @@ SLLNode<T>* SinglyLinkedList<T>::search(const T& element)
 	}
 	// Already checked head.
 	SLLNode<T> *curr = _head->getNext();
-	if (curr == nullptr) {
+	if (!curr) {
 		return nullptr;
+	}
+	if (curr->getElement() == element) {
+		return curr;
 	}
 	// General case:
 	SLLNode<T> *curr_next = _curr->getNext();
-	while (curr_next != nullptr) {
+	while (curr_next) {
 		if (curr_next->getElement() == element) {
 			return curr;
 		}
