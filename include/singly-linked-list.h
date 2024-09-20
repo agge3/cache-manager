@@ -42,23 +42,23 @@ private:
 	SLLNode* _next;
 };
 
-template <typename T>
-class SLLIterator : public Iterator<T> {
-public:
-	SLLIterator& operator++();
-	SLLIterator operator++(int);
-	T& operator*();
-	void add(const T& element);
-	void deleteIt(); // XXX TEMP NAME
-protected:
-	/**
-	* new and delete are protected so heap allocation is disallowed. Must be
-	* allocated on the stack, for RAII.
-	*/
-	explicit SLLIterator(SLLNode<T> node) : _node(node) {}
-private:
-	SLLNode<T> *_node;
-};
+//template <typename T>
+//class SLLIterator : public Iterator<T> {
+//public:
+//	SLLIterator& operator++() override;
+//	SLLIterator operator++(int) override;
+//	T& operator*() override;
+//	void add(const T& element) override;
+//	void deleteIt() override; // XXX TEMP NAME
+//protected:
+//	/**
+//	* new and delete are protected so heap allocation is disallowed. Must be
+//	* allocated on the stack, for RAII.
+//	*/
+//	explicit SLLIterator(SLLNode<T> node) : _node(node) {}
+//private:
+//	SLLNode<T> *_node;
+//};
 
 /**
 * @class SinglyLinkedList
@@ -97,7 +97,7 @@ public:
 	 */
 	SinglyLinkedList<T>& operator=(SinglyLinkedList<T>&& rhs) noexcept;
 
-	friend class SLLIterator<T>;
+	//friend class SLLIterator<T>;
 
 	/**
 	 * Overloaded ostream operator, '<<'.
@@ -114,7 +114,7 @@ public:
 	 *
 	 * @return T element The first element.
 	 */
-	T* front() const;
+	T front() const;
 
 	/**
 	 * Returns the first element of SinglyLinkedList and deletes it from the
@@ -160,7 +160,7 @@ public:
 	 * @return STTIterator<T> iterator An iterator pointing to the element, or
 	 * nullptr if not found.
 	 */
-	SLLIterator<T> find(const T& element);
+	T* find(const T& element);
 
 	/**
 	* Returns the size of SinglyLinkedList.
@@ -182,14 +182,14 @@ public:
 	 *
 	 * @return SLLIterator iterator An Iterator pointing to begin.
 	 */
-	SLLIterator<T> begin() const;
+	//SLLIterator<T> begin() const;
 
 	/**
 	 * Returns an Iterator pointing PAST the end (nullptr) of SinglyLinkedList.
 	 *
 	 * @return SLLIterator iterator An Iterator pointing to end.
 	 */
-	SLLIterator<T> end() const;
+	//SLLIterator<T> end() const;
 private:
 	/**
 	* Searches for an element and returns the Node before it. The element's node

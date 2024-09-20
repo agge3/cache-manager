@@ -40,6 +40,14 @@ struct Dataset {
 void node();
 
 /**
+* Unit tests for LinkedList.
+*
+* @credit OpenAI's ChatGPT
+* Prompt: "Write me test cases for this class, with no frameworks, in cpp."
+*/
+void linked_list();
+
+/**
 * Unit tests for SinglyLinkedList.
 *
 * @credit OpenAI's ChatGPT

@@ -15,37 +15,37 @@
 
 using namespace csc;
 
-template <typename T>
-SLLIterator<T>& SLLIterator<T>::operator++()
-{
-	if (_node) {
-		_node = _node->get_next();
-	}
-	return *this;
-}
-
-template <typename T>
-SLLIterator<T> SLLIterator<T>::operator++(int)
-{
-	SLLIterator tmp = *this;
-	++(*this);
-	return tmp;
-}
-
-template <typename T>
-T& SLLIterator<T>::operator*()
-{
-	if (!_node) {
-		throw std::out_of_range("Attempt to dereference nullptr iterator");
-	}
-	return _node->get_element();
-}
-
-template <typename T>
-void SLLIterator<T>::add(const T& element)
-{
-	_node->set_next(new SLLNode<T>(element, _node->get_next()));
-}
+//template <typename T>
+//SLLIterator<T>& SLLIterator<T>::operator++()
+//{
+//	if (_node) {
+//		_node = _node->get_next();
+//	}
+//	return *this;
+//}
+//
+//template <typename T>
+//SLLIterator<T> SLLIterator<T>::operator++(int)
+//{
+//	SLLIterator tmp = *this;
+//	++(*this);
+//	return tmp;
+//}
+//
+//template <typename T>
+//T& SLLIterator<T>::operator*()
+//{
+//	if (!_node) {
+//		throw std::out_of_range("Attempt to dereference nullptr iterator");
+//	}
+//	return _node->get_element();
+//}
+//
+//template <typename T>
+//void SLLIterator<T>::add(const T& element)
+//{
+//	_node->set_next(new SLLNode<T>(element, _node->get_next()));
+//}
 
 //template <typename T>
 //void SLLIterator<T>::deleteIt()
@@ -148,7 +148,7 @@ SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(SinglyLinkedList<T>&& rhs)
 }
 
 template <typename T>
-T* SinglyLinkedList<T>::front() const
+T SinglyLinkedList<T>::front() const
 {
 	if (empty()) {
 		return nullptr;
@@ -216,7 +216,7 @@ bool SinglyLinkedList<T>::contains(const T& element) const
 }
 
 template <typename T>
-SLLIterator<T> SinglyLinkedList<T>::find(const T& element)
+T* SinglyLinkedList<T>::find(const T& element)
 {
 	return search()->get_next();
 }
@@ -244,17 +244,17 @@ T* SinglyLinkedList<T>::pop_front()
 	return ptr;
 }
 
-template <typename T>
-SLLIterator<T> SinglyLinkedList<T>::begin() const
-{
-	return SLLIterator<T>(_head);
-}
-
-template <typename T>
-SLLIterator<T> SinglyLinkedList<T>::end() const
-{
-	return SLLIterator<T>(nullptr);
-}
+//template <typename T>
+//SLLIterator<T> SinglyLinkedList<T>::begin() const
+//{
+//	return SLLIterator<T>(_head);
+//}
+//
+//template <typename T>
+//SLLIterator<T> SinglyLinkedList<T>::end() const
+//{
+//	return SLLIterator<T>(nullptr);
+//}
 
 // xxx
 template <typename T>

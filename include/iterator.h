@@ -5,8 +5,8 @@ namespace csc {
 template <typename T>
 class Iterator {
 public:
-	virtual Iterator& operator++() = 0;
-	virtual Iterator operator++(int) = 0;
+	virtual Iterator<T>& operator++() = 0;
+	virtual Iterator<T> operator++(int) = 0;
 	virtual T& operator*() const = 0;
 	virtual void add(const T& element) = 0;
 	virtual void deleteIt() = 0; // TEMP XXX, delete is keyword

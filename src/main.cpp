@@ -4,5 +4,6 @@
 
 int main()
 {
-	test::singly_linked_list();
+	//test::linked_list();
+    test::singly_linked_list();
 }
