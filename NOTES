@@ -34,3 +34,6 @@ ing up on multi-core CPUs [11]."
 
 ## Challenges
 * Handling cache misses
+
+## On LRU queue
+Just switch the head pointers. No need to remove and push front
