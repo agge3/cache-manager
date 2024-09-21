@@ -13,6 +13,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <optional>
 
 /**
 * @namespace csc
@@ -38,8 +39,8 @@ public:
 	DLLNode* getPrev() const { return _prev; }
 
 	void setElement(const T& element) { _element = element; }
-	void setNext(Node *next) { _next = next; }
-	void setPrev(Node *prev) { _prev = prev; }
+	void setNext(DLLNode *next) { _next = next; }
+	void setPrev(DLLNode *prev) { _prev = prev; }
 private:
 	T _element;
 	DLLNode *_next;
@@ -108,26 +109,26 @@ public:
 	/**
 	 * Overloaded ostream operator, '<<'.
 	 */
-	friend ostream& operator<<(ostream& out, const DoublyLinkedList& dll) const;
+	//friend ostream& operator<<(ostream& out, const DoublyLinkedList& dll) const;
 
  	/**
 	 * Overloaded istream operator, '>>'.
 	 */
-	friend istream& operator>>(istream& in, DoublyLinkedList& dll) const;
+	//friend istream& operator>>(istream& in, DoublyLinkedList& dll) const;
 
 	/**
 	 * Returns the first element of DoublyLinkedList.
 	 *
 	 * @return T element The first element.
 	 */
-	T front() const;
+	std::optional<T> front() const;
 
 	/**
 	 * Returns the last element of DoublyLinkedList.
 	 *
 	 * @return T element The last element.
 	 */
-	T back() const;
+	std::optional<T> back() const;
 
 	/**
 	 * Returns the first element of DoublyLinkedList and removes it from the 
@@ -135,14 +136,7 @@ public:
 	 *
 	 * @return T element The first element.
 	 */
-	T popFront();
-
-	/**
-	 * Inserts an element at the beginning of DoublyLinkedList.
-	 *
-	 * @param T element The element to be inserted.
-	 */
-	void pushFront(const T& element);
+	std::optional<T> popFront();
 
 	/**
 	 * Returns the last element of DoublyLinkedList and removes it from the 
@@ -150,24 +144,40 @@ public:
 	 *
 	 * @return T element The last element.
 	 */
-	T popBack();
+	std::optional<T> popBack();
+
+	/**
+	 * Inserts an element at the beginning of DoublyLinkedList.
+	 *
+	 * @param T element The element to be inserted.
+	 */
+	const DLLNode<T>* pushFront(const T& element);
 
 	/**
 	 * Inserts an element at the end of DoublyLinkedList.
 	 *
 	 * @param T element The element to be inserted.
 	 */
-	void pushFront(const T& element);
+	const DLLNode<T>* pushBack(const T& element);
+
 
 	/**
 	 * Inserts an element after the DLLNode.
 	 *
 	 * @param T element The element to be inserted.
-	 * @param DLLNode<T> node The node to insert after.
+	 * @param DLLNode<T> *node The node to insert after.
 	 */
-	void insert(const T& element, DLLNode<T> *node);	
+	//void insert(const T& element, DLLNode<T> *node);	
 
-	T get(DLLNode<T> *node);
+	/**
+	 * Gets the element contained in the DLLNode.
+	 *
+	 * @param DLLNode<T> *node The node to get the element from.
+	 *
+	 * @return std::optional<T> element The element if the node wasn't nullptr, 
+	 * or no element for a nullptr node.
+	 */
+	std::optional<T> get(DLLNode<T> *node);
 
 	/**
 	 * Removes an element from DoublyLinkedList.
@@ -186,7 +196,7 @@ public:
 	 *
 	 * @return TRUE, the node was removed; FALSE, the node was not in the list.
 	 */
-	bool remove(DLLNode<T> *node);
+	bool removeAndPushFront(const DLLNode<T> *node);
 
 	/**
 	 * Checks if DoublyLinkedList contains an element.
@@ -233,6 +243,11 @@ public:
 	*/
 	bool empty() const;
 
+	/**
+	* Clears all DoublyLinkedList's DLLNodes and deallocates their memory.
+	*/
+	void clear();
+
 	/** 
 	 * Returns an Iterator pointing to the beginning (first element) of 
 	 * DoublyLinkedList.
@@ -258,16 +273,13 @@ private:
 	* Searches for an element and returns the Node before it. The element's node
 	* can be accessed by getNext().
 	*/
-	DLLNode<T>* search(const T& element);
+	const DLLNode<T>* search(const T& element) const;
 
-	/**
-	* Clears all SinglyLinkedList's Nodes and deallocates their memory.
-	*/
-	void clear();
+
 
 	DLLNode<T> *_head;
 	DLLNode<T> *_tail;
 	std::size_t _size;
 };
 }
-#include "doubly-linked-list.tpp"
+#include "doubly-linked-list.cpp"

@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "iterator.h"
+//#include "iterator.h"
 
 #include <cstddef>
 #include <iostream>
@@ -32,11 +32,11 @@ public:
 	SLLNode(const T& element) : _element(element), _next(nullptr) {}
 	SLLNode(const T& element, SLLNode* next) : _element(element), _next(next) {}
 
-	T get_element() const { return _element; }
-	SLLNode* get_next() const { return _next; }
+	T getElement() const { return _element; }
+	SLLNode* getNext() const { return _next; }
 
-	void set_element(const T& element) { _element = element; }
-	void set_next(SLLNode* next) { _next = next; }
+	void setElement(const T& element) { _element = element; }
+	void setNext(SLLNode* next) { _next = next; }
 private:
 	T _element;
 	SLLNode* _next;
@@ -134,30 +134,41 @@ public:
 	 *
 	 * @return T element The first element.
 	 */
-	T pop_front();
-
-	void push_front(const T& element);
-	void push_back(const T& element);
+	T popFront();
 
 	/**
-	 * Adds a new element at the beginning of SinglyLinkedList.
+	 * Inserts an element at the beginning of SinglyLinkedList.
 	 *
-	 * @param T element The element to be added.
-	 * @param Node, the node the element will get inserted after
+	 * @param T element The element to be inserted.
 	 */
-	void insert(const T& element, SLLNode<T>* node);
+	void pushFront(const T& element);
 
 	/**
-	 * Searches for a node with the specified element and deletes it from the
+	 * Inserts a new element after the node.
+	 *
+	 * @param T element The element to be inserted.
+	 * @param SLLNode *node The node the element will be inserted after.
+	 */
+	void insert(const T& element, SLLNode<T> *node);
+
+	/**
+	 * Removes an element from SinglyLinkedList.
+	 *
+	 * @param T element The element to be removed.
+	 *
+	 * @return TRUE, the element was removed; FALSE, the element was not in the
 	 * list.
-	 *
-	 * @param T element The element to be deleted.
-	 *
-	 * @return TRUE if deleted; FALSE if not deleted.
 	 */
 	bool remove(const T& element);
 
-	//bool remove(SLLNode<T>* node);
+	/**
+	 * Removes a SLLNode from SinglyLinkedList.
+	 *
+	 * @param DLLNode<T> *node The node to be removed.
+	 *
+	 * @return TRUE, the node was removed; FALSE, the node was not in the list.
+	 */
+	bool remove(SLLNode<T> *node);
 
 	/**
 	 * Checks if SinglyLinkedList contains an element.
@@ -169,7 +180,15 @@ public:
 	 */
 	bool contains(const T& element) const;
 
-	//bool contains(SLLNode<T>* node) const;
+	/**
+	 * Checks if SinglyLinkedList contains a SLLNode.
+	 *
+	 * @param T node The node to check for.
+	 *
+	 * @return TRUE, the list contains the node; FALSE, the list does not 
+	 * contain the node.
+	 */	
+	bool contains(SLLNode<T> *node) const;
 
 	/**
 	 * Finds an element and returns an Iterator to it, or nullptr if the element
@@ -212,13 +231,13 @@ public:
 	//SLLIterator<T> end() const;
 private:
 	/**
-	* Searches for an element and returns the Node before it. The element's node
-	* can be accessed by get_next().
+	* Searches for an element and returns the SLLNode before it. The element's 
+	* node can be accessed by getNext().
 	*/
 	SLLNode<T>* search(const T& element) const;
 
 	/**
-	* Clears all SinglyLinkedList's Nodes and deallocates their memory.
+	* Clears all SinglyLinkedList's SLLNodes and deallocates their memory.
 	*/
 	void clear();
 

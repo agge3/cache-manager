@@ -6,17 +6,10 @@
  * @version 1.0
  * @since 2024-08-30
  *
- * Namespace for running tests.
+ * Namespace for test cases.
  */
 
 #pragma once
-
-namespace csc {
-	template <typename T>
-	class Node;
-	template <typename T>
-	class LinkedList;
-}
 
 namespace test {
 
@@ -45,7 +38,7 @@ void node();
 * @credit OpenAI's ChatGPT
 * Prompt: "Write me test cases for this class, with no frameworks, in cpp."
 */
-void linked_list();
+void doublyLinkedList();
 
 /**
 * Unit tests for HashMap.
