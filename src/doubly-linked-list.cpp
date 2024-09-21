@@ -328,9 +328,9 @@ std::optional<T> DoublyLinkedList<T>::popBack()
 //}
 
 template <typename T>
-std::optional<T> DoublyLinkedList<T>::get(DLLNode<T> *node)
+std::optional<T> DoublyLinkedList<T>::get(const DLLNode<T> *ptr)
 {
-	return node ? std::optional<T>(node->getElement()) : std::nullopt;
+	return ptr ? std::optional<T>(ptr->getElement()) : std::nullopt;
 }
 
 template <typename T>
@@ -443,9 +443,10 @@ bool DoublyLinkedList<T>::contains(const T& element) const
 }
 
 template <typename T>
-bool DoublyLinkedList<T>::contains(DLLNode<T> *node) const
+bool DoublyLinkedList<T>::contains(const DLLNode<T> *ptr) const
 {
-	return node;
+	// xxx might be a better way
+	return search(ptr->getElement());
 }
 
 template <typename T>

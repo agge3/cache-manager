@@ -177,7 +177,7 @@ public:
 	 * @return std::optional<T> element The element if the node wasn't nullptr, 
 	 * or no element for a nullptr node.
 	 */
-	std::optional<T> get(DLLNode<T> *node);
+	std::optional<T> get(const DLLNode<T> *ptr);
 
 	/**
 	 * Removes an element from DoublyLinkedList.
@@ -196,7 +196,7 @@ public:
 	 *
 	 * @return TRUE, the node was removed; FALSE, the node was not in the list.
 	 */
-	bool removeAndPushFront(const DLLNode<T> *node);
+	bool removeAndPushFront(const DLLNode<T> *ptr);
 
 	/**
 	 * Checks if DoublyLinkedList contains an element.
@@ -216,7 +216,7 @@ public:
 	 * @return TRUE, the list contains the node; FALSE, the list does not 
 	 * contain the node.
 	 */
-	bool contains(DLLNode<T> *node) const;
+	bool contains(const DLLNode<T> *ptr) const;
 
 	/**
 	 * Finds an element and returns an Iterator to it, or nullptr if the element 
