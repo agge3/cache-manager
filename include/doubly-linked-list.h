@@ -13,6 +13,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <iterator>
 #include <optional>
 
 /**
@@ -22,7 +23,7 @@
 namespace csc {
 
 /**
-* @class DLLNode
+* @class DLLNode<T>
 * DoublyLinkedList Node.
 */
 template <typename T>
@@ -34,7 +35,7 @@ public:
 		_element(element), _next(next), _prev(prev) {}
 	~DLLNode() {}
 
-	T getElement() const { return _element; }
+	const T& getElement() const { return _element; }
 	DLLNode* getNext() const { return _next; }
 	DLLNode* getPrev() const { return _prev; }
 
@@ -47,27 +48,37 @@ private:
 	DLLNode *_prev;
 };
 
-// xxx revisit iterator after implementation
-//template <typename T>
-//class DLLIterator : public csc::Iterator<T> {
-//public:
-//	DLLIterator& operator++();
-//	DLLIterator operator++(int);
-//	T& operator*() const;
-//	void add(const T& element);
-//	void delete();
-//protected:
-//	/**
-//	* new and delete are protected so heap allocation is disallowed. Must be 
-//	* allocated on the stack, for RAII.
-//	*/
-//	explicit DLLIterator(DLLNode<T> node) : _node(node) {}
-//private:
-//	DLLNode<T> *_node;
-//};
+/**
+ * @class DLLIterator<T>
+ * DoublyLinkedList Iterator.
+ */
+template <typename T>
+class DLLIterator {
+public:
+	using iterator_category = std::bidirectional_iterator_tag;
+	using value_type = T;
+	using difference_type = std::ptrdiff_t;
+	using pointer = T*;
+	using reference = T&;
+	using const_reference = const T&;
+
+	explicit DLLIterator(DLLNode<T> *node) : _node(node) {}
+
+	const_reference operator*();
+	pointer operator->();
+	DLLIterator& operator++();
+	DLLIterator operator++(int);
+    DLLIterator& operator--();
+    DLLIterator operator--(int);
+    bool operator==(const DLLIterator& other) const;
+    bool operator!=(const DLLIterator& other) const;
+protected:
+private:
+	DLLNode<T> *_node;
+};
 
 /**
-* @class DoublyDoublyLinkedList
+* @class DoublyLinkedList<T>
 * DoublyLinkedList, specialized as a Queue to be used for keeping track of order 
 * in LRU CacheManager.
 */
@@ -104,7 +115,10 @@ public:
 	 */
 	DoublyLinkedList<T>& operator=(DoublyLinkedList<T>&& rhs) noexcept;
 
-	//friend class DLLIterator<T>;
+	/**
+	 * Friend declaration of DLLIterator.
+	 */
+	friend class DLLIterator<T>;
 
 	/**
 	 * Overloaded ostream operator, '<<'.
@@ -178,6 +192,8 @@ public:
 	 * or no element for a nullptr node.
 	 */
 	std::optional<T> get(const DLLNode<T> *ptr);
+	
+	const DLLNode<T>* get(const T& element);
 
 	/**
 	 * Removes an element from DoublyLinkedList.
@@ -254,7 +270,7 @@ public:
 	 *
 	 * @return DLLIterator iterator An Iterator pointing to begin.
 	 */
-	//DLLIterator<T> begin() const;
+	DLLIterator<T> begin() const;
 
 	/** 
 	 * Returns an Iterator pointing to the end (last element) of 
@@ -262,7 +278,7 @@ public:
 	 *
 	 * @return DLLIterator iterator An Iterator pointing to end.
 	 */
-	//DLLIterator<T> end() const;
+	DLLIterator<T> end() const;
 private:
 	void copyCallingListEmpty(const DoublyLinkedList<T>& other);
 	void copyListsSameLength(const DoublyLinkedList<T>& other);
@@ -274,8 +290,6 @@ private:
 	* can be accessed by getNext().
 	*/
 	const DLLNode<T>* search(const T& element) const;
-
-
 
 	DLLNode<T> *_head;
 	DLLNode<T> *_tail;
