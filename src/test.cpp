@@ -12,11 +12,19 @@
 #include "doubly-linked-list.h"
 
 #include <iostream>
+#include <fstream>
+#include <streambuf>
 #include <memory>
 #include <cassert>
 #include <vector>
 #include <random>
 #include <algorithm>
+
+#ifdef _WIN32
+#define NULL_DEVICE "NUL:"
+#else
+#define NULL_DEVICE "/dev/null"
+#endif
 
 using namespace csc;
 
@@ -55,9 +63,9 @@ void test::doublyLinkedList()
 
         // Test empty list.
         assert(list->empty());
-        std::cout << "[x] empty() tests passed.\n";
+        std::cout << "[✓] empty() tests passed.\n";
         assert(list->size() == 0);
-        std::cout << "[x] size() tests passed.\n";
+        std::cout << "[✓] size() tests passed.\n";
 
         // Test pushFront() with random values.
         for (int i = 0; i < 10; ++i) {
@@ -66,16 +74,17 @@ void test::doublyLinkedList()
             assert(list->front() == value); // New front should be the last pushed.
             assert(list->size() == i + 1);
         }
-        std::cout << "[x] pushFront() tests passed.\n";
+        std::cout << "[✓] pushFront() tests passed.\n";
 
         // Test pushBack() with random values.
+		auto size = list->size();
         for (int i = 0; i < 10; ++i) {
             int value = randomValue();
             list->pushBack(value);
             assert(list->back() == value); // New back should be the last pushed.
-            assert(list->size() == 20 + i + 1);
+            assert(list->size() == size + i + 1);
         }
-        std::cout << "[x] pushBack() tests passed.\n";
+        std::cout << "[✓] pushBack() tests passed.\n";
 
         // Test contains() and get() for all inserted values.
 		// xxx iterator
@@ -116,7 +125,7 @@ void test::doublyLinkedList()
             assert(list->size() >= 0); // Ensure size is valid.
             // Check that front has been removed and size is decremented.
         }
-        std::cout << "[x] popFront() tests passed.\n";
+        std::cout << "[✓] popFront() tests passed.\n";
 
         // Test popBack().
         // Reinsert values for popBack tests.
@@ -130,7 +139,7 @@ void test::doublyLinkedList()
             assert(list->size() >= 0); // Ensure size is valid.
             // Check that back has been removed and size is decremented.
         }
-        std::cout << "[x] popBack() tests passed.\n";
+        std::cout << "[✓] popBack() tests passed.\n";
 
         // Test clear.
         // Clear the list and ensure it's empty.
@@ -140,7 +149,7 @@ void test::doublyLinkedList()
         list->clear();
         assert(list->empty());
         assert(list->size() == 0);
-        std::cout << "[x] clear() tests passed.\n";
+        std::cout << "[✓] clear() tests passed.\n";
 
         // Test removeAndPushFront().
 	    for (int i = 0; i < 10; ++i) {
@@ -164,26 +173,27 @@ void test::doublyLinkedList()
 		const DLLNode<int> *ptr2 = list->pushBack(rand);
 		list->removeAndPushFront(ptr2);
 		assert(*list->front() == rand);
+	    std::cout << "[✓] removeAndPushFront() tests passed.\n";
 
         // Test copy constructor.
         auto listCopy = std::make_unique<DoublyLinkedList<int>>(*list);
         assert(*listCopy->front() == *list->front());
         assert(listCopy->size() == list->size());
-        std::cout << "[x] Copy constructor tests passed.\n";
+        std::cout << "[✓] Copy constructor tests passed.\n";
 
         // Test copy assignment operator.
         auto listAssigned = std::make_unique<DoublyLinkedList<int>>();
         *listAssigned = *list;
         assert(*listAssigned->front() == *list->front());
         assert(listAssigned->size() == list->size());
-        std::cout << "[x] Copy assignment operator tests passed.\n";
+        std::cout << "[✓] Copy assignment operator tests passed.\n";
 
         // Test move constructor.
         auto listMoved = std::make_unique<DoublyLinkedList<int>>(std::move(*list));
         assert(listMoved->size() == listAssigned->size());
         assert(*listMoved->front() == *listAssigned->front());
         assert(list->empty()); // Ensure original list is empty.
-        std::cout << "[x] Move constructor tests passed.\n";
+        std::cout << "[✓] Move constructor tests passed.\n";
 
         // Test move assignment operator.
         auto listMovedAssign = std::make_unique<DoublyLinkedList<int>>();
@@ -191,19 +201,19 @@ void test::doublyLinkedList()
         assert(listMovedAssign->size() == listMoved->size());
         assert(*listMovedAssign->front() == *listMoved->front());
         assert(listAssigned->empty()); // Ensure original list is empty.
-        std::cout << "[x] Move assignment operator tests passed.\n";
+        std::cout << "[✓] Move assignment operator tests passed.\n";
 
         // Test destructors.
         list.reset();
-        std::cout << "[x] Destructor tests passed.\n";
+        std::cout << "[✓] Destructor tests passed.\n";
         listCopy.reset();
-        std::cout << "[x] Copy constructor destructor tests passed.\n";
+        std::cout << "[✓] Copy constructor destructor tests passed.\n";
         listAssigned.reset();
-        std::cout << "[x] Copy assignment operator destructor tests passed.\n";
+        std::cout << "[✓] Copy assignment operator destructor tests passed.\n";
         listMoved.reset();
-        std::cout << "[x] Move constructor destructor tests passed.\n";
+        std::cout << "[✓] Move constructor destructor tests passed.\n";
         listMovedAssign.reset();
-        std::cout << "[x] Move assignment operator destructor tests passed.\n";
+        std::cout << "[✓] Move assignment operator destructor tests passed.\n";
     };
 
 	auto testString = []() {
@@ -241,9 +251,9 @@ void test::doublyLinkedList()
 	
 	    // Test empty list.
 	    assert(list->empty());
-	    std::cout << "empty() passed.\n";
+	    std::cout << "[✓] empty() tests passed.\n";
 	    assert(list->size() == 0);
-	    std::cout << "size() passed.\n";
+	    std::cout << "[✓] size() tests passed.\n";
 	
 	    // Test pushFront() with random strings.
 	    for (int i = 0; i < 10; ++i) {
@@ -252,16 +262,17 @@ void test::doublyLinkedList()
 	        assert(list->front() == value); // New front should be the last pushed.
 	        assert(list->size() == i + 1);
 	    }
-	    std::cout << "[x] pushFront() tests passed.\n";
+	    std::cout << "[✓] pushFront() tests passed.\n";
 	
 	    // Test pushBack() with random strings.
+		auto size = list->size();
 	    for (int i = 0; i < 10; ++i) {
 	        std::string value = randomString();
 	        list->pushBack(value);
 	        assert(list->back() == value); // New back should be the last pushed.
-	        assert(list->size() == 20 + i + 1);
+	        assert(list->size() == size + i + 1);
 	    }
-	    std::cout << "[x] pushBack() tests passed.\n";
+	    std::cout << "[✓] pushBack() tests passed.\n";
 	
 	    // Test contains() and get() for all inserted values.
 		// xxx iterator
@@ -287,7 +298,7 @@ void test::doublyLinkedList()
 	    //    assert(!list->contains(value)); // Check that it's no longer in the list.
 	    //    assert(list->size() >= 0); // Ensure size is valid.
 	    //}	
-	    std::cout << "[x] remove() tests passed.\n";
+	    std::cout << "[✓] remove() tests passed.\n";
 	
 	    // Test popFront().
 	    for (int i = 0; i < 5; ++i) {
@@ -300,7 +311,7 @@ void test::doublyLinkedList()
 	        assert(list->size() >= 0); // Ensure size is valid.
 	        // Check that front has been removed and size is decremented.
 	    }
-	    std::cout << "[x] popFront() tests passed.\n";
+	    std::cout << "[✓] popFront() tests passed.\n";
 	
 	    // Test popBack().
 	    // Reinsert values for popBack tests.
@@ -314,7 +325,7 @@ void test::doublyLinkedList()
 	        assert(list->size() >= 0); // Ensure size is valid.
 	        // Check that back has been removed and size is decremented.
 	    }
-	    std::cout << "[x] popBack() tests passed.\n";
+	    std::cout << "[✓] popBack() tests passed.\n";
 	
 	    // Test clear.
 	    // Clear the list and ensure it's empty.
@@ -324,7 +335,7 @@ void test::doublyLinkedList()
 	    list->clear();
 	    assert(list->empty());
 	    assert(list->size() == 0);
-	    std::cout << "[x] clear() tests passed.\n";
+	    std::cout << "[✓] clear() tests passed.\n";
 	
 	    // Test removeAndPushFront().
 	    for (int i = 0; i < 10; ++i) {
@@ -351,26 +362,27 @@ void test::doublyLinkedList()
 	    const DLLNode<std::string> *ptr2 = list->pushBack(randStr);
 	    list->removeAndPushFront(ptr2);
 	    assert(*list->front() == randStr);
+	    std::cout << "[✓] removeAndPushFront() tests passed.\n";
 	
 	    // Test copy constructor.
 	    auto listCopy = std::make_unique<DoublyLinkedList<std::string>>(*list);
 	    assert(*listCopy->front() == *list->front());
 	    assert(listCopy->size() == list->size());
-	    std::cout << "[x] Copy constructor tests passed.\n";
+	    std::cout << "[✓] Copy constructor tests passed.\n";
 	
 	    // Test copy assignment operator.
 	    auto listAssigned = std::make_unique<DoublyLinkedList<std::string>>();
 	    *listAssigned = *list;
 	    assert(*listAssigned->front() == *list->front());
 	    assert(listAssigned->size() == list->size());
-	    std::cout << "[x] Copy assignment operator tests passed.\n";
+	    std::cout << "[✓] Copy assignment operator tests passed.\n";
 	
 	    // Test move constructor.
 	    auto listMoved = std::make_unique<DoublyLinkedList<std::string>>(std::move(*list));
 	    assert(listMoved->size() == listAssigned->size());
 	    assert(*listMoved->front() == *listAssigned->front());
 	    assert(list->empty()); // Ensure original list is empty.
-	    std::cout << "[x] Move constructor tests passed.\n";
+	    std::cout << "[✓] Move constructor tests passed.\n";
 	
 	    // Test move assignment operator.
 	    auto listMovedAssign = std::make_unique<DoublyLinkedList<std::string>>();
@@ -378,31 +390,49 @@ void test::doublyLinkedList()
 	    assert(listMovedAssign->size() == listMoved->size());
 	    assert(*listMovedAssign->front() == *listMoved->front());
 	    assert(listAssigned->empty()); // Ensure original list is empty.
-	    std::cout << "[x] Move assignment operator tests passed.\n";
+	    std::cout << "[✓] Move assignment operator tests passed.\n";
 	
         // Test destructors.
         list.reset();
-        std::cout << "[x] Destructor tests passed.\n";
+        std::cout << "[✓] Destructor tests passed.\n";
         listCopy.reset();
-        std::cout << "[x] Copy constructor destructor tests passed.\n";
+        std::cout << "[✓] Copy constructor destructor tests passed.\n";
         listAssigned.reset();
-        std::cout << "[x] Copy assignment operator destructor tests passed.\n";
+        std::cout << "[✓] Copy assignment operator destructor tests passed.\n";
         listMoved.reset();
-        std::cout << "[x] Move constructor destructor tests passed.\n";
+        std::cout << "[✓] Move constructor destructor tests passed.\n";
         listMovedAssign.reset();
-        std::cout << "[x] Move assignment operator destructor tests passed.\n";
+        std::cout << "[✓] Move assignment operator destructor tests passed.\n";
 	};	
 
+	std::cout << "Test Summary:\n";
+	std::cout << "int unit tests:\n";
 	testInt();
-    std::cout << "[x] int tests passed!\n";
+    std::cout << "int unit tests passed!\n\n";
+
+	std::cout << "std::string unit tests:\n";
 	testString();
-    std::cout << "[x] String tests passed!\n";
+    std::cout << "std::string unit tests passed!\n\n";
+
+	std::cout << "Stress tests:\n";
 	std::cout << "Stress testing...\n";
+
+	// Redirect std::cout to null.
+	std::ofstream out(NULL_DEVICE);
+	// Save original buffer.
+    std::streambuf* buf = std::cout.rdbuf();
+    std::cout.rdbuf(out.rdbuf());
+
+	// Run stress tests with output silenced.
 	for (auto i = 0; i < 100; ++i) {
 		testInt();
 		testString();
 	}
-	std::cout << "[x] Stress tests passed! 100 iterations." << std::endl;
+
+	// Restore original buffer.
+    std::cout.rdbuf(buf);
+
+	std::cout << "Stress tests passed! 100 random iterations." << std::endl;
 }
 
 /**
@@ -411,91 +441,6 @@ void test::doublyLinkedList()
 * @credit OpenAI's ChatGPT
 * Prompt: "Write me test cases for this class, with no frameworks, in cpp."
 */
-//void test::hash_map()
+//void test::hashMap()
 //{
-//    // Create a HashMap instance
-//    HashMap map;
-//
-//    // Test empty map
-//    assert(map.empty() == true);
-//    assert(map.size() == 0);
-//
-//    // Test insertion
-//    map.insert(1, 100);
-//    assert(map.size() == 1);
-//    assert(map.contains_key(1) == true);
-//    assert(map.contains_value(100) == true);
-//
-//    // Test get value
-//    assert(map.get(1) == 100);
-//
-//    // Test insertion of another element
-//    map.insert(2, 200);
-//    assert(map.size() == 2);
-//    assert(map.contains_key(2) == true);
-//    assert(map.contains_value(200) == true);
-//
-//    // Test replacing a value
-//    map.replace(1, 150);
-//    assert(map.get(1) == 150);
-//
-//    // Test replace with old_value match
-//    map.replace(2, 200, 250);
-//    assert(map.get(2) == 250);
-//    assert(map.contains_value(200) == false);
-//
-//    // Test remove by key
-//    assert(map.remove(1) == 150);
-//    assert(map.contains_key(1) == false);
-//    assert(map.size() == 1);
-//
-//    // Test remove by key and value
-//    map.insert(3, 300);
-//    map.insert(4, 300); // Adding duplicate value
-//    assert(map.remove(4, 300) == true);
-//    assert(map.contains_key(4) == false);
-//    assert(map.contains_value(300) == true);
-//    assert(map.size() == 2); // size should be 2 after removing one element
-//
-//    // Test clear
-//    map.clear();
-//    assert(map.empty() == true);
-//    assert(map.size() == 0);
-//
-//    // Test remove from empty map
-//    try {
-//        map.remove(10);
-//        std::cerr << "Expected exception not thrown\n";
-//    } catch (...) {
-//        // Expected behavior
-//    }
-//
-//    try {
-//        map.get(10);
-//        std::cerr << "Expected exception not thrown\n";
-//    } catch (...) {
-//        // Expected behavior
-//    }
-//
-//    try {
-//        map.remove(10, 100);
-//        std::cerr << "Expected exception not thrown\n";
-//    } catch (...) {
-//        // Expected behavior
-//    }
-//
-//    // Test move operations (if implemented)
-//    HashMap map2;
-//    map2.insert(5, 500);
-//    HashMap map3(std::move(map2));
-//    assert(map3.get(5) == 500);
-//    assert(map2.empty() == true);
-//
-//    HashMap map4;
-//    map4.insert(6, 600);
-//    map4 = std::move(map3);
-//    assert(map4.get(5) == 500);
-//    assert(map3.empty() == true);
-//
-//    std::cout << "All tests passed!" << std::endl;
 //}
