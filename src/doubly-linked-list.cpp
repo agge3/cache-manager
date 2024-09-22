@@ -407,33 +407,26 @@ std::optional<T> DoublyLinkedList<T>::get(const DLLNode<T> *ptr)
 template <typename T>
 bool DoublyLinkedList<T>::remove(const T& element)
 {
-	// Only delete if list has nodes.
+	// Only remove if list has nodes.
 	if (empty()) {
 		return false;
 	}
-	// If node to delete is the head, don't loop.
+
+	// Handle head and tail.
 	if (_head->getElement() == element) {
-		DLLNode<T> *tmp = _head;
-		_head = _head->getNext();
-		delete tmp;
-		tmp = nullptr;
-		--_size;
-	} else {
-		DLLNode<T>* curr = _head;
-		// xxx avoid function calls in a loop parameter
-		while (curr->getNext() && curr->getNext()->getElement() != element) {
-			curr = curr->getNext();
-		}
-		if (!curr->getNext()) {
-			// At tail and element not found.
-			return false;
-		}
-		DLLNode<T> *tmp = curr->getNext();
-		curr->setNext(tmp->getNext());
-		delete tmp;
-		tmp = nullptr;
-		--_size;
+		popFront();
+		return true;
+	} else if (_tail->getElement() == element) {
+		popBack();
+		return true;
 	}
+
+	// General case:
+	DLLNode<T> *node = const_cast<DLLNode<T>*>(search(element));
+	node->getNext()->setPrev(node->getPrev());
+	node->getPrev()->setNext(node->getNext());
+	delete node;
+	node = nullptr;
 	return true;
 }
 

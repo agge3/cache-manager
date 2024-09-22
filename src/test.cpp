@@ -104,11 +104,10 @@ void test::doublyLinkedList()
 	    std::shuffle(values.begin(), values.end(), generator);
 	    
 	    for (const auto& value : values) {
-			// xxx remove segfaulting
-	        //bool removed = list->remove(value);
-	        //assert(removed); // Ensure the value was removed.
-			//std::cout << value << "\n";
-	        //assert(!list->contains(value)); // Check that it's no longer in the list.
+			assert(list->contains(value));
+	        bool removed = list->remove(value);
+	        assert(removed); // Ensure the value was removed.
+	        assert(!list->contains(value)); // Check that it's no longer in the list.
 	        assert(list->size() >= 0); // Ensure size is valid.
 	    }	
 	    std::cout << "[✓] remove() tests passed.\n";
@@ -293,10 +292,10 @@ void test::doublyLinkedList()
 	    std::shuffle(values.begin(), values.end(), generator);
 	    
 	    for (const auto& value : values) {
-			// xxx remove segfaulting
-	        //bool removed = list->remove(value);
-	        //assert(removed); // Ensure the value was removed.
-	        assert(list->contains(value)); // Check that it's no longer in the list.
+			assert(list->contains(value));
+	        bool removed = list->remove(value);
+	        assert(removed); // Ensure the value was removed.
+	    	assert(!list->contains(value)); // Check that it's no longer in the list.
 	        assert(list->size() >= 0); // Ensure size is valid.
 	    }	
 	    std::cout << "[✓] remove() tests passed.\n";
