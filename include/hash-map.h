@@ -163,18 +163,11 @@ public:
 	bool remove(const K& key, const V& value);
 
 	/**
-	 * Gets the value (a copy) associated with the key.
+	 * Gets the value associated with the key.
 	 *
 	 * @param K key The key to get the value.
 	 */
-	V get(const K& key) const;
-
-	/**
-	 * Gets a pointer (a reference) to the value associated with the key.
-	 *
-	 * @param K key The key to get the value.
-	 */
-	V* get(const K& key) const;
+	std::optional<V> get(const K& key) const;
 
 	/**
 	 * Checks whether HashMap contains the key.
@@ -214,7 +207,7 @@ private:
 	constexpr std::size_t TABLE_BUCKETS = 16;	// Power of two for DJR % 2^k.
 
 	std::size_t _buckets;		
-	ListPtr[] _table;
+	ListPtr *_table;
 	std::size_t _size;
 	F _hash;
 };
