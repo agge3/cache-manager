@@ -184,8 +184,8 @@ void DoublyLinkedList<T>::copyCallingListEmpty(
 	// Create _head for caller.
 	_head = new DLLNode<T>(other._head->getElement());
 	// curr at _head, otherCurr at other _head
-	DLLNode<T>* curr = _head;
-	DLLNode<T>* otherCurr = other._head;
+	DLLNode<T> *curr = _head;
+	DLLNode<T> *otherCurr = other._head;
 	// Loop through all other list nodes and create for caller list.
 	for (int i = 1; i < _size; ++i) {
 	    otherCurr = otherCurr->getNext();

@@ -129,7 +129,8 @@ TEST(SinglyLinkedListTest, EdgeCases) {
     EXPECT_EQ(list.size(), 5);
 }
 
-TEST(SinglyLinkedListTest, BigFive) {
+TEST(SLLBigFive, CopyConstructor)
+{
     SinglyLinkedList<int> list;
     for (int i = 0; i < 10; ++i) {
         list.pushFront(i);
@@ -141,13 +142,28 @@ TEST(SinglyLinkedListTest, BigFive) {
     for (int i = 0; i < 10; ++i) {
         EXPECT_TRUE(copyList.contains(i));
     }
+}
 
+TEST(SLLBigFive, CopyAssignment) {
     // Copy assignment
+	SinglyLinkedList<int> list;
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(i);
+    }
+
     SinglyLinkedList<int> assignedList;
-    assignedList = copyList;
-    EXPECT_EQ(assignedList.size(), copyList.size());
+    assignedList = list;
+    EXPECT_EQ(assignedList.size(), list.size());
     for (int i = 0; i < 10; ++i) {
         EXPECT_TRUE(assignedList.contains(i));
+    }
+}
+
+TEST(SLLBigFive, MoveConstructor)
+{
+	SinglyLinkedList<int> list;
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(i);
     }
 
     // Move constructor
@@ -156,14 +172,22 @@ TEST(SinglyLinkedListTest, BigFive) {
     EXPECT_TRUE(movedList.contains(0));
     EXPECT_TRUE(movedList.contains(9));
     EXPECT_TRUE(list.isEmpty()); // Original list should be empty
+}
+
+TEST(SLLBigFive, MoveAssignment)
+{
+	SinglyLinkedList<int> list;
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(i);
+    }
 
     // Move assignment
     SinglyLinkedList<int> anotherList;
-    anotherList = std::move(movedList);
+    anotherList = std::move(list);
     EXPECT_EQ(anotherList.size(), 10);
     EXPECT_TRUE(anotherList.contains(0));
     EXPECT_TRUE(anotherList.contains(9));
-    EXPECT_TRUE(movedList.isEmpty()); // Moved list should be empty
+    EXPECT_TRUE(list.isEmpty()); // Moved list should be empty
 }
 
 TEST(SinglyLinkedListTest, StressTest) {

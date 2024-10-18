@@ -65,17 +65,15 @@ SinglyLinkedList<T>::SinglyLinkedList(const SinglyLinkedList<T>& other)
 {
     if (!other.isEmpty()) {
         _size = other._size;
-        _head = new SLLNode<T>(other._head->getElement(),
-                               other._head->getNext());
-        SLLNode<T>* curr = _head->getNext();
-        SLLNode<T>* other_curr = _head->getNext();
-        while(other_curr != nullptr) {
-            curr->setNext(new SLLNode<T>(other_curr->getElement(),
-                           other_curr->getNext()));
-            other_curr = other_curr->getNext();
+        _head = new SLLNode<T>(other._head->getElement());
+        SLLNode<T> *curr = _head;
+        SLLNode<T> *otherCurr = other._head->getNext();
+        while (otherCurr != nullptr) {
+            curr->setNext(new SLLNode<T>(otherCurr->getElement()));
             curr = curr->getNext();
+			otherCurr = otherCurr->getNext();
         }
-        curr = other_curr = nullptr;
+        curr = otherCurr = nullptr;
     }
 }
 
@@ -91,27 +89,33 @@ template <typename T>
 SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(const SinglyLinkedList<T>& rhs)
 {
     if (&rhs == this) {
-        std::cerr << "Attempted assignment to self.";
+        // Attempted assignment to self, return out.
         return *this;
     }
 
     if (rhs.isEmpty()) {
         this->clear();
-    }
-
-    _head = rhs._head;
-    _size = rhs._size;
-    SLLNode<T>* curr = _head;
-    SLLNode<T>* rhs_curr = rhs._head->getNext();
-
-    // XXX test this condition
-    while (curr != nullptr && rhs_curr != nullptr) {
-        curr->setNext(new SLLNode<T>(rhs_curr->getElement(), rhs_curr->getNext()));
-        rhs_curr = rhs_curr->getNext();
-        curr = curr->getNext();
-    }
-
-    curr = rhs_curr = nullptr;
+    } else {
+    	SLLNode<T> *curr = _head;
+    	SLLNode<T> *rhsCurr = rhs._head;
+		while (curr->getNext() != nullptr && rhsCurr->getNext() != nullptr) {
+			curr->setElement(rhsCurr->getElement());
+			curr = curr->getNext();
+			rhsCurr = rhsCurr->getNext();
+		}
+		while (curr->getNext() == nullptr && rhsCurr->getNext() != nullptr) {
+			curr->setNext(new SLLNode<T>(rhsCurr->getElement));
+			curr = curr->getNext();
+			rhsCurr = rhsCurr->getNext();
+		}
+		while (curr->getNext() != nullptr && rhsCurr->getNext() == nullptr) {
+			SLLNode<T> *tmp = curr->getNext();
+			delete curr;
+			curr = tmp;
+			tmp = nullptr;
+		}
+    	curr = rhs_curr = nullptr;
+	}
 	return *this;
 }
 
@@ -264,15 +268,15 @@ T SinglyLinkedList<T>::popFront()
 template <typename T>
 void SinglyLinkedList<T>::pushFront(const T& element)
 {
-	// Check if list already has a head.
-	if (_head != nullptr) {
-		SLLNode<T>* node = new SLLNode<T>(element);
+	// If list is empty, create new list.
+	if (isEmpty()) {
+		_head = new SLLNode<T>(element);
+		++_size;
+	// General case:
+	} else {
+		SLLNode<T> *node = new SLLNode<T>(element);
 		node->setNext(_head);
 		_head = node;
-		++_size;
-	} else {
-	// Empty list, create head.
-		_head = new SLLNode<T>(element);
 		++_size;
 	}
 }
