@@ -1,8 +1,8 @@
-#include "util.h"
 #include "test.h"
-#include "linked-list.h"
 
-int main()
+int main(int argc, char **argv)
 {
-	test::linked_list();
+	::testing::InitGoogleTest(&argc, argv);
+	test::test();
+	return RUN_ALL_TESTS();
 }

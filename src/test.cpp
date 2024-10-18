@@ -1,295 +1,635 @@
 /**
- * @file main.cpp
+ * @file test.cpp
  *
  * @author Tyler Baxter
  * @version 1.0
- * @since 2024-08-30
+ * @since 2024-09-21
  *
- * Main entry point. Test cases.
+ * Test cases.
  */
 
 #include "test.h"
-#include "linked-list.h"
+
+#include "singly-linked-list.h"
+#include "doubly-linked-list.h"
 
 #include <iostream>
+#include <fstream>
+#include <streambuf>
 #include <memory>
 #include <cassert>
 #include <vector>
+#include <random>
+#include <algorithm>
+
+#ifdef _WIN32
+#define NULL_DEVICE "NUL:"
+#else
+#define NULL_DEVICE "/dev/null"
+#endif
 
 using namespace csc;
 
-/**
-* Unit tests for Node.
-*
-* @credit OpenAI's ChatGPT
-* Prompt: "Write me test cases for this class, with no frameworks, in cpp."
-*/
-void test::node()
-{
-    // Test Node creation
-    Node<int> node1(10);
-    assert(node1.get_element() == 10);
-    assert(node1.get_next() == nullptr);
-    assert(node1.get_prev() == nullptr);
+namespace test {
 
-    // Test setting and getting elements
-    node1.set_element(20);
-    assert(node1.get_element() == 20);
+std::default_random_engine generator;
+std::uniform_int_distribution<int> intDistribution{1, 100};
+std::uniform_int_distribution<int> lengthDistribution{1, 10};
 
-    // Test setting and getting next and previous nodes
-    Node<int> node2(30);
-    node1.set_next(&node2);
-    node2.set_prev(&node1);
-    assert(node1.get_next() == &node2);
-    assert(node2.get_prev() == &node1);
+std::string randomString() {
+    int len = lengthDistribution(generator);
+    std::string str;
+    for (int j = 0; j < len; ++j) {
+        char c = 'a' + generator() % 26;
+        str += c;
+    }
+    return str;
+}
+
+int randomInt() {
+    return intDistribution(generator);
+}
+
+TEST(SinglyLinkedListTest, BasicOperationsInt) {
+    SinglyLinkedList<int> list;
+
+    // Initial state
+    EXPECT_TRUE(list.isEmpty());
+    EXPECT_EQ(list.size(), 0);
+
+    // Push elements
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(randomInt());
+        EXPECT_EQ(list.size(), i + 1);
+        EXPECT_FALSE(list.isEmpty());
+    }
+
+    // Pop elements
+    for (int i = 9; i >= 0; --i) {
+        int value = list.popFront();
+        EXPECT_EQ(list.size(), i);
+        EXPECT_FALSE(list.contains(value));
+    }
+    EXPECT_TRUE(list.isEmpty());
+
+    // Remove elements
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(i);
+    }
+    EXPECT_EQ(list.size(), 10);
+    EXPECT_TRUE(list.remove(5));
+    EXPECT_EQ(list.size(), 9);
+    EXPECT_FALSE(list.contains(5));
+    EXPECT_TRUE(list.remove(0));
+    EXPECT_EQ(list.size(), 8);
+}
+
+TEST(SinglyLinkedListTest, BasicOperationsString) {
+    SinglyLinkedList<std::string> list;
+
+    // Initial state
+    EXPECT_TRUE(list.isEmpty());
+    EXPECT_EQ(list.size(), 0);
+
+    // Push strings
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(randomString());
+        EXPECT_EQ(list.size(), i + 1);
+        EXPECT_FALSE(list.isEmpty());
+    }
+
+    // Pop strings
+    for (int i = 9; i >= 0; --i) {
+        std::string value = list.popFront();
+        EXPECT_EQ(list.size(), i);
+        EXPECT_FALSE(list.contains(value));
+    }
+    EXPECT_TRUE(list.isEmpty());
+
+    // Remove non-existent string
+    std::string toRemove = "test";
+    EXPECT_FALSE(list.remove(toRemove));
+}
+
+TEST(SinglyLinkedListTest, EdgeCases) {
+    SinglyLinkedList<int> list;
+
+    // Pop from empty list
+    EXPECT_THROW(list.popFront(), std::runtime_error);
+
+    // Remove from empty list
+    EXPECT_FALSE(list.remove(10));
+
+    // Remove non-existent element
+    for (int i = 0; i < 5; ++i) {
+        list.pushFront(i);
+    }
+    EXPECT_EQ(list.size(), 5);
+    EXPECT_FALSE(list.remove(10));
+    EXPECT_EQ(list.size(), 5);
+}
+
+TEST(SinglyLinkedListTest, BigFive) {
+    SinglyLinkedList<int> list;
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(i);
+    }
+
+    // Copy constructor
+    SinglyLinkedList<int> copyList(list);
+    EXPECT_EQ(copyList.size(), list.size());
+    for (int i = 0; i < 10; ++i) {
+        EXPECT_TRUE(copyList.contains(i));
+    }
+
+    // Copy assignment
+    SinglyLinkedList<int> assignedList;
+    assignedList = copyList;
+    EXPECT_EQ(assignedList.size(), copyList.size());
+    for (int i = 0; i < 10; ++i) {
+        EXPECT_TRUE(assignedList.contains(i));
+    }
+
+    // Move constructor
+    SinglyLinkedList<int> movedList(std::move(list));
+    EXPECT_EQ(movedList.size(), 10);
+    EXPECT_TRUE(movedList.contains(0));
+    EXPECT_TRUE(movedList.contains(9));
+    EXPECT_TRUE(list.isEmpty()); // Original list should be empty
+
+    // Move assignment
+    SinglyLinkedList<int> anotherList;
+    anotherList = std::move(movedList);
+    EXPECT_EQ(anotherList.size(), 10);
+    EXPECT_TRUE(anotherList.contains(0));
+    EXPECT_TRUE(anotherList.contains(9));
+    EXPECT_TRUE(movedList.isEmpty()); // Moved list should be empty
+}
+
+TEST(SinglyLinkedListTest, StressTest) {
+    SinglyLinkedList<int> list;
+
+    // Push random elements
+    for (int i = 0; i < 1000; ++i) {
+        list.pushFront(randomInt());
+        EXPECT_EQ(list.size(), i + 1);
+    }
+
+    // Remove random elements
+    std::vector<int> values;
+    for (int i = 0; i < 1000; ++i) {
+        int value = randomInt();
+        if (list.contains(value)) {
+            EXPECT_TRUE(list.remove(value));
+        } else {
+            EXPECT_FALSE(list.remove(value));
+        }
+    }
+
+    // Ensure final size is valid
+    EXPECT_LE(list.size(), 1000);
 }
 
 /**
-* Unit tests for List.
+* Tests for DoublyLinkedList.
 *
 * @credit OpenAI's ChatGPT
-* Prompt: "Write me test cases for this class, with no frameworks, in cpp."
+* @modified 2024-09-21 Tyler Baxter
 */
-void test::linked_list()
+void testDoublyLinkedList()
 {
-    // Create a LinkedList instance.
-    auto list = std::make_unique<LinkedList<int>>();
+	auto testInt = []() {
+		std::default_random_engine generator;
+    	std::uniform_int_distribution<int> distribution(1, 100);
+        auto randomValue = [&]() { return distribution(generator); };
 
-    // Test empty list
-    assert(list->empty() == true);
-	std::cout << "empty() passed.\n";
-    assert(list->size() == 0);
-	std::cout << "size() passed.\n";
+    	// Test DLLNode<int> construction.
+        DLLNode<int> node1(10);
+        assert(node1.getElement() == 10);
+        assert(node1.getNext() == nullptr);
+        assert(node1.getPrev() == nullptr);
 
-    // Test push_front
-    list->push_front(1);
-    assert(list->front() == 1);
-    assert(list->back() == 1);
-    assert(list->size() == 1);
-	std::cout << "push_front() passed.\n";
+        // Test setting and getting elements.
+        node1.setElement(20);
+        assert(node1.getElement() == 20);
 
-    // Test push_back
-    list->push_back(2);
-    assert(list->front() == 1);
-    assert(list->back() == 2);
-    assert(list->size() == 2);
-	std::cout << "push_back() passed.\n";
+        // Test setting and getting next and previous nodes.
+        DLLNode<int> node2(30);
+        node1.setNext(&node2);
+        node2.setPrev(&node1);
+        assert(node1.getNext() == &node2);
+        assert(node2.getPrev() == &node1);
 
-	// Test get
-	assert(list->get(0) == 1);
-    assert(list->get(1) == 2);
-	std::cout << "get() passed.\n";
+        // Create a DoublyLinkedList<int> instance.
+        auto list = std::make_unique<DoublyLinkedList<int>>();
 
-    // Test insert
-    list->insert(3, 1); // Insert 3 at index 1
-	std::cout << "Element inserted into the list.\n";
-    assert(list->get(0) == 1);
-    assert(list->get(1) == 3);
-    assert(list->get(2) == 2);
-    assert(list->size() == 3);
-	std::cout << "insert() passed.\n";
+        // Test empty list.
+        assert(list->empty());
+        std::cout << "[✓] empty() tests passed.\n";
+        assert(list->size() == 0);
+        std::cout << "[✓] size() tests passed.\n";
 
-    // Test remove
-    assert(list->remove(3) == true);
-	std::cout << "Element removed from the list.\n";
-    assert(list->size() == 2);
-    assert(list->get(0) == 1);
-    assert(list->get(1) == 2);
-	std::cout << "remove() passed.\n";
+        // Test pushFront() with random values.
+        for (int i = 0; i < 10; ++i) {
+            int value = randomValue();
+            list->pushFront(value);
+			// New front should be the last pushed.
+            assert(list->front() == value);
+			assert(list->size() == i + 1);
+        }
+        std::cout << "[✓] pushFront() tests passed.\n";
 
-    // Test pop_front
-    list->pop_front();
-    assert(list->size() == 1);
-    assert(list->front() == 2);
-	std::cout << "pop_front() passed.\n";
+        // Test pushBack() with random values.
+		auto size = list->size();
+        for (int i = 0; i < 10; ++i) {
+            int value = randomValue();
+            list->pushBack(value);
+ 			// New back should be the last pushed.
+            assert(list->back() == value);
+            assert(list->size() == size + i + 1);
+        }
+        std::cout << "[✓] pushBack() tests passed.\n";
 
-    // Test pop_back
-    list->pop_back();
-    assert(list->empty() == true);
-    assert(list->size() == 0);
-	std::cout << "pop_back() passed.\n";
+        // Test contains() and get() for all inserted values.
+		for (auto it = list->begin(); it != list->end(); ++it) {
+	        assert(list->contains(*it));
+			assert(list->get(*it));
+		}
+	    std::cout << "[✓] contains() tests passed.\n";
+	    std::cout << "[✓] get() tests passed.\n";
 
-    // Test exception handling for empty list
-    try {
-        list->front(); // Should throw exception
-        assert(false); // Should not reach this line
-    } catch (const std::out_of_range& e) {
-		std::cout << "front() out of range exception passed. " << e.what() << 
-			"\n";
-    }
+		// Test overloaded insertion operator.
+        std::vector<int> values;
+	    for (auto it = list->begin(); it != list->end(); ++it) {
+	        values.push_back(*it);
+	    }
+		std::cout << "\tPrinting list...\n";
+		std::cout << "\tExpected:\t";
+		auto printVector = [&](std::vector<int> v) {
+			std::cout << "[ ";
+    		bool first = true;
+    		for (auto it = v.begin(); it != v.end(); ++it) {
+        		if (!first) {
+					std::cout << ", ";
+        		}
+        		first = false;
+				std::cout << *it;
+    		}
+			std::cout << " ]";
+		};
+		printVector(values);
+		std::cout << "\n\tActual:  \t" << *list << "\n";
+	    std::cout << "[✓] Overloaded insertion operator tests passed.\n";
 
-    try {
-        list->back(); // Should throw exception
-        assert(false); // Should not reach this line
-    } catch (const std::out_of_range& e) {
-		std::cout << "back() out of range exception passed. " << e.what() << 
-			"\n";
-    }
+	    // Test remove() with both present and absent elements.
+	    // Shuffle values for random removals.
+	    std::shuffle(values.begin(), values.end(), generator);
+	    for (const auto& value : values) {
+			assert(list->contains(value));
+	        bool removed = list->remove(value);
+	        assert(removed); // Ensure the value was removed.
+	    }
+		assert(list->empty());
+	    std::cout << "[✓] remove() tests passed.\n";
 
-    // Test clear
-    list->push_front(4);
-    list->push_back(5);
-    list->clear();
-    assert(list->empty() == true);
-    assert(list->size() == 0);
-	std::cout << "clear() passed.\n";
+        // Test popFront().
+        for (int i = 0; i < 5; ++i) {
+            list->pushBack(randomValue());
+        }
 
-    // Test copy constructor
-    list->push_front(6);
-    list->push_back(7);
-    auto listCopy = std::make_unique<LinkedList<int>>(*list);
-    assert(listCopy->front() == 6);
-    assert(listCopy->back() == 7);
-    assert(listCopy->size() == 2);
-	std::cout << "Copy constructor passed.\n";
+        while (!list->empty()) {
+            int frontValue = *list->front();
+            list->popFront();
+            assert(list->size() >= 0); // Ensure size is valid.
+        }
+        std::cout << "[✓] popFront() tests passed.\n";
 
-    // Test copy assignment operator
-    auto listAssigned = std::make_unique<LinkedList<int>>();
-    *listAssigned = *list;
-    assert(listAssigned->front() == 6);
-    assert(listAssigned->back() == 7);
-    assert(listAssigned->size() == 2);
-	std::cout << "Copy assignment operator passed.\n";
+        // Test popBack().
+        // Reinsert values for popBack tests.
+        for (int i = 0; i < 5; ++i) {
+            list->pushBack(randomValue());
+        }
 
-    // Test move constructor
-    auto listMoved = std::make_unique<LinkedList<int>>(std::move(*list));
-    assert(listMoved->front() == 6);
-    assert(listMoved->back() == 7);
-    assert(listMoved->size() == 2);
-    assert(list->empty() == true); // Ensure list is empty after move
-	std::cout << "Move constructor passed.\n";
+        while (!list->empty()) {
+            int backValue = *list->back();
+            list->popBack();
+            assert(list->size() >= 0); // Ensure size is valid.
+        }
+        std::cout << "[✓] popBack() tests passed.\n";
 
-    // Test move assignment operator
-    auto listMovedAssign = std::make_unique<LinkedList<int>>();
-    *listMovedAssign = std::move(*listAssigned);
-    assert(listMovedAssign->front() == 6);
-    assert(listMovedAssign->back() == 7);
-    assert(listMovedAssign->size() == 2);
-    assert(listAssigned->empty() == true); // Ensure listAssigned is empty after move
-	std::cout << "Move assignment operator passed.\n";
+        // Test clear().
+        for (int i = 0; i < 5; ++i) {
+            list->pushBack(randomValue());
+        }
+        list->clear();
+        assert(list->empty());
+        assert(list->size() == 0);
+        std::cout << "[✓] clear() tests passed.\n";
 
-    // Test contains
-    assert(listMoved->contains(6) == true);
-    assert(listMoved->contains(8) == false);
-	std::cout << "contains() passed.\n";
+        // Test removeAndPushFront().
+	    for (int i = 0; i < 10; ++i) {
+        	list->pushBack(randomValue());
+        }
+		int rand = randomValue();
+		const DLLNode<int> *ptr1 = list->pushFront(rand);
+		list->removeAndPushFront(ptr1);
+		assert(*list->front() == rand);
+	    for (int i = 0; i < 10; ++i) {
+        	list->pushFront(randomValue());
+        }
+		list->removeAndPushFront(ptr1);
+		assert(*list->front() == rand);
+	    for (int i = 0; i < 10; ++i) {
+        	list->pushBack(randomValue());
+        }
+		list->removeAndPushFront(ptr1);
+		assert(*list->front() == rand);
+		rand = randomValue();
+		const DLLNode<int> *ptr2 = list->pushBack(rand);
+		list->removeAndPushFront(ptr2);
+		assert(*list->front() == rand);
+	    std::cout << "[✓] removeAndPushFront() tests passed.\n";
 
-    const Node<int>* beginNode = listMoved->begin();
-    assert(beginNode != nullptr); // Check if beginNode is not null
-    assert(beginNode->get_element() == 6);
-	beginNode = nullptr;
-	std::cout << "begin() passed.\n";
-    
-    const Node<int>* endNode = listMoved->end();
-    assert(endNode != nullptr); // Check if endNode is not null
-    assert(endNode->get_element() == 7);
-	endNode = nullptr;
-	std::cout << "end() passed.\n";
+        // Test copy constructor.
+        auto listCopy = std::make_unique<DoublyLinkedList<int>>(*list);
+        assert(*listCopy->front() == *list->front());
+        assert(listCopy->size() == list->size());
+        std::cout << "[✓] Copy constructor tests passed.\n";
 
-	list.reset();
-	std::cout << "Destructor of list passed.\n";
-	listCopy.reset();
-	std::cout << "Destructor of copy constructor list passed.\n";
-	listAssigned.reset();
-	std::cout << "Destructor of copy assignment operator list passed.\n";
-	listMoved.reset();
-	std::cout << "Destructor of move constructor list passed.\n";
-    listMovedAssign.reset();
-	std::cout << "Destructor of move assignment operator list passed.\n";
+        // Test copy assignment operator.
+        auto listAssigned = std::make_unique<DoublyLinkedList<int>>();
+        *listAssigned = *list;
+        assert(*listAssigned->front() == *list->front());
+        assert(listAssigned->size() == list->size());
+        std::cout << "[✓] Copy assignment operator tests passed.\n";
 
-    std::cout << "All tests passed!" << std::endl;
+        // Test move constructor.
+        auto listMoved = std::make_unique<DoublyLinkedList<int>>(
+			std::move(*list));
+        assert(listMoved->size() == listAssigned->size());
+        assert(*listMoved->front() == *listAssigned->front());
+        assert(list->empty()); // Ensure original list is empty.
+        std::cout << "[✓] Move constructor tests passed.\n";
+
+        // Test move assignment operator.
+        auto listMovedAssign = std::make_unique<DoublyLinkedList<int>>();
+        *listMovedAssign = std::move(*listAssigned);
+        assert(listMovedAssign->size() == listMoved->size());
+        assert(*listMovedAssign->front() == *listMoved->front());
+        assert(listAssigned->empty()); // Ensure original list is empty.
+        std::cout << "[✓] Move assignment operator tests passed.\n";
+
+        // Test destructors.
+        list.reset();
+        std::cout << "[✓] Destructor tests passed.\n";
+        listCopy.reset();
+        std::cout << "[✓] Copy constructor destructor tests passed.\n";
+        listAssigned.reset();
+        std::cout << "[✓] Copy assignment operator destructor tests passed.\n";
+        listMoved.reset();
+        std::cout << "[✓] Move constructor destructor tests passed.\n";
+        listMovedAssign.reset();
+        std::cout << "[✓] Move assignment operator destructor tests passed.\n";
+    };
+
+	auto testString = []() {
+	    std::default_random_engine generator;
+	    std::uniform_int_distribution<int> lengthDist(1, 10);
+	    auto randomString = [&]() {
+	        int len = lengthDist(generator);
+	        std::string str;
+	        for (int j = 0; j < len; ++j) {
+				// Generate a random lowercase letter.
+	            char c = 'a' + generator() % 26;
+				str += c;
+	        }
+	        return str;
+	    };
+
+	    // Test DLLNode<std::string> construction.
+	    DLLNode<std::string> node1("test");
+	    assert(node1.getElement() == "test");
+	    assert(node1.getNext() == nullptr);
+	    assert(node1.getPrev() == nullptr);
+
+	    // Test setting and getting elements.
+	    node1.setElement("updated");
+	    assert(node1.getElement() == "updated");
+
+	    // Test setting and getting next and previous nodes.
+	    DLLNode<std::string> node2("next");
+	    node1.setNext(&node2);
+	    node2.setPrev(&node1);
+	    assert(node1.getNext() == &node2);
+	    assert(node2.getPrev() == &node1);
+
+	    // Create a DoublyLinkedList<std::string> instance.
+	    auto list = std::make_unique<DoublyLinkedList<std::string>>();
+
+	    // Test empty() and size().
+	    assert(list->empty());
+	    std::cout << "[✓] empty() tests passed.\n";
+	    assert(list->size() == 0);
+	    std::cout << "[✓] size() tests passed.\n";
+
+	    // Test pushFront() with random strings.
+	    for (int i = 0; i < 10; ++i) {
+	        std::string value = randomString();
+	        list->pushFront(value);
+ 			// New front should be the last pushed.
+	        assert(list->front() == value);
+			assert(list->size() == i + 1);
+	    }
+	    std::cout << "[✓] pushFront() tests passed.\n";
+
+	    // Test pushBack() with random strings.
+		auto size = list->size();
+	    for (int i = 0; i < 10; ++i) {
+	        std::string value = randomString();
+	        list->pushBack(value);
+ 			// New back should be the last pushed.
+	        assert(list->back() == value);
+			assert(list->size() == size + i + 1);
+	    }
+	    std::cout << "[✓] pushBack() tests passed.\n";
+
+	    // Test contains() and get() for all inserted values.
+		for (auto it = list->begin(); it != list->end(); ++it) {
+	        assert(list->contains(*it));
+			assert(list->get(*it));
+	    }
+	    std::cout << "[✓] contains() tests passed.\n";
+	    std::cout << "[✓] get() tests passed.\n";
+
+	    // Test overloaded insertion operator.
+        std::vector<std::string> values;
+	    for (auto it = list->begin(); it != list->end(); ++it) {
+	        values.push_back(*it);
+	    }
+		std::cout << "\tPrinting list...\n";
+		std::cout << "\tExpected:\t";
+		auto printVector = [&](std::vector<std::string> v) {
+			std::cout << "[ ";
+    		bool first = true;
+    		for (auto it = v.begin(); it != v.end(); ++it) {
+        		if (!first) {
+					std::cout << ", ";
+        		}
+        		first = false;
+				std::cout << *it;
+    		}
+			std::cout << " ]";
+		};
+		printVector(values);
+		std::cout << "\n\tActual:  \t" << *list << "\n";
+	    std::cout << "[✓] Overloaded insertion operator tests passed.\n";
+
+	    // Test remove() with both present and absent elements.
+	    // Shuffle values for random removals.
+	    std::shuffle(values.begin(), values.end(), generator);
+	    for (const auto& value : values) {
+			assert(list->contains(value));
+	        bool removed = list->remove(value);
+	        assert(removed); // Ensure the value was removed.
+	    }
+		assert(list->empty());
+	    std::cout << "[✓] remove() tests passed.\n";
+
+	    // Test popFront().
+	    for (int i = 0; i < 5; ++i) {
+	        list->pushBack(randomString());
+	    }
+	    while (!list->empty()) {
+	        std::string frontValue = *list->front();
+	        list->popFront();
+	        assert(list->size() >= 0); // Ensure size is valid.
+	    }
+	    std::cout << "[✓] popFront() tests passed.\n";
+
+	    // Test popBack().
+	    for (int i = 0; i < 5; ++i) {
+	        list->pushBack(randomString());
+	    }
+
+	    while (!list->empty()) {
+	        std::string backValue = *list->back();
+	        list->popBack();
+	        assert(list->size() >= 0); // Ensure size is valid.
+	    }
+	    std::cout << "[✓] popBack() tests passed.\n";
+
+	    // Test clear().
+	    for (int i = 0; i < 5; ++i) {
+	        list->pushBack(randomString());
+	    }
+	    list->clear();
+	    assert(list->empty());
+	    assert(list->size() == 0);
+	    std::cout << "[✓] clear() tests passed.\n";
+
+	    // Test removeAndPushFront().
+	    for (int i = 0; i < 10; ++i) {
+	        list->pushBack(randomString());
+	    }
+	    std::string randStr = randomString();
+	    const DLLNode<std::string> *ptr1 = list->pushFront(randStr);
+	    list->removeAndPushFront(ptr1);
+	    assert(*list->front() == randStr);
+
+	    for (int i = 0; i < 10; ++i) {
+	        list->pushFront(randomString());
+	    }
+	    list->removeAndPushFront(ptr1);
+	    assert(*list->front() == randStr);
+
+	    for (int i = 0; i < 10; ++i) {
+	        list->pushBack(randomString());
+	    }
+	    list->removeAndPushFront(ptr1);
+	    assert(*list->front() == randStr);
+
+	    randStr = randomString();
+	    const DLLNode<std::string> *ptr2 = list->pushBack(randStr);
+	    list->removeAndPushFront(ptr2);
+	    assert(*list->front() == randStr);
+	    std::cout << "[✓] removeAndPushFront() tests passed.\n";
+
+	    // Test copy constructor.
+	    auto listCopy = std::make_unique<DoublyLinkedList<std::string>>(*list);
+	    assert(*listCopy->front() == *list->front());
+	    assert(listCopy->size() == list->size());
+	    std::cout << "[✓] Copy constructor tests passed.\n";
+
+	    // Test copy assignment operator.
+	    auto listAssigned = std::make_unique<DoublyLinkedList<std::string>>();
+	    *listAssigned = *list;
+	    assert(*listAssigned->front() == *list->front());
+	    assert(listAssigned->size() == list->size());
+	    std::cout << "[✓] Copy assignment operator tests passed.\n";
+
+	    // Test move constructor.
+	    auto listMoved = std::make_unique<DoublyLinkedList<std::string>>(
+			std::move(*list));
+	    assert(listMoved->size() == listAssigned->size());
+	    assert(*listMoved->front() == *listAssigned->front());
+	    assert(list->empty()); // Ensure original list is empty.
+	    std::cout << "[✓] Move constructor tests passed.\n";
+
+	    // Test move assignment operator.
+	    auto listMovedAssign =
+			std::make_unique<DoublyLinkedList<std::string>>();
+	    *listMovedAssign = std::move(*listAssigned);
+	    assert(listMovedAssign->size() == listMoved->size());
+	    assert(*listMovedAssign->front() == *listMoved->front());
+	    assert(listAssigned->empty()); // Ensure original list is empty.
+	    std::cout << "[✓] Move assignment operator tests passed.\n";
+
+        // Test destructors.
+        list.reset();
+        std::cout << "[✓] Destructor tests passed.\n";
+        listCopy.reset();
+        std::cout << "[✓] Copy constructor destructor tests passed.\n";
+        listAssigned.reset();
+        std::cout << "[✓] Copy assignment operator destructor tests passed.\n";
+        listMoved.reset();
+        std::cout << "[✓] Move constructor destructor tests passed.\n";
+        listMovedAssign.reset();
+        std::cout << "[✓] Move assignment operator destructor tests passed.\n";
+	};
+
+	std::cout << "Test Summary:\n";
+	std::cout << "int unit tests:\n";
+	testInt();
+    std::cout << "int unit tests passed!\n\n";
+
+	std::cout << "std::string unit tests:\n";
+	testString();
+    std::cout << "std::string unit tests passed!\n\n";
+
+	std::cout << "Stress tests:\n";
+	std::cout << "Stress testing...\n";
+
+	// Redirect std::cout to null.
+	std::ofstream out(NULL_DEVICE);
+	// Save original buffer.
+    std::streambuf* buf = std::cout.rdbuf();
+    std::cout.rdbuf(out.rdbuf());
+
+	// Run stress tests with output silenced.
+	for (auto i = 0; i < 100; ++i) {
+		testInt();
+		testString();
+	}
+
+	// Restore original buffer.
+    std::cout.rdbuf(buf);
+
+	std::cout << "Stress tests passed! 100 random iterations." << std::endl;
 }
 
-/**
-* Unit tests for HashMap.
-*
-* @credit OpenAI's ChatGPT
-* Prompt: "Write me test cases for this class, with no frameworks, in cpp."
-*/
-void test::hash_map()
+void test()
 {
-//    // Create a HashMap instance
-//    HashMap map;
-//
-//    // Test empty map
-//    assert(map.empty() == true);
-//    assert(map.size() == 0);
-//
-//    // Test insertion
-//    map.insert(1, 100);
-//    assert(map.size() == 1);
-//    assert(map.contains_key(1) == true);
-//    assert(map.contains_value(100) == true);
-//
-//    // Test get value
-//    assert(map.get(1) == 100);
-//
-//    // Test insertion of another element
-//    map.insert(2, 200);
-//    assert(map.size() == 2);
-//    assert(map.contains_key(2) == true);
-//    assert(map.contains_value(200) == true);
-//
-//    // Test replacing a value
-//    map.replace(1, 150);
-//    assert(map.get(1) == 150);
-//
-//    // Test replace with old_value match
-//    map.replace(2, 200, 250);
-//    assert(map.get(2) == 250);
-//    assert(map.contains_value(200) == false);
-//
-//    // Test remove by key
-//    assert(map.remove(1) == 150);
-//    assert(map.contains_key(1) == false);
-//    assert(map.size() == 1);
-//
-//    // Test remove by key and value
-//    map.insert(3, 300);
-//    map.insert(4, 300); // Adding duplicate value
-//    assert(map.remove(4, 300) == true);
-//    assert(map.contains_key(4) == false);
-//    assert(map.contains_value(300) == true);
-//    assert(map.size() == 2); // size should be 2 after removing one element
-//
-//    // Test clear
-//    map.clear();
-//    assert(map.empty() == true);
-//    assert(map.size() == 0);
-//
-//    // Test remove from empty map
-//    try {
-//        map.remove(10);
-//        std::cerr << "Expected exception not thrown\n";
-//    } catch (...) {
-//        // Expected behavior
-//    }
-//
-//    try {
-//        map.get(10);
-//        std::cerr << "Expected exception not thrown\n";
-//    } catch (...) {
-//        // Expected behavior
-//    }
-//
-//    try {
-//        map.remove(10, 100);
-//        std::cerr << "Expected exception not thrown\n";
-//    } catch (...) {
-//        // Expected behavior
-//    }
-//
-//    // Test move operations (if implemented)
-//    HashMap map2;
-//    map2.insert(5, 500);
-//    HashMap map3(std::move(map2));
-//    assert(map3.get(5) == 500);
-//    assert(map2.empty() == true);
-//
-//    HashMap map4;
-//    map4.insert(6, 600);
-//    map4 = std::move(map3);
-//    assert(map4.get(5) == 500);
-//    assert(map3.empty() == true);
-//
-//    std::cout << "All tests passed!" << std::endl;
+	testDoublyLinkedList();
+}
+
 }

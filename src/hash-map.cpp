@@ -91,19 +91,19 @@ HashMap<K, V, F>::HashMap(std::size_t buckets) :
 
 // Copy constructor
 HashMap::HashMap(const HashMap& src) 
-    : _buckets(src._buckets), _count(src._count) {
+    : _buckets(src._buckets), _count(src._count)
+{
     // Copy elements
-    for (auto& bucket : _buckets) {
-        for (auto& entry : bucket) {
-            _buckets[bucket].emplace_back(entry);
-        }
-    }
+	// xxx
 }
 
 // Move constructor
-HashMap::HashMap(HashMap&& src) noexcept 
-    : _buckets(std::move(src._buckets)), _count(src._count) {
-    src._count = 0;
+HashMap::HashMap(HashMap&& src) noexcept : 
+	_buckets(src._buckets),
+	_table(std::move(src._table),
+	_size(src._size)
+{
+    // xxx
 }
 
 // Copy assignment operator
@@ -113,11 +113,7 @@ HashMap& HashMap::operator=(const HashMap& rhs) {
         _buckets = rhs._buckets;
         _count = rhs._count;
         // Copy elements
-        for (auto& bucket : _buckets) {
-            for (auto& entry : bucket) {
-                _buckets[bucket].emplace_back(entry);
-            }
-        }
+		// xxx
     }
     return *this;
 }
@@ -126,18 +122,18 @@ HashMap& HashMap::operator=(const HashMap& rhs) {
 HashMap& HashMap::operator=(HashMap&& rhs) noexcept {
     if (this != &rhs) {
         clear();
-        _buckets = std::move(rhs._buckets);
-        _count = rhs._count;
-        rhs._count = 0;
+		_buckets = src._buckets;
+        _table = std::move(rhs._table);
+        _table = rhs._table;
     }
     return *this;
 }
 
 template <typename K, typename V, typename F = Hash>
-void HashMap<K, V, F>::insert(const K& key, const V& value) const
+void HashMap<K, V, F>::add(const K& key, const V& value)
 {
 	ListPtr ptr = _table[_hash{}(key) % _buckets];
-	if (!ptr) {
+	if (ptr == nullptr) {
 		ptr = std::make_unique<SinglyLinkedList<HashNode<K, V>>>();
 	}
 	ptr->insert(HashNode<K, V>(key, value));
@@ -150,32 +146,32 @@ bool HashMap<K, V, F>::remove(const K& key) const
 		return false;
 	}
 	ListPtr ptr = _table[_hash{}(key) % _buckets];
-	if (!ptr) {
+	if (ptr == nullptr) {
 		return false;
 	}
 	return ptr->remove(HashNode<K, V>(key));
 }
 
 template <typename K, typename V, typename F = Hash>
-V* HashMap<K, V, F>::get(const K& key) const
+std::optional<V> HashMap<K, V, F>::getItem(const K& key) const
 {
 	if (empty()) {
 		return nullptr;
 	}
 
 	ListPtr ptr = _table[_hash{}(key) % _buckets];
-	if (!ptr) {
+	if (ptr == nullptr) {
 		return nullptr;
 	}
 
-	HashNode<K, V> *node = ptr->find(HashNode<K, V>(key));
+	HashNode<K, V> *node = ptr->find(HashNode<K, V>{key});
 	if (node == nullptr) {
 		return nullptr;
 	}
 
-	V *v = node->get_value();
+	std::optional<V> v = node->getValue();
 	node = nullptr;
-	return v;
+	return v
 }
 
 template <typename K, typename V, typename F = Hash>
@@ -185,10 +181,10 @@ bool HashMap<K, V, F>::contains(const K& key) const
 		return false;
 	}
 	ListPtr ptr = _table[_hash{}(key) % _buckets];
-	if (!ptr) {
+	if (ptr == nullptr) {
 		return false;
 	}
-	return ptr->contains(HashNode<K, V>(key));
+	return ptr->contains(HashNode<K, V>{key});
 }
 
 template <typename K, typename V, typename F = Hash>
@@ -203,24 +199,24 @@ bool HashMap<K, V, F>::replace(const K& key, const V& value)
 		return false;
 	}
 
-	HashNode<K, V> *node = ptr->find(HashNode<K, V>(key));
+	HashNode<K, V> *node = ptr->find(HashNode<K, V>{key});
 	if (node == nullptr) {
 		return false;
 	}
 
-	node->set_value(value);
+	node->setValue(value);
 	node == nullptr;
 	return true;
 }
 
 template <typename K, typename V, typename F = Hash>
-bool HashMap<K, V, F>::empty() const
+bool HashMap<K, V, F>::isEmpty() const
 {
 	return _table == nullptr && _size == 0;
 }
 
 template <typename K, typename V, typename F = Hash>
-std::size_t HashMap<K, V, F>::size() const
+std::size_t HashMap<K, V, F>::getNumberOfItems() const
 {
 	return _size;
 }
