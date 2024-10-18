@@ -9,6 +9,8 @@
  */
 
 #include "test.h"
+
+#include "singly-linked-list.h"
 #include "doubly-linked-list.h"
 
 #include <iostream>
@@ -28,13 +30,173 @@
 
 using namespace csc;
 
+namespace test {
+
+std::default_random_engine generator;
+std::uniform_int_distribution<int> intDistribution{1, 100};
+std::uniform_int_distribution<int> lengthDistribution{1, 10};
+
+std::string randomString() {
+    int len = lengthDistribution(generator);
+    std::string str;
+    for (int j = 0; j < len; ++j) {
+        char c = 'a' + generator() % 26;
+        str += c;
+    }
+    return str;
+}
+
+int randomInt() {
+    return intDistribution(generator);
+}
+
+TEST(SinglyLinkedListTest, BasicOperationsInt) {
+    SinglyLinkedList<int> list;
+
+    // Initial state
+    EXPECT_TRUE(list.isEmpty());
+    EXPECT_EQ(list.size(), 0);
+
+    // Push elements
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(randomInt());
+        EXPECT_EQ(list.size(), i + 1);
+        EXPECT_FALSE(list.isEmpty());
+    }
+
+    // Pop elements
+    for (int i = 9; i >= 0; --i) {
+        int value = list.popFront();
+        EXPECT_EQ(list.size(), i);
+        EXPECT_FALSE(list.contains(value));
+    }
+    EXPECT_TRUE(list.isEmpty());
+
+    // Remove elements
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(i);
+    }
+    EXPECT_EQ(list.size(), 10);
+    EXPECT_TRUE(list.remove(5));
+    EXPECT_EQ(list.size(), 9);
+    EXPECT_FALSE(list.contains(5));
+    EXPECT_TRUE(list.remove(0));
+    EXPECT_EQ(list.size(), 8);
+}
+
+TEST(SinglyLinkedListTest, BasicOperationsString) {
+    SinglyLinkedList<std::string> list;
+
+    // Initial state
+    EXPECT_TRUE(list.isEmpty());
+    EXPECT_EQ(list.size(), 0);
+
+    // Push strings
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(randomString());
+        EXPECT_EQ(list.size(), i + 1);
+        EXPECT_FALSE(list.isEmpty());
+    }
+
+    // Pop strings
+    for (int i = 9; i >= 0; --i) {
+        std::string value = list.popFront();
+        EXPECT_EQ(list.size(), i);
+        EXPECT_FALSE(list.contains(value));
+    }
+    EXPECT_TRUE(list.isEmpty());
+
+    // Remove non-existent string
+    std::string toRemove = "test";
+    EXPECT_FALSE(list.remove(toRemove));
+}
+
+TEST(SinglyLinkedListTest, EdgeCases) {
+    SinglyLinkedList<int> list;
+
+    // Pop from empty list
+    EXPECT_THROW(list.popFront(), std::runtime_error);
+
+    // Remove from empty list
+    EXPECT_FALSE(list.remove(10));
+
+    // Remove non-existent element
+    for (int i = 0; i < 5; ++i) {
+        list.pushFront(i);
+    }
+    EXPECT_EQ(list.size(), 5);
+    EXPECT_FALSE(list.remove(10));
+    EXPECT_EQ(list.size(), 5);
+}
+
+TEST(SinglyLinkedListTest, BigFive) {
+    SinglyLinkedList<int> list;
+    for (int i = 0; i < 10; ++i) {
+        list.pushFront(i);
+    }
+
+    // Copy constructor
+    SinglyLinkedList<int> copyList(list);
+    EXPECT_EQ(copyList.size(), list.size());
+    for (int i = 0; i < 10; ++i) {
+        EXPECT_TRUE(copyList.contains(i));
+    }
+
+    // Copy assignment
+    SinglyLinkedList<int> assignedList;
+    assignedList = copyList;
+    EXPECT_EQ(assignedList.size(), copyList.size());
+    for (int i = 0; i < 10; ++i) {
+        EXPECT_TRUE(assignedList.contains(i));
+    }
+
+    // Move constructor
+    SinglyLinkedList<int> movedList(std::move(list));
+    EXPECT_EQ(movedList.size(), 10);
+    EXPECT_TRUE(movedList.contains(0));
+    EXPECT_TRUE(movedList.contains(9));
+    EXPECT_TRUE(list.isEmpty()); // Original list should be empty
+
+    // Move assignment
+    SinglyLinkedList<int> anotherList;
+    anotherList = std::move(movedList);
+    EXPECT_EQ(anotherList.size(), 10);
+    EXPECT_TRUE(anotherList.contains(0));
+    EXPECT_TRUE(anotherList.contains(9));
+    EXPECT_TRUE(movedList.isEmpty()); // Moved list should be empty
+}
+
+TEST(SinglyLinkedListTest, StressTest) {
+    SinglyLinkedList<int> list;
+
+    // Push random elements
+    for (int i = 0; i < 1000; ++i) {
+        list.pushFront(randomInt());
+        EXPECT_EQ(list.size(), i + 1);
+    }
+
+    // Remove random elements
+    std::vector<int> values;
+    for (int i = 0; i < 1000; ++i) {
+        int value = randomInt();
+        if (list.contains(value)) {
+            EXPECT_TRUE(list.remove(value));
+        } else {
+            EXPECT_FALSE(list.remove(value));
+        }
+    }
+
+    // Ensure final size is valid
+    EXPECT_LE(list.size(), 1000);
+}
+
 /**
 * Tests for DoublyLinkedList.
 *
 * @credit OpenAI's ChatGPT
 * @modified 2024-09-21 Tyler Baxter
 */
-void test::doublyLinkedList()
+void testDoublyLinkedList()
 {
 	auto testInt = []() {
 		std::default_random_engine generator;
@@ -463,4 +625,11 @@ void test::doublyLinkedList()
     std::cout.rdbuf(buf);
 
 	std::cout << "Stress tests passed! 100 random iterations." << std::endl;
+}
+
+void test()
+{
+	testDoublyLinkedList();
+}
+
 }

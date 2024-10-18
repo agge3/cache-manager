@@ -11,7 +11,14 @@
 
 #pragma once
 
+#include <gtest/gtest.h>	// include gtest when test.h is included
+
 namespace test {
+
+/**
+ * Main driver function for all test cases.
+ */
+void test();
 
 /**
 * Unit tests for DoublyLinkedList.

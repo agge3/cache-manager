@@ -6,7 +6,10 @@
 template <typename K, typename V>
 class CacheManager {
 public:
-	CacheManager(std::size_t capacity);
+	/** 
+	 * Return an instance of CacheManager.
+	 */
+	static CacheManager* instance();
 
     /**
      * Retrieves the value associated with the key, and updates its position.
@@ -23,7 +26,16 @@ public:
      * @param value The value to associate with the key.
      */
     void put(const K& key, const V& value);
+
+protected:
+    /**
+     * CacheManager is a singleton. Constructor with a specified capacity.
+     *
+     * @param capacity The maximum number of items the cache can hold.
+     */
+	CacheManager(std::size_t capacity);
 private:
+	static CacheManager *_instance;
 	std::size_t _capacity
 	std::unique_ptr<csc::HashMap<K, V>> _map;
 	std::unique_ptr<csc::LinkedList<K>> _queue;

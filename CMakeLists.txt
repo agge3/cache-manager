@@ -6,7 +6,7 @@ project(cache-manager
 	DESCRIPTION "Cache manager"
     LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # set version numbers
@@ -30,7 +30,6 @@ add_executable(cache-manager)
 
 # add src
 target_sources(cache-manager PRIVATE src/main.cpp
-	src/util.cpp
 	src/test.cpp
 )
 

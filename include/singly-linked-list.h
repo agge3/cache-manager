@@ -1,24 +1,23 @@
 /**
  * @file singly-linked-list.h
- * @class SinglyLinkedList
+ * @class SinglyLinkedList<T>
  *
- * @author Tyler Baxter, Kat Powell
+ * @author Kat Powell
  * @version 1.0
- * @since 2024-08-30
+ * @since 2024-09-19
  *
  * SinglyLinkedList and SinglyLinkedList helpers.
  */
 
 #pragma once
 
-//#include "iterator.h"
-
 #include <cstddef>
+#include <iterator>
 #include <iostream>
 
 /**
 * @namespace csc
-* Namespace for CacheManager-specific packages.
+* Namespace for CSC-specific packages.
 */
 namespace csc {
 
@@ -32,7 +31,7 @@ public:
 	SLLNode(const T& element) : _element(element), _next(nullptr) {}
 	SLLNode(const T& element, SLLNode* next) : _element(element), _next(next) {}
 
-	T getElement() const { return _element; }
+	const T& getElement() const { return _element; }
 	SLLNode* getNext() const { return _next; }
 
 	void setElement(const T& element) { _element = element; }
@@ -42,39 +41,41 @@ private:
 	SLLNode* _next;
 };
 
-//template <typename T>
-//class SLLIterator : public Iterator<T> {
-//public:
-//	SLLIterator& operator++() override;
-//	SLLIterator operator++(int) override;
-//	T& operator*() override;
-//	void add(const T& element) override;
-//	void deleteIt() override; // XXX TEMP NAME
-//protected:
-//	/**
-//	* new and delete are protected so heap allocation is disallowed. Must be
-//	* allocated on the stack, for RAII.
-//	*/
-//	explicit SLLIterator(SLLNode<T> node) : _node(node) {}
-//private:
-//	SLLNode<T> *_node;
-//};
-
-
-// would we rather declare these inline in definition file, or have them
-// pre-declared here and keep them in the header?
-template <typename T> class SinglyLinkedList;
-
+/**
+ * @class SLLIterator<T>
+ * SinglyLinkedList Iterator.
+ */
 template <typename T>
-std::ostream& operator<<(std::ostream& out, const SinglyLinkedList<T>& sll);
+class SLLIterator {
+public:
+	using iterator_category = std::forward_iterator_tag;
+	using value_type = T;
+	using difference_type = std::ptrdiff_t;
+	using pointer = T*;
+	using reference = T&;
+	using const_reference = const T&;
 
+    explicit SLLIterator(SLLNode<T>* node) : _node(node) {}
+
+    const_reference operator*();
+	pointer operator->();
+    SLLIterator& operator++();
+	SLLIterator operator++(int);
+	bool operator==(const SLLIterator& other) const;
+    bool operator!=(const SLLIterator& other) const;
+private:
+    SLLNode<T>* _node;
+};
+
+// Forward declaration for overloaded insertion operator with template class.
 template <typename T>
-std::istream& operator>>(std::istream& in, SinglyLinkedList<T>& sll);
-
+class SinglyLinkedList;
+template <typename T>
+std::ostream& operator<<(std::ostream&, const SinglyLinkedList<T>&);
 
 /**
 * @class SinglyLinkedList
-* SinglyLinkedList, specialized to be used as buckets for HashMap.
+* SinglyLinkedList.
 */
 template <typename T>
 class SinglyLinkedList {
@@ -109,17 +110,16 @@ public:
 	 */
 	SinglyLinkedList<T>& operator=(SinglyLinkedList<T>&& rhs) noexcept;
 
-	//friend class SLLIterator<T>;
+	/**
+	 * Friend declaration of SLLIterator.
+	 */	
+	friend class SLLIterator<T>;
 
 	/**
-	 * Overloaded ostream operator, '<<'.
+	 * Overloaded insertion operator<<.
 	 */
-	friend std::ostream& operator<< <>(std::ostream& out, const SinglyLinkedList& sll);
-
- 	/**
-	 * Overloaded istream operator, '>>'.
-	 */
-	friend std::istream& operator>> <>(std::istream& in, SinglyLinkedList& sll);
+	friend std::ostream& operator<< <>(std::ostream& out,
+		const SinglyLinkedList<T>& list);
 
 	/**
 	 * Returns the first element of SinglyLinkedList.
@@ -127,6 +127,13 @@ public:
 	 * @return T element The first element.
 	 */
 	T front() const;
+
+	/**
+	 * Returns a ptr to the first node of SinglyLinkedList.
+	 *
+	 * @return T* the head of the list.
+	 */
+	SLLNode<T>* front_ptr() const;
 
 	/**
 	 * Returns the first element of SinglyLinkedList and deletes it from the
@@ -137,38 +144,41 @@ public:
 	T popFront();
 
 	/**
-	 * Inserts an element at the beginning of SinglyLinkedList.
+	 * Adds a new node at the beginning of the list.
 	 *
 	 * @param T element The element to be inserted.
 	 */
 	void pushFront(const T& element);
 
 	/**
-	 * Inserts a new element after the node.
+	 * Adds a new node at the end of the list.
 	 *
 	 * @param T element The element to be inserted.
-	 * @param SLLNode *node The node the element will be inserted after.
 	 */
-	void insert(const T& element, SLLNode<T> *node);
+	void pushBack(const T& element);
 
 	/**
-	 * Removes an element from SinglyLinkedList.
+	 * Prints the list.
+	 */
+	void print() const;
+
+	/**
+	 * Adds a new element at the beginning of SinglyLinkedList.
 	 *
-	 * @param T element The element to be removed.
-	 *
-	 * @return TRUE, the element was removed; FALSE, the element was not in the
+	 * @param T element The element to be added.
+	 * @param Node, the node the element will get inserted after
+	 */
+	void insert(const T& element, SLLNode<T>* node);
+
+	/**
+	 * Searches for a node with the specified element and deletes it from the
 	 * list.
+	 *
+	 * @param T element The element to be deleted.
+	 *
+	 * @return TRUE if deleted; FALSE if not deleted.
 	 */
 	bool remove(const T& element);
-
-	/**
-	 * Removes a SLLNode from SinglyLinkedList.
-	 *
-	 * @param DLLNode<T> *node The node to be removed.
-	 *
-	 * @return TRUE, the node was removed; FALSE, the node was not in the list.
-	 */
-	bool remove(SLLNode<T> *node);
 
 	/**
 	 * Checks if SinglyLinkedList contains an element.
@@ -179,27 +189,6 @@ public:
 	 * contain the element.
 	 */
 	bool contains(const T& element) const;
-
-	/**
-	 * Checks if SinglyLinkedList contains a SLLNode.
-	 *
-	 * @param T node The node to check for.
-	 *
-	 * @return TRUE, the list contains the node; FALSE, the list does not 
-	 * contain the node.
-	 */	
-	bool contains(SLLNode<T> *node) const;
-
-	/**
-	 * Finds an element and returns an Iterator to it, or nullptr if the element
-	 * was not found.
-	 *
-	 * @param T element The element to find.
-	 *
-	 * @return STTIterator<T> iterator An iterator pointing to the element, or
-	 * nullptr if not found.
-	 */
-	//T* find(const T& element);
 
 	/**
 	* Returns the size of SinglyLinkedList.
@@ -213,31 +202,32 @@ public:
 	*
 	* @return TRUE if empty; FALSE if not empty.
 	*/
-	bool empty() const;
-
-	/**
-	 * Returns an Iterator pointing to the beginning (first element) of
+	bool isEmpty() const;
+	
+	/** 
+	 * Returns an Iterator pointing to the beginning (first element) of 
 	 * SinglyLinkedList.
 	 *
 	 * @return SLLIterator iterator An Iterator pointing to begin.
 	 */
-	//SLLIterator<T> begin() const;
+    SLLIterator<T> begin() const { return SLLIterator<T>(_head); }
 
-	/**
-	 * Returns an Iterator pointing PAST the end (nullptr) of SinglyLinkedList.
+	/** 
+	 * Returns an Iterator pointing to the end (last element) of 
+	 * SinglyLinkedList.
 	 *
 	 * @return SLLIterator iterator An Iterator pointing to end.
 	 */
-	//SLLIterator<T> end() const;
+    SLLIterator<T> end() const { return SLLIterator<T>(nullptr); }
 private:
 	/**
-	* Searches for an element and returns the SLLNode before it. The element's 
-	* node can be accessed by getNext().
+	* Searches for an element and returns the Node before it. The element's node
+	* can be accessed by getNext().
 	*/
 	SLLNode<T>* search(const T& element) const;
 
 	/**
-	* Clears all SinglyLinkedList's SLLNodes and deallocates their memory.
+	* Clears all SinglyLinkedList's Nodes and deallocates their memory.
 	*/
 	void clear();
 
