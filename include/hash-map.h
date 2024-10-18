@@ -54,11 +54,15 @@ struct Hash<K> {
 template <typename K, typename V>
 class HashNode {
 public:
-	HashNode(const K& key) : _key(key), _value(nullptr) {}
+	HashNode(const K& key) : _value(nullptr) {}
 	HashNode(const K& key, const V& value) : _key(key), _value(value) {}
+
+	bool operator==(const HashNode<K, V> *rhs) const;
+	bool operator>(const HashNode<K,V> *rhs) const;
+
 	K getKey() const { return _key; }
-	V getValue() const { return _value; }
-	void setValue(const V& value) { _value = value; }
+	V getItem() const { return _value; }
+	void setItem(const V& value) { _value = value; }
 protected:
     // Disallow copy and assignment.
     HashNode(const HashNode& other);
@@ -136,7 +140,7 @@ public:
 	 * @param int value
 	 * The value to be inserted.
 	 */
-	void insert(const K& key, const V& value);	
+	void add(const K& key, const V& value);	
 
 	/**
 	 * Removes the mapping for the specified key from this map if present.
@@ -167,7 +171,7 @@ public:
 	 *
 	 * @param K key The key to get the value.
 	 */
-	std::optional<V> get(const K& key) const;
+	std::optional<V> getItem(const K& key) const;
 
 	/**
 	 * Checks whether HashMap contains the key.
@@ -185,25 +189,27 @@ public:
 	 */
 	void replace(const K& key, const V& value);
 
+	void traverse(void visit(V&)) const;
+
 	/**
 	* Returns the size of HashMap.
 	*
 	* @return std::size_t The size.
 	*/
-	std::size_t size() const;
+	std::size_t getNumberOfItems() const;
 
 	/**
 	* Check whether HashMap is empty or not.
 	*
 	* @return TRUE if empty; FALSE if not empty.
 	*/
-	bool empty() const;
-private:
+	bool isEmpty() const;
+
 	/**
 	 * Clears the contents and deallocates memory of HashMap.
 	 */
 	void clear();
-
+private:
 	constexpr std::size_t TABLE_BUCKETS = 16;	// Power of two for DJR % 2^k.
 
 	std::size_t _buckets;		

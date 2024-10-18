@@ -1,12 +1,11 @@
 /**
- * @file doubly-linked-list.tpp
- * @class DoublyLinkedList
+ * @file doubly-linked-list.cpp
  *
  * @author Tyler Baxter
  * @version 1.0
- * @since 2024-08-30
+ * @since 2024-09-21
  *
- * DoublyLinkedList implementation.
+ * DoublyLinkedList and DoublyLinkedList helpers implementation.
  */
 
 #include "doubly-linked-list.h"
@@ -18,7 +17,7 @@ using namespace csc;
 
 template <typename T>
 typename DLLIterator<T>::const_reference DLLIterator<T>::operator*()
-{ 
+{
     if (!_node) {
         throw std::runtime_error("Attempt to dereference a null iterator.");
     }
@@ -26,12 +25,12 @@ typename DLLIterator<T>::const_reference DLLIterator<T>::operator*()
 }
 
 template <typename T>
-typename DLLIterator<T>::pointer DLLIterator<T>::operator->() 
-{ 
+typename DLLIterator<T>::pointer DLLIterator<T>::operator->()
+{
 	if (!_node) {
     	throw std::runtime_error("Attempt to dereference a null iterator.");
 	}
-	return &(_node->getElement()); 
+	return &(_node->getElement());
 }
 
 template <typename T>
@@ -52,7 +51,7 @@ DLLIterator<T> DLLIterator<T>::operator++(int)
 }
 
 template <typename T>
-DLLIterator<T>& DLLIterator<T>::operator--() 
+DLLIterator<T>& DLLIterator<T>::operator--()
 {
     if (_node) {
         _node = _node->getPrev();
@@ -61,7 +60,7 @@ DLLIterator<T>& DLLIterator<T>::operator--()
 }
 
 template <typename T>
-DLLIterator<T> DLLIterator<T>::operator--(int) 
+DLLIterator<T> DLLIterator<T>::operator--(int)
 {
     DLLIterator tmp = *this;
     --(*this);
@@ -69,16 +68,16 @@ DLLIterator<T> DLLIterator<T>::operator--(int)
 }
 
 template <typename T>
-bool DLLIterator<T>::operator==(const DLLIterator& other) const 
+bool DLLIterator<T>::operator==(const DLLIterator& other) const
 {
     return _node == other._node;
 }
 
 template <typename T>
-bool DLLIterator<T>::operator!=(const DLLIterator& other) const 
+bool DLLIterator<T>::operator!=(const DLLIterator& other) const
 {
     return _node != other._node;
-}	
+}
 
 template <typename T>
 DoublyLinkedList<T>::DoublyLinkedList(const DoublyLinkedList<T>& other)
@@ -158,6 +157,25 @@ DoublyLinkedList<T>& DoublyLinkedList<T>::operator=(
 }
 
 template <typename T>
+std::ostream& csc::operator<<(std::ostream& out,
+	const DoublyLinkedList<T>& list)
+{
+    out << "[ ";
+    bool first = true;
+
+    for (auto it = list.begin(); it != list.end(); ++it) {
+        if (!first) {
+            out << ", ";
+        }
+        first = false;
+        out << *it;
+    }
+
+    out << " ]";
+    return out;
+}
+
+template <typename T>
 void DoublyLinkedList<T>::copyCallingListEmpty(
 	const DoublyLinkedList<T>& other) {
 	// It's assumed calling object is empty, so we don't need to check.
@@ -181,7 +199,7 @@ void DoublyLinkedList<T>::copyCallingListEmpty(
 
 template <typename T>
 void DoublyLinkedList<T>::copyListsSameLength(
-	const DoublyLinkedList<T>& other) 
+	const DoublyLinkedList<T>& other)
 {
 	DLLNode<T> *curr = _head;
 	DLLNode<T> *otherCurr = other._head;
@@ -196,7 +214,7 @@ void DoublyLinkedList<T>::copyListsSameLength(
 
 template <typename T>
 void DoublyLinkedList<T>::copyCallingListLonger(
-	const DoublyLinkedList<T>& other) 
+	const DoublyLinkedList<T>& other)
 {
     // Create curr for caller and other _head.
     DLLNode<T>* curr = _head;
@@ -211,8 +229,7 @@ void DoublyLinkedList<T>::copyCallingListLonger(
         curr = curr->getNext();
         otherCurr = otherCurr->getNext();
     }
-    // curr at new _tail for caller.
-    // Delete everything after...
+    // curr at new _tail for caller, delete everything after.
     while (curr != nullptr) {
         delete curr;
         curr = curr->getNext();
@@ -224,7 +241,7 @@ void DoublyLinkedList<T>::copyCallingListLonger(
 
 template <typename T>
 void DoublyLinkedList<T>::copyCallingListShorter(
-	const DoublyLinkedList<T>& other) 
+	const DoublyLinkedList<T>& other)
 {
     DLLNode<T>* curr = _head;
     DLLNode<T>* otherCurr = other._head;
@@ -298,7 +315,7 @@ const DLLNode<T>* DoublyLinkedList<T>::pushFront(const T& element)
 		ptr = nullptr;
 	}
 	// Increment size, node has been added.
-	++_size;	
+	++_size;
 	return _head;
 }
 
@@ -356,42 +373,6 @@ std::optional<T> DoublyLinkedList<T>::popBack()
 	return ele;
 }
 
-//template <typename T>
-//bool DoublyLinkedList<T>::insert(T element, int index)
-//{
-//	// xxx rework the bool
-//	index_out_of_range(index);
-//
-//	// Insert at _head.
-//	if (index == 0) {
-//		pushFront(element);
-//		return true;
-//	}
-//
-//	// Insert at _tail.
-//	if (index == _size) {
-//		push_back(element);
-//		return true;
-//	}
-//
-//	DLLNode<T>* curr = _head;
-//	int i = 0;
-//	// We want to stop one before the index we want to insert, so we can 
-//	// use setNext() to insert at that index.
-//	while (++i != index) {
-//		curr->getNext();
-//	}
-//	DLLNode<T>* currNext = curr->getNext();
-//	curr->setNext(new DLLNode<T>(element, currNext, curr));
-//	// Make sure currNext isn't nullptr before trying to set prev for it.
-//	if (currNext != nullptr) {
-//		currNext->setPrev(curr->getNext());
-//	}
-//	++_size;
-//	curr = currNext = nullptr;
-//	return true;
-//}
-
 template <typename T>
 const DLLNode<T>* DoublyLinkedList<T>::get(const T& element)
 {
@@ -412,21 +393,27 @@ bool DoublyLinkedList<T>::remove(const T& element)
 		return false;
 	}
 
-	// Handle head and tail.
+	// Handle head and tail cases.
 	if (_head->getElement() == element) {
 		popFront();
 		return true;
 	} else if (_tail->getElement() == element) {
+		// `else if` to lock control flow into `size > 1` for tail case.
 		popBack();
 		return true;
 	}
 
 	// General case:
+	// Already handled head and tail, so safe to assume `size() > 2`.
 	DLLNode<T> *node = const_cast<DLLNode<T>*>(search(element));
+	if (!node) {
+		return false;
+	}
 	node->getNext()->setPrev(node->getPrev());
 	node->getPrev()->setNext(node->getNext());
 	delete node;
 	node = nullptr;
+	--_size;
 	return true;
 }
 
@@ -464,24 +451,6 @@ bool DoublyLinkedList<T>::removeAndPushFront(const DLLNode<T> *ptr)
 	_head = node;
 	return true;
 }
-
-//template <typename T>
-//void DoublyLinkedList<T>::print() const
-//{
-//	if (empty()) {
-//		std::cout << "Empty list\n";
-//	// Guard loop if there's only one element.
-//	} else if (_head == _tail) {
-//		std::cout << _head->getElement();
-//	} else {
-//		DLLNode<T>* curr = _head;
-//		while (curr != nullptr) {
-//			std::cout << curr->getElement() << ", ";
-//			curr = curr->getNext();
-//		}
-//		curr = nullptr;
-//	}
-//}
 
 template <typename T>
 const DLLNode<T>* DoublyLinkedList<T>::search(const T& element) const
