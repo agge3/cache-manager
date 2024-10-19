@@ -98,23 +98,21 @@ SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(const SinglyLinkedList<T>& r
     } else {
     	SLLNode<T> *curr = _head;
     	SLLNode<T> *rhsCurr = rhs._head;
-		while (curr->getNext() != nullptr && rhsCurr->getNext() != nullptr) {
-			curr->setElement(rhsCurr->getElement());
+		while (rhsCurr != nullptr) {
+			if (curr == nullptr) {
+				curr = new SLLNode<T>(rhs->getElement());
+			} else {
+				curr->setElement(rhsCurr->getElement());
+			}
 			curr = curr->getNext();
 			rhsCurr = rhsCurr->getNext();
 		}
-		while (curr->getNext() == nullptr && rhsCurr->getNext() != nullptr) {
-			curr->setNext(new SLLNode<T>(rhsCurr->getElement));
-			curr = curr->getNext();
-			rhsCurr = rhsCurr->getNext();
-		}
-		while (curr->getNext() != nullptr && rhsCurr->getNext() == nullptr) {
-			SLLNode<T> *tmp = curr->getNext();
+		while (curr != nullptr && rhsCurr == nullptr) {
+			SLLNode<T> *tmp = curr;
 			delete curr;
-			curr = tmp;
-			tmp = nullptr;
+			curr = tmp->getNext();
 		}
-    	curr = rhs_curr = nullptr;
+    	curr = rhsCurr = nullptr;
 	}
 	return *this;
 }
