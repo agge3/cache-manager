@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <iterator>
 #include <iostream>
+#include <optional>
 
 /**
 * @namespace csc
@@ -126,7 +127,7 @@ public:
 	 *
 	 * @return T element The first element.
 	 */
-	T front() const;
+	std::optional<T> front() const;
 
 	/**
 	 * Returns a ptr to the first node of SinglyLinkedList.
@@ -141,7 +142,7 @@ public:
 	 *
 	 * @return T element The first element.
 	 */
-	T popFront();
+	std::optional<T> popFront();
 
 	/**
 	 * Adds a new node at the beginning of the list.

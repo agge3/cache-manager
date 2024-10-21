@@ -10,6 +10,8 @@
  */
 
 #include <exception>
+#include <cassert>
+#include <optional>
 
 using namespace csc;
 
@@ -61,6 +63,24 @@ bool SLLIterator<T>::operator!=(const SLLIterator& other) const
 }
 
 template <typename T>
+std::ostream& csc::operator<<(std::ostream& out, 
+							  const SinglyLinkedList<T>& list)
+{
+	out << "[ ";
+	bool first = true;
+
+	for (auto it = list.begin(); it != list.end(); ++it) {
+		if (!first) {
+			out << ", ";
+		}
+		first = false;
+		out << *it;
+	}
+	out << " ]";
+	return out;
+}
+
+template <typename T>
 SinglyLinkedList<T>::SinglyLinkedList(const SinglyLinkedList<T>& other)
 {
     if (!other.isEmpty()) {
@@ -89,31 +109,43 @@ template <typename T>
 SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(const SinglyLinkedList<T>& rhs)
 {
     if (&rhs == this) {
-        // Attempted assignment to self, return out.
-        return *this;
+        // Attempted assignment to self.
+		assert(_head->getElement() == rhs._head->getElement());
+		assert(_size == rhs._size);
+        return *this;	// return out
     }
 
     if (rhs.isEmpty()) {
         this->clear();
-    } else {
-    	SLLNode<T> *curr = _head;
-    	SLLNode<T> *rhsCurr = rhs._head;
-		while (rhsCurr != nullptr) {
-			if (curr == nullptr) {
-				curr = new SLLNode<T>(rhs->getElement());
-			} else {
-				curr->setElement(rhsCurr->getElement());
-			}
-			curr = curr->getNext();
-			rhsCurr = rhsCurr->getNext();
-		}
-		while (curr != nullptr && rhsCurr == nullptr) {
-			SLLNode<T> *tmp = curr;
-			delete curr;
-			curr = tmp->getNext();
-		}
-    	curr = rhsCurr = nullptr;
+		return *this;	// return out
 	}
+
+	// Handle caller list is empty.
+	if (_head == nullptr) {
+		_head = new SLLNode<T>(rhs._head->getElement());
+	}
+
+    SLLNode<T> *curr = _head;
+    SLLNode<T> *rhsCurr = rhs._head;
+	while (rhsCurr != nullptr) {
+		if (curr == nullptr) {
+			curr = new SLLNode<T>(rhsCurr->getElement());
+		} else {
+			curr->setElement(rhsCurr->getElement());
+		}
+		curr = curr->getNext();
+		rhsCurr = rhsCurr->getNext();
+	}
+	while (curr != nullptr && rhsCurr == nullptr) {
+		SLLNode<T> *tmp = curr;
+		delete curr;
+		curr = tmp->getNext();
+	}
+    curr = rhsCurr = nullptr;
+	_size = rhs._size;
+	
+	assert(_head != nullptr);
+	assert(_size == rhs._size);
 	return *this;
 }
 
@@ -135,12 +167,9 @@ SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(SinglyLinkedList<T>&& rhs)
 }
 
 template <typename T>
-T SinglyLinkedList<T>::front() const
+std::optional<T> SinglyLinkedList<T>::front() const
 {
-	if (isEmpty()) {
-		//return nullptr; do we want to return ptrs or values?
-	}
-	return _head->getElement();
+	return !isEmpty() ? std::optional<T>(_head->getElement()) : std::nullopt;
 }
 
 template <typename T>
@@ -207,27 +236,25 @@ bool SinglyLinkedList<T>::remove(const T& element)
 template <typename T>
 SLLNode<T>* SinglyLinkedList<T>::search(const T& element) const
 {
-	// List is isEmpty, return nullptr.
+	// List is empty, return nullptr.
 	if (isEmpty()) {
 		return nullptr;
 	}
+	//std::cout << "size: " << _size << "\n";	// uncomment to print size
+	assert(_head != nullptr);
+
 	// Search element is head, return a pointer to head.
 	if (_head->getElement() == element) {
 		return _head;
 	}
-	// Already checked head.
-	SLLNode<T> *curr = _head->getNext();
-	if (curr == nullptr) {
-		return nullptr;
-	}
+
 	// General case:
-	SLLNode<T> *curr_next = curr;
-	while (curr_next != nullptr) {
-		if (curr_next->getElement() == element) {
+	SLLNode<T> *curr = _head->getNext();	// Already checked head.
+	while (curr != nullptr) {
+		if (curr->getElement() == element) {
 			return curr;
 		}
 		curr = curr->getNext();
-		curr_next = curr_next->getNext();
 	}
 	return nullptr;
 }
@@ -239,22 +266,24 @@ bool SinglyLinkedList<T>::contains(const T& element) const
 }
 
 template <typename T>
-T SinglyLinkedList<T>::popFront()
+std::optional<T> SinglyLinkedList<T>::popFront()
 {
-	// Guard if the list is isEmpty.
+	// Guard if the list is empty.
 	if (isEmpty()) {
-		throw std::out_of_range("Attempt to pop an isEmpty list.");
+		return std::nullopt;
 	}
+
 	// Guard if the list only has one element.
 	if (_head->getNext() == nullptr) {
-		T ele = _head->getElement();
+		auto ele = _head->getElement();
 		delete _head;
 		_head = nullptr;
 		_size = 0;
 		return ele;
 	}
+
 	// General case:
-	T ele = _head->getElement();
+	auto ele = _head->getElement();
 	SLLNode<T>* curr = _head;
 	_head = _head->getNext();
 	delete curr;

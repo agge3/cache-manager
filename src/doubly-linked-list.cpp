@@ -170,7 +170,6 @@ std::ostream& csc::operator<<(std::ostream& out,
         first = false;
         out << *it;
     }
-
     out << " ]";
     return out;
 }

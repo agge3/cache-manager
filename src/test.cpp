@@ -59,16 +59,23 @@ TEST(SinglyLinkedListTest, BasicOperationsInt) {
 
     // Push elements
     for (int i = 0; i < 10; ++i) {
-        list.pushFront(randomInt());
+		// XXX Random causes sometimes duplicate values. Do we want to cope with
+		// that or not?
+        list.pushFront(i);
         EXPECT_EQ(list.size(), i + 1);
         EXPECT_FALSE(list.isEmpty());
     }
 
     // Pop elements
-    for (int i = 9; i >= 0; --i) {
-        int value = list.popFront();
-        EXPECT_EQ(list.size(), i);
-        EXPECT_FALSE(list.contains(value));
+    for (auto i = list.size(); i > 0; --i) {
+		std::optional<int> front = list.front();
+		std::optional<int> v = list.popFront();
+		EXPECT_EQ(*front, *v) << "Front: " << *front << ", Popped value: " <<
+			*v << "\n";
+        EXPECT_TRUE(list.front() != *front) << "Current front: " << 
+			*list.front() << ", Old front: " << *front << ", List size: " <<
+			list.size() << "\n";
+        EXPECT_EQ(list.size(), i - 1);
     }
     EXPECT_TRUE(list.isEmpty());
 
@@ -100,9 +107,9 @@ TEST(SinglyLinkedListTest, BasicOperationsString) {
 
     // Pop strings
     for (int i = 9; i >= 0; --i) {
-        std::string value = list.popFront();
+		std::optional<std::string> value = list.popFront();
         EXPECT_EQ(list.size(), i);
-        EXPECT_FALSE(list.contains(value));
+        EXPECT_FALSE(list.contains(*value));
     }
     EXPECT_TRUE(list.isEmpty());
 
@@ -115,7 +122,8 @@ TEST(SinglyLinkedListTest, EdgeCases) {
     SinglyLinkedList<int> list;
 
     // Pop from empty list
-    EXPECT_THROW(list.popFront(), std::runtime_error);
+	std::optional<int> v = list.popFront();
+    EXPECT_TRUE(!v.has_value());
 
     // Remove from empty list
     EXPECT_FALSE(list.remove(10));
@@ -127,6 +135,32 @@ TEST(SinglyLinkedListTest, EdgeCases) {
     EXPECT_EQ(list.size(), 5);
     EXPECT_FALSE(list.remove(10));
     EXPECT_EQ(list.size(), 5);
+}
+
+TEST(SLLMembers, pushFront)
+{
+	SinglyLinkedList<int> list;
+	for (int i = 0; i < 10; ++i) {
+		list.pushFront(i);
+		EXPECT_TRUE(list.contains(i));
+	}
+}
+
+TEST(SLLMembers, popFront)
+{
+	SinglyLinkedList<int> list;
+	for (int i = 0; i < 10; ++i) {
+		list.pushFront(i);
+		EXPECT_TRUE(list.contains(i));
+	}
+	EXPECT_TRUE(list.size() == 10);
+	for (auto i = list.size(); i > 0; --i) {
+		std::optional<int> v = list.popFront();
+		EXPECT_TRUE(list.size() == i - 1);
+		EXPECT_FALSE(list.contains(*v));
+	}
+	EXPECT_TRUE(list.size() == 0);
+	EXPECT_TRUE(list.isEmpty());
 }
 
 TEST(SLLBigFive, CopyConstructor)
