@@ -21,6 +21,7 @@
 #include <vector>
 #include <random>
 #include <algorithm>
+#include <sstream>
 
 #ifdef _WIN32
 #define NULL_DEVICE "NUL:"
@@ -163,6 +164,63 @@ TEST(SLLMembers, popFront)
 	EXPECT_TRUE(list.isEmpty());
 }
 
+TEST(SLLFriends, ostream)
+{
+	SinglyLinkedList<int> list;
+	for (int i = 1; i <= 5; ++i) {
+		list.pushBack(i);
+	}
+	std::ostringstream out;
+	out << list;
+	EXPECT_EQ(out.str(), "[ 1, 2, 3, 4, 5 ]");
+}
+
+TEST(SLLOperators, Equality)
+{
+    SinglyLinkedList<int> list1;
+    SinglyLinkedList<int> list2;
+    for (int i = 0; i < 10; ++i) {
+        list1.pushFront(i);
+    }
+	EXPECT_FALSE(list1 == list2);
+    for (int i = 0; i < 5; ++i) {
+        list2.pushFront(i);
+    }
+	EXPECT_FALSE(list1 == list2);
+	for (int i = 5; i < 15; ++i) {
+		list2.pushFront(i);
+	}
+	EXPECT_FALSE(list1 == list2);
+	list2.clear();
+    for (int i = 0; i < 10; ++i) {
+        list2.pushFront(i);
+    }
+	EXPECT_TRUE(list1 == list2);
+}
+
+TEST(SLLOperators, Inequality)
+{
+    SinglyLinkedList<int> list1;
+    SinglyLinkedList<int> list2;
+    for (int i = 0; i < 10; ++i) {
+        list1.pushFront(i);
+    }
+	EXPECT_TRUE(list1 != list2);
+    for (int i = 0; i < 5; ++i) {
+        list2.pushFront(i);
+    }
+	EXPECT_TRUE(list1 != list2);
+	for (int i = 5; i < 15; ++i) {
+		list2.pushFront(i);
+	}
+	EXPECT_TRUE(list1 != list2);
+	list2.clear();
+    for (int i = 0; i < 10; ++i) {
+        list2.pushFront(i);
+    }
+	EXPECT_FALSE(list1 != list2);
+}
+
 TEST(SLLBigFive, CopyConstructor)
 {
     SinglyLinkedList<int> list;
@@ -179,18 +237,59 @@ TEST(SLLBigFive, CopyConstructor)
 }
 
 TEST(SLLBigFive, CopyAssignment) {
-    // Copy assignment
 	SinglyLinkedList<int> list;
     for (int i = 0; i < 10; ++i) {
         list.pushFront(i);
     }
 
+	// With empty list.
     SinglyLinkedList<int> assignedList;
     assignedList = list;
     EXPECT_EQ(assignedList.size(), list.size());
     for (int i = 0; i < 10; ++i) {
-        EXPECT_TRUE(assignedList.contains(i));
+        EXPECT_TRUE(assignedList.contains(i)) << "Original list: " << list <<
+			"\nAssigned list: " << assignedList << "\n";
     }
+	EXPECT_TRUE(list == assignedList);
+	std::ostringstream listOut;
+	std::ostringstream assignedOut;
+	listOut << list;
+	assignedOut << assignedList;
+	EXPECT_EQ(listOut.str(), assignedOut.str());
+
+	// With smaller list.
+	assignedList.clear();
+	EXPECT_TRUE(assignedList.isEmpty());
+	for (int i = 0; i < 5; ++i) {
+		assignedList.pushFront(i);
+	}
+    assignedList = list;
+    EXPECT_EQ(assignedList.size(), list.size());
+    for (int i = 0; i < 10; ++i) {
+        EXPECT_TRUE(assignedList.contains(i)) << "Original list: " << list <<
+			"\nAssigned list: " << assignedList << "\n";
+    }
+	EXPECT_TRUE(list == assignedList);
+	std::ostringstream().swap(assignedOut);
+	assignedOut << assignedList;
+	EXPECT_EQ(listOut.str(), assignedOut.str());
+
+	// With larger list.
+	assignedList.clear();
+	EXPECT_TRUE(assignedList.isEmpty());
+	for (int i = 0; i < 15; ++i) {
+		assignedList.pushFront(i);
+	}
+    assignedList = list;
+    EXPECT_EQ(assignedList.size(), list.size());
+    for (int i = 0; i < 10; ++i) {
+        EXPECT_TRUE(assignedList.contains(i)) << "Original list: " << list <<
+			"\nAssigned list: " << assignedList << "\n";
+    }
+	EXPECT_TRUE(list == assignedList);
+	std::ostringstream().swap(assignedOut);
+	assignedOut << assignedList;
+	EXPECT_EQ(listOut.str(), assignedOut.str());
 }
 
 TEST(SLLBigFive, MoveConstructor)
@@ -222,6 +321,15 @@ TEST(SLLBigFive, MoveAssignment)
     EXPECT_TRUE(anotherList.contains(0));
     EXPECT_TRUE(anotherList.contains(9));
     EXPECT_TRUE(list.isEmpty()); // Moved list should be empty
+}
+
+TEST(SLLBigFive, Destructor)
+{
+	std::unique_ptr<SinglyLinkedList<int>> list(new SinglyLinkedList<int>());
+	for (int i = 0; i < 10; ++i) {
+		list->pushFront(i);
+	}
+	list.reset();
 }
 
 TEST(SinglyLinkedListTest, StressTest) {

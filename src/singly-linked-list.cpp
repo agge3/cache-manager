@@ -74,6 +74,7 @@ std::ostream& csc::operator<<(std::ostream& out,
 			out << ", ";
 		}
 		first = false;
+		assert(it != list.end());
 		out << *it;
 	}
 	out << " ]";
@@ -105,8 +106,46 @@ SinglyLinkedList<T>::SinglyLinkedList(SinglyLinkedList<T>&& other) noexcept :
     other._size = 0;
 }
 
+
 template <typename T>
-SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(const SinglyLinkedList<T>& rhs)
+constexpr bool csc::operator==(const SinglyLinkedList<T>& lhs,
+							   const SinglyLinkedList<T>& rhs)
+{
+	// Avoid the loop if they're the same object.
+	if (&lhs == &rhs) {
+		return true;
+	}
+	// Avoid the loop if their sizes are different.
+	if (lhs._size != rhs._size) {
+		return false;
+	}
+	// Their size has been checked, so if one is empty the other is also empty.
+	// Don't try to call methods from an empty list.
+	if (lhs.isEmpty() && rhs.isEmpty()) {
+		return true;
+	}
+	SLLNode<T> *lhsCurr = lhs._head;
+	SLLNode<T> *rhsCurr = rhs._head;
+	while (lhsCurr != nullptr && rhsCurr != nullptr) {
+		if (lhsCurr->getElement() != rhsCurr->getElement()) {
+			return false;
+		}
+		lhsCurr = lhsCurr->getNext();
+		rhsCurr = rhsCurr->getNext();
+	}
+	return true;
+}
+
+template <typename T>
+constexpr bool csc::operator!=(const SinglyLinkedList<T>& lhs,
+							   const SinglyLinkedList<T>& rhs)
+{
+	return !(lhs == rhs);
+}
+
+template <typename T>
+SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(
+	const SinglyLinkedList<T>& rhs)
 {
     if (&rhs == this) {
         // Attempted assignment to self.
@@ -120,34 +159,90 @@ SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(const SinglyLinkedList<T>& r
 		return *this;	// return out
 	}
 
-	// Handle caller list is empty.
+	// Handle if caller is an empty list.
 	if (_head == nullptr) {
 		_head = new SLLNode<T>(rhs._head->getElement());
+	} else {
+		_head->setElement(rhs._head->getElement());
 	}
 
-    SLLNode<T> *curr = _head;
-    SLLNode<T> *rhsCurr = rhs._head;
-	while (rhsCurr != nullptr) {
-		if (curr == nullptr) {
-			curr = new SLLNode<T>(rhsCurr->getElement());
-		} else {
-			curr->setElement(rhsCurr->getElement());
-		}
+    SLLNode<T> *curr = _head->getNext();
+    SLLNode<T> *rhsCurr = rhs._head->getNext();
+	// Need to keep track of previous.
+    SLLNode<T> *prev = _head;
+	// Both lists have the current node allocated, copy rhs' element into 
+	// current.
+	while (curr != nullptr && rhsCurr != nullptr) {
+		curr->setElement(rhsCurr->getElement());
+		curr = curr->getNext();
+		rhsCurr = rhsCurr->getNext();
+		prev = prev->getNext();
+	}
+	// Current needs the current node allocated, allocate it with rhs' element.
+	while (curr == nullptr && rhsCurr != nullptr) {
+		curr = new SLLNode<T>(rhsCurr->getElement());
+		prev->setNext(curr);
+		prev = curr;
 		curr = curr->getNext();
 		rhsCurr = rhsCurr->getNext();
 	}
+	// We've finished copying rhs' elements and current still has nodes, delete
+	// them.
 	while (curr != nullptr && rhsCurr == nullptr) {
-		SLLNode<T> *tmp = curr;
+		prev->setNext(curr->getNext());
 		delete curr;
-		curr = tmp->getNext();
-	}
-    curr = rhsCurr = nullptr;
+		curr = prev->getNext();
+	} 
+	// These should be one past last (i.e., nullptr).
+	assert(curr == nullptr);
+	assert(rhsCurr == nullptr);
+	curr = rhsCurr = prev = nullptr;
 	_size = rhs._size;
 	
 	assert(_head != nullptr);
 	assert(_size == rhs._size);
 	return *this;
 }
+
+//template <typename T>
+//SinglyLinkedList<T>& SinglyLinkedList<T>::copySameSize(
+//	const SinglyLinkedList<T>& rhs)
+//{
+//	SLLNode<T> *curr = _head;
+//	SLLNode<T> *rhsCurr = rhs._head;
+//	while (curr != nullptr && rhsCurr != nullptr) {
+//		curr->setElement(rhs->getElement());
+//		curr = curr->getNext();
+//		rhsCurr = rhsCurr->getNext();
+//	}
+//	return *this;
+//}
+//
+//template <typename T>
+//SinglyLinkedList<T>& SinglyLinkedList<T>::copySelfSmaller(
+//	const SinglyLinkedList<T>& rhs)
+//{
+//	if (_head == nullptr) {
+//		_head = new SLLNode<T>(rhs->getElement);
+//	}
+//	SLLNode<T> *curr = _head->getNext();
+//	SLLNode<T> *prev = _head;
+//	SLLNode<T> *rhsCurr = rhs._head->getNext();
+//	while (rhsCurr != nullptr) {
+//		curr = new SLLNode<T>(rhsCurr->getElement());
+//		prev->setNext(curr);
+//		curr = curr->getNext();
+//		prev = prev->getNext();
+//		rhsCurr = rhsCurr->getNext();
+//	}
+//	return *this;
+//}
+//
+//template <typename T>
+//SinglyLinkedList<T>& SinglyLinkedList<T>::copySelfLarger(
+//	const SinglyLinkedList<T>& rhs)
+//{
+//}
 
 template <typename T>
 SinglyLinkedList<T>& SinglyLinkedList<T>::operator=(SinglyLinkedList<T>&& rhs)
@@ -275,20 +370,30 @@ std::optional<T> SinglyLinkedList<T>::popFront()
 
 	// Guard if the list only has one element.
 	if (_head->getNext() == nullptr) {
-		auto ele = _head->getElement();
+		auto ele = std::optional<T>(_head->getElement());
+		assert(ele.has_value());
+
 		delete _head;
 		_head = nullptr;
 		_size = 0;
+		assert(isEmpty());
+
 		return ele;
 	}
 
 	// General case:
-	auto ele = _head->getElement();
-	SLLNode<T>* curr = _head;
+	auto ele = std::optional<T>(_head->getElement());
+	assert(ele.has_value());
+
+	SLLNode<T> *curr = _head;
 	_head = _head->getNext();
+	assert(curr != nullptr);
+	assert(_head != nullptr);
+
 	delete curr;
 	curr = nullptr;
 	--_size;
+
 	return ele;
 }
 
@@ -359,7 +464,15 @@ bool SinglyLinkedList<T>::isEmpty() const
 template <typename T>
 void SinglyLinkedList<T>::clear()
 {
-	while (!isEmpty()) {
-		popFront();
+	if (!isEmpty()) {
+		SLLNode<T> *curr = _head;
+		while (curr != nullptr) {
+			SLLNode<T> *tmp = curr;
+			curr = curr->getNext();
+			delete tmp;
+			tmp = nullptr;
+		}
+		_head = nullptr;
+		_size = 0;
 	}
 }
