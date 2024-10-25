@@ -13,7 +13,9 @@
 
 #include "singly-linked-list.h"
 
+#include <cmath>
 #include <cstddef>
+#include <iterator>
 #include <string>
 #include <memory>
 #include <iostream>
@@ -73,8 +75,8 @@ public:
 
 	bool operator>(const HashNode<K, V>& src);
 
-	K getKey() const { return _key; }
-	V getItem() const { return _value; }
+	const K& getKey() const { return _key; }
+	const V& getItem() const { return _value; }
 	void setItem(const V& value) { _value = value; }
 protected:
     // Disallow copy and assignment.
@@ -86,37 +88,50 @@ private:
 	V _value;
 };
 
+// Forward declaration of HashMap for reliant template declarations.
+template <typename K, typename V, typename F>
+class HashMap;
+
+// Forward declaration of template overloaded insertion operator.
+template <typename K, typename V, typename F>
+std::ostream& operator<<(std::ostream&, const HashMap<K, V, F>&);
+
 /**
  * @class MapIterator<V>
  * HashMap Iterator.
  */
-template <typename V>
+template <typename K, typename V, typename F>
 class MapIterator {
 public:
 	using iterator_category = std::forward_iterator_tag;
-	using value_type = T;
+	using value_type = V;
 	using difference_type = std::ptrdiff_t;
-	using pointer = T*;
-	using reference = T&;
-	using const_reference = const T&;
+	using pointer = V*;
+	using reference = V&;
+	using const_reference = const V&;
 
-    explicit SLLIterator(SLLNode<T>* node) : _node(node) {}
+    explicit MapIterator(typename HashMap<K, V, F>::ListPtr *table,
+						 std::size_t buckets, std::size_t index) :
+		_table(table), _buckets(buckets), _index(index), _listIt(advance()) {}
 
     const_reference operator*();
 	pointer operator->();
-    SLLIterator& operator++();
-	SLLIterator operator++(int);
-	bool operator==(const SLLIterator& other) const;
-    bool operator!=(const SLLIterator& other) const;
+    MapIterator& operator++();
+	MapIterator operator++(int);
+	bool operator==(const MapIterator& other) const;
+    bool operator!=(const MapIterator& other) const;
 private:
-    SLLNode<T>* _node;
-};
+	/**
+	 * Advances index until next valid bucket (has a list), and returns an
+	 * iterator to the list.
+	 */
+	SLLIterator<HashNode<K, V>> advance();
 
-// Forward declaration for overloaded insertion operator with template class.
-template <typename K, typename V, typename F>
-class HashMap;
-template <typename K, typename V, typename F>
-std::ostream& operator<<(std::ostream&, const HashMap<K, V, F>&);
+	typename HashMap<K, V, F>::ListPtr *_table;	// reference to the hash table
+	std::size_t _buckets;
+	std::size_t _index;
+	SLLIterator<HashNode<K, V>> _listIt;
+};
 
 /**
 * @class HashMap
@@ -125,12 +140,12 @@ std::ostream& operator<<(std::ostream&, const HashMap<K, V, F>&);
 template <typename K, typename V, typename F = Hash<K>>
 class HashMap {
 public:
-    /**
-     * @typedef std::unique_ptr<SinglyLinkedList<HashNode<K, V>>> ListPtr
+	/**
+	 * @typedef std::unique_ptr<SinglyLinkedList<HashNode<K, V>>> ListPtr
 	 * ListPtr is a pointer to a SinglyLinkedList of HashNodes. HashMap has
 	 * exclusive ownership of any ListPtrs.
-     */
-    typedef std::unique_ptr<SinglyLinkedList<HashNode<K, V>>> ListPtr;
+	 */
+	using ListPtr = std::unique_ptr<SinglyLinkedList<HashNode<K, V>>>;
 
 	/**
 	 * Default constructor.
@@ -166,6 +181,11 @@ public:
 	 * Move assignment operator.
 	 */
 	HashMap<K, V, F>& operator=(HashMap<K, V, F>&& rhs) noexcept;
+
+	/**
+	 * Friend declaration of MapIterator.
+	 */	
+	friend class MapIterator<K, V, F>;
 
 	/**
 	 * Overloaded ostream operator, '<<'.
@@ -245,6 +265,16 @@ public:
 	* @return TRUE if empty; FALSE if not empty.
 	*/
 	bool isEmpty() const;
+
+	/**
+	 * xxx
+	 */
+	MapIterator<K, V, F> begin() const;
+
+	/**
+	 * xxx
+	 */
+	MapIterator<K, V, F> end() const;
 
 	/**
 	 * Clears the contents and deallocates memory of HashMap.

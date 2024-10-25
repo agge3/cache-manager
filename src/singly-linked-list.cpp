@@ -25,7 +25,7 @@ typename SLLIterator<T>::const_reference SLLIterator<T>::operator*()
 }
 
 template <typename T>
-typename SLLIterator<T>::pointer SLLIterator<T>::operator->() 
+typename SLLIterator<T>::const_pointer SLLIterator<T>::operator->() 
 { 
 	if (!_node) {
     	throw std::runtime_error("Attempt to dereference a null iterator.");
@@ -77,6 +77,7 @@ std::ostream& csc::operator<<(std::ostream& out,
 		assert(it != list.end());
 		out << *it;
 	}
+
 	out << " ]";
 	return out;
 }

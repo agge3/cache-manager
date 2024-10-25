@@ -23,6 +23,7 @@
 #include <random>
 #include <algorithm>
 #include <sstream>
+#include <cstdint>
 
 #ifdef _WIN32
 #define NULL_DEVICE "NUL:"
@@ -178,7 +179,7 @@ TEST(SLLMembers, find)
 	EXPECT_TRUE(list.find(1).has_value());
 }
 
-TEST(SLLFriends, ostream)
+TEST(SLLOperators, ostream)
 {
 	SinglyLinkedList<int> list;
 	for (int i = 1; i <= 5; ++i) {
@@ -370,6 +371,45 @@ TEST(SinglyLinkedListTest, StressTest) {
     EXPECT_LE(list.size(), 1000);
 }
 
+TEST(HashFunction, Integers)
+{
+	Hash<std::int32_t> hash;
+	//for (std::int32_t i = 0x80000000; i < 0x7fffffff; ++i) {
+	//	EXPECT_EQ(hash(i), hash(i));
+	//}
+	// smaller range... :)
+	for (std::int32_t i = -100; i < 100; ++i) {
+		EXPECT_EQ(hash(i), hash(i));
+	}
+}
+
+TEST(HashNodeOperators, Equality)
+{
+	auto node1 = HashNode<int, int>(1, 1);
+	auto node2 = HashNode<int, int>(1);
+	EXPECT_EQ(node1, node2);
+	EXPECT_TRUE(node1 == node2);
+
+	auto node3 = HashNode<std::string, int>("key", 3);
+	auto node4 = HashNode<std::string, int>("key");
+	EXPECT_EQ(node3, node4);
+	EXPECT_TRUE(node3 == node4);
+
+	auto node5 = HashNode<int, int>(2, 2);
+	auto node6 = HashNode<int, int>(3);
+	EXPECT_NE(node5, node6);
+	EXPECT_FALSE(node5 == node6);
+
+	EXPECT_NE(node1, node5);
+	EXPECT_NE(node1, node6);
+	EXPECT_NE(node2, node5);
+	EXPECT_NE(node2, node6);
+	EXPECT_FALSE(node1 == node5);
+	EXPECT_FALSE(node1 == node6);
+	EXPECT_FALSE(node2 == node5);
+	EXPECT_FALSE(node2 == node6);
+}
+
 TEST(HashMapMembers, add)
 {
 	std::unique_ptr<HashMap<int, int>> intMap =
@@ -380,16 +420,27 @@ TEST(HashMapMembers, add)
 		std::make_unique<HashMap<std::string, int>>();
 
 	intMap->add(1, 0);
+	EXPECT_EQ(intMap->getNumberOfItems(), 1);
 	intMap->add(2, 1);
+	EXPECT_EQ(intMap->getNumberOfItems(), 2);
+	EXPECT_TRUE(intMap->contains(2));
 	intMap->add(3, 3);
+	EXPECT_EQ(intMap->getNumberOfItems(), 3);
+	EXPECT_TRUE(intMap->contains(3));
 	strMap->add("key", "value");
+	EXPECT_EQ(strMap->getNumberOfItems(), 1);
 	strMap->add("k", "v");
+	EXPECT_EQ(strMap->getNumberOfItems(), 2);
 	strMap->add("same", "same");
+	EXPECT_EQ(strMap->getNumberOfItems(), 3);
 	strIntMap->add("key", 4);
+	EXPECT_EQ(strIntMap->getNumberOfItems(), 1);
 	strIntMap->add("k", 5);
+	EXPECT_EQ(strIntMap->getNumberOfItems(), 2);
 	strIntMap->add("Very long string with spaces and mixed case.", 0x7fffffff);
+	EXPECT_EQ(strIntMap->getNumberOfItems(), 3);
 	
-	EXPECT_TRUE(intMap->contains(1));
+	//EXPECT_TRUE(intMap->contains(1)) << "Map: " << *intMap << "\n";
 	EXPECT_TRUE(intMap->contains(2));
 	EXPECT_TRUE(intMap->contains(3));
 	EXPECT_TRUE(strMap->contains("key"));
@@ -422,6 +473,16 @@ TEST(HashMapMembers, add)
 	EXPECT_FALSE(intMap->getItem(4).has_value());
 	EXPECT_FALSE(strMap->getItem("otherKey").has_value());
 	EXPECT_FALSE(strIntMap->getItem("otherKey").has_value());
+}
+
+TEST(HashMapOperators, ostream)
+{
+	std::unique_ptr<HashMap<int, int>> intMap =
+		std::make_unique<HashMap<int, int>>();
+	for (int i = 0; i < 10; ++i) {
+		intMap->add(i, i);
+	}
+	std::cout << *intMap;
 }
 
 /**

@@ -53,13 +53,14 @@ public:
 	using value_type = T;
 	using difference_type = std::ptrdiff_t;
 	using pointer = T*;
+	using const_pointer = const T*;
 	using reference = T&;
 	using const_reference = const T&;
 
     explicit SLLIterator(SLLNode<T>* node) : _node(node) {}
 
     const_reference operator*();
-	pointer operator->();
+	const_pointer operator->();
     SLLIterator& operator++();
 	SLLIterator operator++(int);
 	bool operator==(const SLLIterator& other) const;
