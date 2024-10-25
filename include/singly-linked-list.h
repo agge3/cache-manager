@@ -73,6 +73,12 @@ template <typename T>
 class SinglyLinkedList;
 template <typename T>
 std::ostream& operator<<(std::ostream&, const SinglyLinkedList<T>&);
+template <typename T>
+constexpr bool operator==(const SinglyLinkedList<T>&,
+						  const SinglyLinkedList<T>&);
+template <typename T>
+constexpr bool operator!=(const SinglyLinkedList<T>&,
+						  const SinglyLinkedList<T>&);
 
 /**
 * @class SinglyLinkedList
@@ -121,6 +127,18 @@ public:
 	 */
 	friend std::ostream& operator<< <>(std::ostream& out,
 		const SinglyLinkedList<T>& list);
+	
+	/**
+	 * Equality operator.
+	 */
+	friend constexpr bool operator== <>(const SinglyLinkedList<T>& lhs,
+		const SinglyLinkedList<T>& rhs);
+
+	/**
+	 * Inequality operator.
+	 */
+	friend constexpr bool operator!= <>(const SinglyLinkedList<T>& lhs,
+		const SinglyLinkedList<T>& rhs);
 
 	/**
 	 * Returns the first element of SinglyLinkedList.
@@ -221,18 +239,18 @@ public:
 	 *
 	 * @return SLLIterator iterator An Iterator pointing to end.
 	 */
-    SLLIterator<T> end() const { return SLLIterator<T>(nullptr); }
+ 	SLLIterator<T> end() const { return SLLIterator<T>(nullptr); }
+
+	/**
+	* Clears all SinglyLinkedList's Nodes and deallocates their memory.
+	*/
+	void clear();
 private:
 	/**
 	* Searches for an element and returns the Node before it. The element's node
 	* can be accessed by getNext().
 	*/
 	SLLNode<T>* search(const T& element) const;
-
-	/**
-	* Clears all SinglyLinkedList's Nodes and deallocates their memory.
-	*/
-	void clear();
 
 	SLLNode<T>* _head;
 	std::size_t _size;
