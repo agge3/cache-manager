@@ -70,7 +70,18 @@ std::size_t Hash<std::string>::operator()(const std::string& str) const
 }
 
 template <typename K, typename V>
-bool HashNode<K, V>::operator(
+constexpr bool csc::operator==(const HashNode<K, V>& rhs,
+							   const HashNode<K, V>& lhs)
+{
+	return rhs.getKey() == lhs.getKey();
+}
+
+template <typename K, typename V>
+constexpr bool csc::operator!=(const HashNode<K, V>& rhs,
+							   const HashNode<K, V>& lhs)
+{
+	return !(rhs == lhs);
+}
 
 template <typename K, typename V, typename F>
 HashMap<K, V, F>::HashMap() : 

@@ -48,6 +48,14 @@ struct Hash<std::string> {
 	std::size_t operator()(const std::string& str) const;
 };
 
+// Forward declaration for overloaded operators with template class.
+template <typename K, typename V>
+class HashNode
+template <typename K, typename V>
+constexpr bool operator==(const HashNode<K, V>&, const HashNode<K, V>&);
+template <typename T, typename V>
+constexpr bool operator!=(const HashNode<K, V>&, const HashNode<K, V>&);
+
 /**
  * @class HashNode
  * HashNode is a key-value pair for HashMap.
@@ -58,8 +66,12 @@ public:
 	HashNode(const K& key) : _value(nullptr) {}
 	HashNode(const K& key, const V& value) : _key(key), _value(value) {}
 
-	bool operator==(const HashNode<K, V> *rhs) const;
-	bool operator>(const HashNode<K,V> *rhs) const;
+	friend constexpr bool operator== <>(const HashNode<K, V>& lhs, const
+		HashNode<K, V>& rhs);
+	friend constexpr bool operator!= <>(const HashNode<K, V>& lhs, const
+		HashNode<K, V>& rhs);
+
+	bool operator>(const HashNode<K, V>& src);
 
 	K getKey() const { return _key; }
 	V getItem() const { return _value; }
@@ -112,27 +124,28 @@ public:
 	/**
 	 * Copy constructor.
 	 */
-	HashMap(const HashMap& src);
+	HashMap(const HashMap<K, V, F>& src);
 
 	/*
 	 * Move constructor.
 	 */
-	HashMap(HashMap&& src) noexcept;
+	HashMap(HashMap<K, V, F>&& src) noexcept;
 
 	/**
 	 * Assignment operator.
 	 */
-	HashMap& operator=(const HashMap& rhs);
+	HashMap<K, V, F>& operator=(const HashMap<K, V, F>& rhs);
 
 	/**
 	 * Move assignment operator.
 	 */
-	HashMap& operator=(HashMap&& rhs) noexcept;
+	HashMap<K, V, F>& operator=(HashMap<K, V, F>&& rhs) noexcept;
 
 	/**
 	 * Overloaded ostream operator, '<<'.
 	 */
-	friend ostream& operator<< <>(ostream& out, const HashMap& map) const;
+	friend ostream& operator<< <>(ostream& out, const HashMap<K, V, F>& map)
+		const;
 
 	/**
 	 * Associates the specified value with the specified key in this map.
