@@ -57,13 +57,11 @@ std::size_t Hash<K>::operator()(const K& key) const
 	return djb2(key);
 }
 
-template <>
 std::size_t Hash<unsigned char *>::operator()(unsigned char *str) const
 {
 	return djb2(str);
 }
 
-template <>
 std::size_t Hash<std::string>::operator()(const std::string& str) const
 {
 	return djb2(str);

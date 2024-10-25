@@ -233,7 +233,6 @@ TEST(SLLOperators, Inequality)
         list2.pushFront(i);
     }
 	EXPECT_FALSE(list1 != list2);
->>>>>>> 2cd32d1ac4b07636f4d7e6512830f191490b0bb9
 }
 
 TEST(SLLBigFive, CopyConstructor)

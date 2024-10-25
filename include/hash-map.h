@@ -50,10 +50,10 @@ struct Hash<std::string> {
 
 // Forward declaration for overloaded operators with template class.
 template <typename K, typename V>
-class HashNode
+class HashNode;
 template <typename K, typename V>
 constexpr bool operator==(const HashNode<K, V>&, const HashNode<K, V>&);
-template <typename T, typename V>
+template <typename K, typename V>
 constexpr bool operator!=(const HashNode<K, V>&, const HashNode<K, V>&);
 
 /**
@@ -63,7 +63,7 @@ constexpr bool operator!=(const HashNode<K, V>&, const HashNode<K, V>&);
 template <typename K, typename V>
 class HashNode {
 public:
-	HashNode(const K& key) : _value(nullptr) {}
+	HashNode(const K& key) : _key(key) {}
 	HashNode(const K& key, const V& value) : _key(key), _value(value) {}
 
 	friend constexpr bool operator== <>(const HashNode<K, V>& lhs, const
@@ -78,12 +78,38 @@ public:
 	void setItem(const V& value) { _value = value; }
 protected:
     // Disallow copy and assignment.
-    HashNode(const HashNode& other);
-    HashNode& operator=(const HashNode& other);
+    //HashNode(const HashNode& other);
+    //HashNode& operator=(const HashNode& other);
 private:
 	//const std::size_t _hash;
 	const K _key;
 	V _value;
+};
+
+/**
+ * @class MapIterator<V>
+ * HashMap Iterator.
+ */
+template <typename V>
+class MapIterator {
+public:
+	using iterator_category = std::forward_iterator_tag;
+	using value_type = T;
+	using difference_type = std::ptrdiff_t;
+	using pointer = T*;
+	using reference = T&;
+	using const_reference = const T&;
+
+    explicit SLLIterator(SLLNode<T>* node) : _node(node) {}
+
+    const_reference operator*();
+	pointer operator->();
+    SLLIterator& operator++();
+	SLLIterator operator++(int);
+	bool operator==(const SLLIterator& other) const;
+    bool operator!=(const SLLIterator& other) const;
+private:
+    SLLNode<T>* _node;
 };
 
 // Forward declaration for overloaded insertion operator with template class.
@@ -144,8 +170,8 @@ public:
 	/**
 	 * Overloaded ostream operator, '<<'.
 	 */
-	friend ostream& operator<< <>(ostream& out, const HashMap<K, V, F>& map)
-		const;
+	friend std::ostream& operator<< <>(std::ostream& out,
+		const HashMap<K, V, F>& map);
 
 	/**
 	 * Associates the specified value with the specified key in this map.
