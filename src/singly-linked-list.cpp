@@ -266,6 +266,17 @@ bool SinglyLinkedList<T>::contains(const T& element) const
 }
 
 template <typename T>
+std::optional<T> SinglyLinkedList<T>::find(const T& element) const
+{
+	for (auto it = begin(); it != end(); ++it) {
+		if (*it == element) {
+			return std::optional<T>(*it);
+		}
+	}
+	return std::nullopt;
+}
+
+template <typename T>
 std::optional<T> SinglyLinkedList<T>::popFront()
 {
 	// Guard if the list is empty.

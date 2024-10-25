@@ -12,6 +12,7 @@
 
 #include "singly-linked-list.h"
 #include "doubly-linked-list.h"
+#include "hash-map.h"
 
 #include <iostream>
 #include <fstream>
@@ -163,6 +164,19 @@ TEST(SLLMembers, popFront)
 	EXPECT_TRUE(list.isEmpty());
 }
 
+TEST(SLLMembers, find)
+{
+	SinglyLinkedList<int> list;
+	for (int i = 0; i < 10; ++i) {
+		list.pushFront(i);
+		EXPECT_TRUE(list.contains(i));
+	}
+	EXPECT_EQ(*(list.find(9)), 9);
+	EXPECT_NE(*(list.find(8)), 9);
+	EXPECT_FALSE(list.find(11).has_value());
+	EXPECT_TRUE(list.find(1).has_value());
+}
+
 TEST(SLLBigFive, CopyConstructor)
 {
     SinglyLinkedList<int> list;
@@ -246,6 +260,60 @@ TEST(SinglyLinkedListTest, StressTest) {
 
     // Ensure final size is valid
     EXPECT_LE(list.size(), 1000);
+}
+
+TEST(HashMapMembers, add)
+{
+	std::unique_ptr<HashMap<int, int>> intMap =
+		std::make_unique<HashMap<int, int>>();
+	std::unique_ptr<HashMap<std::string, std::string>> strMap = 
+		std::make_unique<HashMap<std::string, std::string>>();
+	std::unique_ptr<HashMap<std::string, int>> strIntMap =
+		std::make_unique<HashMap<std::string, int>>();
+
+	intMap->add(1, 0);
+	intMap->add(2, 1);
+	intMap->add(3, 3);
+	strMap->add("key", "value");
+	strMap->add("k", "v");
+	strMap->add("same", "same");
+	strIntMap->add("key", 4);
+	strIntMap->add("k", 5);
+	strIntMap->add("Very long string with spaces and mixed case.", 0x7fffffff);
+	
+	EXPECT_TRUE(intMap->contains(1));
+	EXPECT_TRUE(intMap->contains(2));
+	EXPECT_TRUE(intMap->contains(3));
+	EXPECT_TRUE(strMap->contains("key"));
+	EXPECT_TRUE(strMap->contains("k"));
+	EXPECT_TRUE(strMap->contains("same"));
+	EXPECT_TRUE(strIntMap->contains("key"));
+	EXPECT_TRUE(strIntMap->contains("k"));
+	EXPECT_TRUE(strIntMap->contains("Very long string with spaces and mixed case."));
+
+	EXPECT_FALSE(intMap->contains(4));
+	EXPECT_FALSE(intMap->contains(5));
+	EXPECT_FALSE(intMap->contains(6));
+	EXPECT_FALSE(strMap->contains("Key"));
+	EXPECT_FALSE(strMap->contains("K"));
+	EXPECT_FALSE(strMap->contains("Same"));
+	EXPECT_FALSE(strIntMap->contains("Key"));
+	EXPECT_FALSE(strIntMap->contains("K"));
+	EXPECT_FALSE(strIntMap->contains("Another very long string with spaces and mixed case."));
+
+	EXPECT_TRUE(*(intMap->getItem(1)) == 0);
+	EXPECT_TRUE(*(intMap->getItem(2)) == 1);
+	EXPECT_TRUE(*(intMap->getItem(3)) == 3);
+	EXPECT_TRUE(*(strMap->getItem("key")) == "value");
+	EXPECT_TRUE(*(strMap->getItem("k")) == "v");
+	EXPECT_TRUE(*(strMap->getItem("same")) == "same");
+	EXPECT_TRUE(*(strIntMap->getItem("key")) == 4);
+	EXPECT_TRUE(*(strIntMap->getItem("k")) == 5);
+	EXPECT_TRUE(*(strIntMap->getItem("Very long string with spaces and mixed case.")) == 0x7fffffff);
+
+	EXPECT_FALSE(intMap->getItem(4).has_value());
+	EXPECT_FALSE(strMap->getItem("otherKey").has_value());
+	EXPECT_FALSE(strIntMap->getItem("otherKey").has_value());
 }
 
 /**

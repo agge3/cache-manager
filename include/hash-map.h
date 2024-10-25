@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <string>
 #include <memory>
+#include <iostream>
 
 /**
 * @namespace csc
@@ -24,10 +25,18 @@
 namespace csc {
 
 /**
+* Generic Hash function.
+*/
+template <typename K>
+struct Hash {
+	std::size_t operator()(const K& key) const;
+};
+
+/**
 * C-String Hash function.
 */
 template <>
-struct Hash<unsigned char*> {
+struct Hash<unsigned char *> {
 	std::size_t operator()(unsigned char *str) const;
 };
 
@@ -37,14 +46,6 @@ struct Hash<unsigned char*> {
 template <>
 struct Hash<std::string> {
 	std::size_t operator()(const std::string& str) const;
-};
-
-/**
-* Generic Hash function.
-*/
-template <typename K>
-struct Hash<K> {
-	std::size_t operator()(const K& key) const;
 };
 
 /**
@@ -68,16 +69,22 @@ protected:
     HashNode(const HashNode& other);
     HashNode& operator=(const HashNode& other);
 private:
-	const std::size_t _hash;
+	//const std::size_t _hash;
 	const K _key;
 	V _value;
 };
+
+// Forward declaration for overloaded insertion operator with template class.
+template <typename K, typename V, typename F>
+class HashMap;
+template <typename K, typename V, typename F>
+std::ostream& operator<<(std::ostream&, const HashMap<K, V, F>&);
 
 /**
 * @class HashMap
 * Chained HashMap.
 */
-template <typename K, typename V, typename F = Hash>
+template <typename K, typename V, typename F = Hash<K>>
 class HashMap {
 public:
     /**
@@ -110,7 +117,7 @@ public:
 	/*
 	 * Move constructor.
 	 */
-	HashMap(HashMap&& src);
+	HashMap(HashMap&& src) noexcept;
 
 	/**
 	 * Assignment operator.
@@ -120,17 +127,12 @@ public:
 	/**
 	 * Move assignment operator.
 	 */
-	HashMap& operator=(HashMap&& rhs);
+	HashMap& operator=(HashMap&& rhs) noexcept;
 
 	/**
 	 * Overloaded ostream operator, '<<'.
 	 */
-	friend ostream& operator<<(ostream& out, const SinglyLinkedList& sll) const;
-
- 	/**
-	 * Overloaded istream operator, '>>'.
-	 */
-	friend istream& operator>>(istream& in, SinglyLinkedList& sll) const;
+	friend ostream& operator<< <>(ostream& out, const HashMap& map) const;
 
 	/**
 	 * Associates the specified value with the specified key in this map.
@@ -187,9 +189,9 @@ public:
 	 * @param K key The key to replace the mapped value.
 	 * @param V value The new value.
 	 */
-	void replace(const K& key, const V& value);
+	bool replace(const K& key, const V& value);
 
-	void traverse(void visit(V&)) const;
+	//void traverse(void visit(V&)) const;
 
 	/**
 	* Returns the size of HashMap.
@@ -210,7 +212,7 @@ public:
 	 */
 	void clear();
 private:
-	constexpr std::size_t TABLE_BUCKETS = 16;	// Power of two for DJR % 2^k.
+	const std::size_t TABLE_BUCKETS = 16;	// Power of two for DJR % 2^k.
 
 	std::size_t _buckets;		
 	ListPtr *_table;

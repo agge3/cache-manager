@@ -204,6 +204,8 @@ public:
 	* @return TRUE if empty; FALSE if not empty.
 	*/
 	bool isEmpty() const;
+
+	std::optional<T> find(const T& element) const;
 	
 	/** 
 	 * Returns an Iterator pointing to the beginning (first element) of 
