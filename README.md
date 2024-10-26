@@ -16,6 +16,8 @@ a robust iterator as to not invalidate iterators and pre-emptively prepare for t
 (a cache manager can be accessed from many threads)
 polymorphic vs. concrete iterator? it's fine, clients know their data structure, so concrete is preferred due to its stack allocation
 
+# HashMap Description
+
 # Credit
 Inspirations:
 <br>

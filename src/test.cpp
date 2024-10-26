@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 #include <streambuf>
 #include <memory>
 #include <cassert>
@@ -473,6 +474,33 @@ TEST(HashMapMembers, add)
 	EXPECT_FALSE(intMap->getItem(4).has_value());
 	EXPECT_FALSE(strMap->getItem("otherKey").has_value());
 	EXPECT_FALSE(strIntMap->getItem("otherKey").has_value());
+}
+
+TEST(MapIterator, Iterator)
+{
+	std::unique_ptr<HashMap<int, int>> intMap =
+		std::make_unique<HashMap<int, int>>();
+	intMap->add(1, 1);
+	auto beginIt = intMap->begin();
+	auto endIt = intMap->end();
+	EXPECT_NE(beginIt, endIt);
+	EXPECT_EQ(*beginIt, 1);
+	++beginIt;
+	EXPECT_EQ(beginIt, endIt);
+	EXPECT_THROW(*beginIt, std::runtime_error);
+	EXPECT_THROW(*endIt, std::runtime_error);
+	intMap.reset();
+	for (int i = 0; i < 10; ++i) {
+		intMap->add(i, i);
+	}
+	beginIt = intMap->begin();
+	endIt = intMap->end();
+	for (int i = 0; i < 10; ++i) {
+		EXPECT_NE(beginIt, endIt);
+		EXPECT_NO_THROW(*beginIt);
+		++beginIt;
+	}
+	EXPECT_EQ(beginIt, endIt);
 }
 
 TEST(HashMapOperators, ostream)

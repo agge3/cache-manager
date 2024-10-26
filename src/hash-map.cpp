@@ -1,5 +1,7 @@
 #include "hash-map.h"
 
+#include <filesystem>
+#include <map>
 #include <vector>
 #include <iostream>
 #include <memory>
@@ -83,39 +85,109 @@ constexpr bool csc::operator!=(const HashNode<K, V>& rhs,
 }
 
 template <typename K, typename V, typename F>
-typename MapIterator<K, V, F>::const_reference MapIterator<K, V, F>::operator*()
+std::optional<V> MapIterator<K, V, F>::operator*()
 { 
-    if (_listIt == SLLIterator<HashNode<K, V>>(nullptr)) {
-        throw std::runtime_error("Attempt to dereference a null iterator.");
-    }
-    return _listIt->getItem();
+	if (_type != MapIteratorType::EmptyBucket) {
+    	return std::optional<V>(_listIt->getItem());
+	}
+	return std::nullopt;
 }
 
 template <typename K, typename V, typename F>
 typename MapIterator<K, V, F>::pointer MapIterator<K, V, F>::operator->() 
 { 
-    if (_listIt == SLLIterator<HashNode<K, V>>(nullptr)) {
-    	throw std::runtime_error("Attempt to dereference a null iterator.");
+	if (_type != MapIteratorType::EmptyBucket) {
+		return &(_listIt->getItem()); 
 	}
-	return &(_listIt->getItem()); 
+	return nullptr;
 }
 
 template <typename K, typename V, typename F>
 MapIterator<K, V, F>& MapIterator<K, V, F>::operator++()
 {
-	if (_listIt == SLLIterator<HashNode<K, V>>(nullptr)) {
+	if (_type == MapIteratorType::EmptyBucket) {
+		++_index;
 		_listIt = advance();
-	}
-	// There's a chance that advance() never finds a valid list - guard.
-	if (_listIt != SLLIterator<HashNode<K, V>>(nullptr)) {
-		// SAFE to index into our lists now (they won't be nullptr).
-		++_listIt;
+		setType();
+	} else {
+		if (_listIt != _table[_index]->end()) {
+			++_listIt;
+		}
 		if (_listIt == _table[_index]->end()) {
+			++_index;
 			_listIt = advance();
 		}
+		setType();
 	}
 	return *this;
 }
+
+template <typename K, typename V, typename F>
+SLLIterator<HashNode<K, V>> MapIterator<K, V, F>::advance()
+{
+	if (_type == MapIteratorType::FullBucket) {
+		return _table[_index]->begin();
+	}
+	return SLLIterator<HashNode<K, V>>(nullptr);
+}
+
+
+template <typename K, typename V, typename F>
+void MapIterator<K, V, F>::setType()
+{
+	if (_table[_index] == nullptr) {
+		_type = MapIteratorType::EmptyBucket;
+	}
+	else {
+		_type = MapIteratorType::FullBucket;
+	}
+}
+
+template <typename K, typename V, typename F>
+MapIteratorType MapIterator<K, V, F>::getType() const
+{
+	return _type;
+}
+
+template <typename K, typename V, typename F>
+std::size_t MapIterator<K, V, F>::getIndex() const
+{
+	return _index;
+}
+
+//template <typename K, typename V, typename F>
+//void MapIterator<K, V, F>::setType()
+//{
+//	if (_index == 0) {
+//		_type = MapIteratorType::Begin;
+//	}
+//	if (_index = _buckets) {
+//		_type = MapIteratorType::End;
+//	}
+//	if (_table[_index] == nullptr) {
+//		_type = _type | MapIteratorType::EmptyBucket;
+//	}
+//	if (_table[_index] != nullptr) {
+//		_type = _type | MapIteratorType::FullBucket;
+//	}
+//	if (_listIt == _table[_index]->begin()) {
+//		_type = _type | MapIteratorType::BucketBegin;
+//	}
+//	if (_listIt == _table[_index]->end()) {
+//		_type = _type | MapIteratorType::BucketEnd;
+//	}
+//
+
+//template <typename K, typename V, typename F>
+//MapIteratorType MapIterator<K, V, F>::getType() const
+//	if (_type & MapIteratorType::EmptyBucket != 0) {
+//		return MapIteratorType::EmptyBucket;
+//	}
+//	if (_type & MapIterator::EmptyBucket == 0) {
+//		return MapIteratorType::FullBucket;
+//	}
+//	return MapIteratorType::Null;
+//}
 
 template <typename K, typename V, typename F>
 MapIterator<K, V, F> MapIterator<K, V, F>::operator++(int)
@@ -139,18 +211,25 @@ bool MapIterator<K, V, F>::operator!=(const MapIterator& other) const
 	return !(*this == other);
 }
 
-template <typename K, typename V, typename F>
-SLLIterator<HashNode<K, V>> MapIterator<K, V, F>::advance()
-{
-	while (_index < _buckets) {
-		if (_table[_index] != nullptr) {
-			++_index;
-			return _table[_index]->begin();
-		}
-		++_index;
-	}
-	return SLLIterator<HashNode<K, V>>(nullptr);
-}
+//template <typename K, typename V, typename F>
+//SLLIterator<HashNode<K, V>> MapIterator<K, V, F>::advance()
+//{
+//	while (_index < _buckets) {
+//		if (_table[_index] != nullptr && !_table[_index]->isEmpty()) {
+//			return _table[_index]->begin();
+//		}
+//		++_index;
+//	}
+//	return SLLIterator<HashNode<K, V>>(nullptr);
+//}
+//
+//void MapIterator<K, V, F>::bucketEnd() const
+//{
+//	if (_table[_index] == nullptr) {
+//		return false;
+//	}
+//	return _listIt != _table[_index]->end();
+//}
 
 template <typename K, typename V, typename F>
 HashMap<K, V, F>::HashMap() : 
@@ -220,20 +299,41 @@ HashMap<K, V, F>& HashMap<K, V, F>::operator=(HashMap<K, V, F>&& rhs) noexcept
 template <typename K, typename V, typename F>
 std::ostream& csc::operator<<(std::ostream& out, const HashMap<K, V, F>& map)
 {
-	out << "[ ";
+    bool empty = false;
+	bool full = false;
 	bool first = true;
 
-	for (auto it = map.begin(); it != map.end(); ++it) {
-		if (!first) {
-			out << ", ";
-		}
-		first = false;
-		assert(it != map.end());
-		out << *it;
-	}
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        auto type = it.getType();
+        std::size_t index = it.getIndex();
 
-	out << " ]";
-	return out;
+        if (type == MapIteratorType::EmptyBucket) {
+			full = false;
+			if (!empty) {
+				if (first) {
+        			out << "Empty: " << index;
+					first = false;
+				}
+        		out << "\n\nEmpty: " << index;
+		 		empty = true;
+			} else {
+		 		out << ", " << index;
+			}
+        } else if (type == MapIteratorType::FullBucket) {
+			empty = false;
+			if (!full) {
+				if (first) {
+		 			out << "Index: " << index << ": " << **it;
+					first = false;
+				}
+		 		out << "\n\nIndex: " << index << ": " << **it;
+				full = true;
+			} else {
+		 		out << ", " << **it;
+			}
+		}
+    }
+    return out;
 }
 
 template <typename K, typename V, typename F>

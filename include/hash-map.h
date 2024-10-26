@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <iostream>
+#include <optional>
 
 /**
 * @namespace csc
@@ -96,6 +97,16 @@ class HashMap;
 template <typename K, typename V, typename F>
 std::ostream& operator<<(std::ostream&, const HashMap<K, V, F>&);
 
+/* 
+ * @enum MapIteratorType
+ * MapIterator can have multiple states that need to be handled differently.
+ * Simple bitmask wrapper for state deduction of MapIterator.
+ */
+enum class MapIteratorType : bool {
+	EmptyBucket = false,
+	FullBucket = true
+};
+
 /**
  * @class MapIterator<V>
  * HashMap Iterator.
@@ -114,12 +125,15 @@ public:
 						 std::size_t buckets, std::size_t index) :
 		_table(table), _buckets(buckets), _index(index), _listIt(advance()) {}
 
-    const_reference operator*();
+	std::optional<V> operator*();
 	pointer operator->();
     MapIterator& operator++();
 	MapIterator operator++(int);
 	bool operator==(const MapIterator& other) const;
     bool operator!=(const MapIterator& other) const;
+
+	MapIteratorType getType() const;
+	std::size_t getIndex() const;
 private:
 	/**
 	 * Advances index until next valid bucket (has a list), and returns an
@@ -127,10 +141,13 @@ private:
 	 */
 	SLLIterator<HashNode<K, V>> advance();
 
+	void setType();
+
 	typename HashMap<K, V, F>::ListPtr *_table;	// reference to the hash table
 	std::size_t _buckets;
 	std::size_t _index;
 	SLLIterator<HashNode<K, V>> _listIt;
+	MapIteratorType _type;
 };
 
 /**
