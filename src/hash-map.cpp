@@ -87,8 +87,10 @@ constexpr bool csc::operator!=(const HashNode<K, V>& rhs,
 template <typename K, typename V, typename F>
 std::optional<V> MapIterator<K, V, F>::operator*()
 { 
-	if (_type != MapIteratorType::EmptyBucket) {
-    	return std::optional<V>(_listIt->getItem());
+	if (_type != MapIteratorType::EmptyBucket &&
+		_listIt != SLLIterator<HashNode<K, V>>(nullptr)) {
+		auto node = *_listIt;
+    	return std::optional<V>(node.getItem());
 	}
 	return std::nullopt;
 }
@@ -422,13 +424,20 @@ bool HashMap<K, V, F>::replace(const K& key, const V& value)
 template <typename K, typename V, typename F>
 bool HashMap<K, V, F>::isEmpty() const
 {
-	return _table == nullptr && _size == 0;
+	// XXX Maybe an additional check?
+	return _size == 0;
 }
 
 template <typename K, typename V, typename F>
 std::size_t HashMap<K, V, F>::getNumberOfItems() const
 {
 	return _size;
+}
+
+template <typename K, typename V, typename F>
+std::size_t HashMap<K, V, F>::capacity() const
+{
+	return _buckets;
 }
 
 template <typename K, typename V, typename F>
@@ -448,11 +457,8 @@ MapIterator<K, V, F> HashMap<K, V, F>::end() const
 template <typename K, typename V, typename F>
 void HashMap<K, V, F>::clear()
 {
-	if (!isEmpty()) {
-		// When table is deleted, its smart ListPtrs will lose scope and call
-		// their destructors.
-		delete[] _table;
-		_table = nullptr;
-	}
-	// else, do nothing
+	// When table is deleted, its smart ListPtrs will lose scope and call their
+	// destructors.
+	delete[] _table;
+	_table = nullptr;
 }

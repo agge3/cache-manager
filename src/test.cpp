@@ -384,6 +384,44 @@ TEST(HashFunction, Integers)
 	}
 }
 
+class HashNodeTest : public testing::Test {
+protected:
+	HashNodeTest() :
+		_node1(1, 1),
+		_node2(1),
+		_node3("key", 3),
+		_node4("key"),
+		_node5(2, 2),
+		_node6(3)
+	{
+		// do nothing
+	}
+
+	HashNode<int, int> _node1;
+	HashNode<int, int> _node2;
+	HashNode<std::string, int> _node3;
+	HashNode<std::string, int> _node4;
+	HashNode<int, int> _node5;
+	HashNode<int, int> _node6;
+};
+
+TEST_F(HashNodeTest, getItem)
+{
+	EXPECT_EQ(_node1.getItem(), 1);
+	EXPECT_EQ(_node3.getItem(), 3);
+	EXPECT_EQ(_node5.getItem(), 2);
+}
+
+TEST_F(HashNodeTest, getKey)
+{
+	EXPECT_EQ(_node1.getKey(), 1);
+	EXPECT_EQ(_node2.getKey(), 1);
+	EXPECT_EQ(_node3.getKey(), "key");
+	EXPECT_EQ(_node4.getKey(), "key");
+	EXPECT_EQ(_node5.getKey(), 2);
+	EXPECT_EQ(_node6.getKey(), 3);
+}
+
 TEST(HashNodeOperators, Equality)
 {
 	auto node1 = HashNode<int, int>(1, 1);
@@ -474,6 +512,97 @@ TEST(HashMapMembers, add)
 	EXPECT_FALSE(intMap->getItem(4).has_value());
 	EXPECT_FALSE(strMap->getItem("otherKey").has_value());
 	EXPECT_FALSE(strIntMap->getItem("otherKey").has_value());
+}
+
+template <typename K>
+struct NoHash {
+	std::size_t operator()(const K& key) const { return key; } 
+};
+
+class HashMapTest : public testing::Test {
+protected:
+	HashMapTest() :
+		// Initialize HashMap with no hash function to a consistent size for
+		// testing.
+		_noHashMap(10)
+	{
+		_intMap.add(1, 0);
+		_intMap.add(2, 1);
+		_intMap.add(3, 3);
+		_strMap.add("key", "value");
+		_strMap.add("k", "v");
+		_strMap.add("same", "same");
+		_strIntMap.add("key", 4);
+		_strIntMap.add("k", 5);
+		_strIntMap.add("Very long string with spaces and mixed case.", 0x7fffffff);
+
+		_noHashMap.add(0, 10);
+		_noHashMap.add(1, 11);
+		_noHashMap.add(2, 12);
+		_noHashMap.add(7, 17);
+		_noHashMap.add(8, 18);
+		_noHashMap.add(9, 19);
+	}
+
+	HashMap<int, int> _intMap;
+	HashMap<int, int> _emptyIntMap;
+	HashMap<std::string, std::string> _strMap;
+	HashMap<std::string, std::string> _emptyStrMap;
+	HashMap<std::string, int> _strIntMap;
+	HashMap<std::string, int> _emptyStrIntMap;
+
+	HashMap<int, int, NoHash<int>> _noHashMap;
+};
+
+class MapIteratorTest : public testing::Test {
+protected:
+	MapIteratorTest()
+	{
+	}
+};
+
+TEST_F(HashMapTest, isEmpty)
+{
+	EXPECT_TRUE(_emptyIntMap.isEmpty());
+	EXPECT_TRUE(_emptyStrMap.isEmpty());
+	EXPECT_TRUE(_emptyStrIntMap.isEmpty());
+	EXPECT_FALSE(_intMap.isEmpty());
+	EXPECT_FALSE(_strMap.isEmpty());
+	EXPECT_FALSE(_strIntMap.isEmpty());
+}
+
+TEST_F(HashMapTest, getNumberOfItems)
+{
+	EXPECT_EQ(_emptyIntMap.getNumberOfItems(), 0);
+	EXPECT_EQ(_emptyStrMap.getNumberOfItems(), 0);
+	EXPECT_EQ(_emptyStrIntMap.getNumberOfItems(), 0);
+	EXPECT_EQ(_intMap.getNumberOfItems(), 3);
+	EXPECT_EQ(_strMap.getNumberOfItems(), 3);
+	EXPECT_EQ(_strIntMap.getNumberOfItems(), 3);
+}
+
+TEST_F(HashMapTest, MapIterator)
+{
+	auto it = _noHashMap.begin();
+	EXPECT_TRUE(it.getType() == MapIteratorType::FullBucket);
+	auto opt = *it;
+	std::cout << "Value of optional: " << *opt << "\n";
+
+	//std::vector<int> v(_intMap.getNumberOfItems());
+	//for (auto it = _intMap.begin(); it != _intMap.end(); ++it) {
+	//	if (it.getType() != MapIteratorType::EmptyBucket) {
+	//		auto opt = *it;
+	//		if (opt.has_value()) {
+	//			v.push_back(*opt);
+	//		} else {
+	//			std::cout <<
+	//				"Optional was expected to have value, but was empty!\n";
+	//		}
+	//	}
+	//}
+	//for (auto it = v.begin(); it != v.end(); ++it) {
+	//	EXPECT_TRUE(_intMap.contains(*it));
+	//}
 }
 
 TEST(MapIterator, Iterator)

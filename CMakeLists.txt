@@ -36,10 +36,10 @@ target_sources(cache-manager PRIVATE src/main.cpp
 # include dir
 target_include_directories(cache-manager PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/
-    )
+)
 target_include_directories(cache-manager PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/
-    )
+)
 
 target_link_libraries(
 	cache-manager

@@ -276,6 +276,8 @@ public:
 	*/
 	std::size_t getNumberOfItems() const;
 
+	std::size_t capacity() const;
+
 	/**
 	* Check whether HashMap is empty or not.
 	*
