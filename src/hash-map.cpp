@@ -83,10 +83,17 @@ constexpr bool csc::operator!=(const HashNode<K, V>& rhs,
 {
 	return !(rhs == lhs);
 }
+explicit MapIterator(typename HashMap<K, V, F>::ListPtr *table,
+						 std::size_t buckets, std::size_t index) :
+		_table(table), _buckets(buckets), _index(index), _listIt(advance()) {
+setType();
+}
+
+
 
 template <typename K, typename V, typename F>
 std::optional<V> MapIterator<K, V, F>::operator*()
-{ 
+{
 	if (_type != MapIteratorType::EmptyBucket &&
 		_listIt != SLLIterator<HashNode<K, V>>(nullptr)) {
 		auto node = *_listIt;
@@ -104,35 +111,38 @@ typename MapIterator<K, V, F>::pointer MapIterator<K, V, F>::operator->()
 	return nullptr;
 }
 
+
+
+
 template <typename K, typename V, typename F>
 MapIterator<K, V, F>& MapIterator<K, V, F>::operator++()
 {
+	if (_index < _buckets - 1) {
+		throw std::runtime_exception("Attempt to increment iterator past end.");
+	}
 	if (_type == MapIteratorType::EmptyBucket) {
-		++_index;
-		_listIt = advance();
-		setType();
+		advance()
 	} else {
 		if (_listIt != _table[_index]->end()) {
 			++_listIt;
 		}
 		if (_listIt == _table[_index]->end()) {
-			++_index;
-			_listIt = advance();
+			advance();
 		}
-		setType();
 	}
-	return *this;
+	}
 }
-
 template <typename K, typename V, typename F>
-SLLIterator<HashNode<K, V>> MapIterator<K, V, F>::advance()
+void MapIterator<K, V, F>::advance()
 {
+	++_index;
+	setType();
 	if (_type == MapIteratorType::FullBucket) {
-		return _table[_index]->begin();
+		_listIt = _table[_index]->begin();
+	} else {
+		_listIt = SLLIterator<HashNode<K, V>>(nullptr);
 	}
-	return SLLIterator<HashNode<K, V>>(nullptr);
 }
-
 
 template <typename K, typename V, typename F>
 void MapIterator<K, V, F>::setType()
@@ -240,7 +250,6 @@ HashMap<K, V, F>::HashMap() :
 	_size(0),
 	_hash()
 {
-	// do nothing
 }
 
 template <typename K, typename V, typename F>
@@ -298,45 +307,7 @@ HashMap<K, V, F>& HashMap<K, V, F>::operator=(HashMap<K, V, F>&& rhs) noexcept
     return *this;
 }
 
-template <typename K, typename V, typename F>
-std::ostream& csc::operator<<(std::ostream& out, const HashMap<K, V, F>& map)
-{
-    bool empty = false;
-	bool full = false;
-	bool first = true;
 
-    for (auto it = map.begin(); it != map.end(); ++it) {
-        auto type = it.getType();
-        std::size_t index = it.getIndex();
-
-        if (type == MapIteratorType::EmptyBucket) {
-			full = false;
-			if (!empty) {
-				if (first) {
-        			out << "Empty: " << index;
-					first = false;
-				}
-        		out << "\n\nEmpty: " << index;
-		 		empty = true;
-			} else {
-		 		out << ", " << index;
-			}
-        } else if (type == MapIteratorType::FullBucket) {
-			empty = false;
-			if (!full) {
-				if (first) {
-		 			out << "Index: " << index << ": " << **it;
-					first = false;
-				}
-		 		out << "\n\nIndex: " << index << ": " << **it;
-				full = true;
-			} else {
-		 		out << ", " << **it;
-			}
-		}
-    }
-    return out;
-}
 
 template <typename K, typename V, typename F>
 void HashMap<K, V, F>::add(const K& key, const V& value)
@@ -357,7 +328,7 @@ bool HashMap<K, V, F>::remove(const K& key)
 	if (isEmpty()) {
 		return false;
 	}
-	auto ptr = _table[_hash(key) % _buckets].get();
+	auto ptr = _table[_hash(key) % _buckets - 1].get();
 	if (ptr == nullptr) {
 		return false;
 	}
@@ -373,7 +344,7 @@ std::optional<V> HashMap<K, V, F>::getItem(const K& key) const
 		return std::nullopt;
 	}
 
-	auto ptr = _table[_hash(key) % _buckets].get();
+	auto ptr = _table[_hash(key) % _buckets - 1].get();
 	if (ptr == nullptr) {
 		return std::nullopt;
 	}
@@ -390,7 +361,7 @@ bool HashMap<K, V, F>::contains(const K& key) const
 		return false;
 	}
 	assert(_table != nullptr);
-	auto ptr = _table[_hash(key) % _buckets].get();
+	auto ptr = _table[_hash(key) % _buckets - 1].get();
 	if (ptr == nullptr) {
 		std::cout << "entering nullptr\n";
 		return false;
@@ -406,7 +377,7 @@ bool HashMap<K, V, F>::replace(const K& key, const V& value)
 		return false;
 	}
 
-	auto ptr = _table[_hash(key) % _buckets].get();
+	auto ptr = _table[_hash(key) % _buckets - 1].get();
 	if (!ptr) {
 		return false;
 	}
@@ -451,7 +422,54 @@ template <typename K, typename V, typename F>
 MapIterator<K, V, F> HashMap<K, V, F>::end() const
 {
 	// End at table index is table size.
-	return MapIterator<K, V, F>(_table, _buckets, _buckets);
+	return MapIterator<K, V, F>(_table, _buckets, _buckets - 1);
+}
+
+template <typename K, typename V, typename F>
+std::ostream& csc::operator<<(std::ostream& out, const HashMap<K, V, F>& map)
+{
+    bool empty = false;
+	bool full = false;
+	bool first = true;
+
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        auto type = it.getType();
+        std::size_t index = it.getIndex();
+
+        if (type == MapIteratorType::EmptyBucket) {
+			full = false;
+			if (!empty) {
+				if (first) {
+        			out << "Empty: " << index;
+					first = false;
+					empty = true;
+				} else { 
+					out << "\n\nEmpty: " << index;
+		 			empty = true;
+				}
+			} else {
+		 		out << ", " << index;
+			}
+        } else if (type == MapIteratorType::FullBucket) {
+			empty = false;
+			auto valueOpt = *it;  // Get the optional value
+        	if (valueOpt.has_value()) {  // Check if it has a value
+            	if (!full) {
+                	if (first) {
+                    	out << "Index: " << index << ": " << valueOpt.value(); // Print the value
+                    	first = false;
+                	} else {
+						out << "\n\nIndex: " << index << ": " << valueOpt.value(); // Print the value
+                		full = true;
+					}
+            	} else {
+                	out << ", " << valueOpt.value(); // Print the value
+            	}
+        	}
+    	}
+	}
+	out << "\n";
+    return out;
 }
 
 template <typename K, typename V, typename F>

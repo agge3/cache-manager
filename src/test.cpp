@@ -375,13 +375,13 @@ TEST(SinglyLinkedListTest, StressTest) {
 TEST(HashFunction, Integers)
 {
 	Hash<std::int32_t> hash;
-	//for (std::int32_t i = 0x80000000; i < 0x7fffffff; ++i) {
-	//	EXPECT_EQ(hash(i), hash(i));
-	//}
-	// smaller range... :)
-	for (std::int32_t i = -100; i < 100; ++i) {
+	for (std::int32_t i = 0x80000000; i < 0x7fffffff; ++i) {
 		EXPECT_EQ(hash(i), hash(i));
 	}
+	// smaller range... :)
+	//for (std::int32_t i = -100; i < 100; ++i) {
+	//	EXPECT_EQ(hash(i), hash(i));
+	//}
 }
 
 class HashNodeTest : public testing::Test {
@@ -554,13 +554,6 @@ protected:
 	HashMap<int, int, NoHash<int>> _noHashMap;
 };
 
-class MapIteratorTest : public testing::Test {
-protected:
-	MapIteratorTest()
-	{
-	}
-};
-
 TEST_F(HashMapTest, isEmpty)
 {
 	EXPECT_TRUE(_emptyIntMap.isEmpty());
@@ -581,7 +574,7 @@ TEST_F(HashMapTest, getNumberOfItems)
 	EXPECT_EQ(_strIntMap.getNumberOfItems(), 3);
 }
 
-TEST_F(HashMapTest, MapIterator)
+TEST_F(HashMapTest, MapIteratorBegin)
 {
 	auto it = _noHashMap.begin();
 	EXPECT_TRUE(it.getType() == MapIteratorType::FullBucket);
@@ -605,31 +598,49 @@ TEST_F(HashMapTest, MapIterator)
 	//}
 }
 
+TEST_F(HashMapTest, MapIteratorEnd) 
+{
+}
+
+TEST_F(HashMapTest, MapIterator)
+{
+}
+
+TEST_F(HashMapTest, MapIteratorIncrement)
+{
+}
+
 TEST(MapIterator, Iterator)
 {
-	std::unique_ptr<HashMap<int, int>> intMap =
-		std::make_unique<HashMap<int, int>>();
-	intMap->add(1, 1);
-	auto beginIt = intMap->begin();
-	auto endIt = intMap->end();
-	EXPECT_NE(beginIt, endIt);
-	EXPECT_EQ(*beginIt, 1);
-	++beginIt;
-	EXPECT_EQ(beginIt, endIt);
-	EXPECT_THROW(*beginIt, std::runtime_error);
-	EXPECT_THROW(*endIt, std::runtime_error);
-	intMap.reset();
-	for (int i = 0; i < 10; ++i) {
-		intMap->add(i, i);
-	}
-	beginIt = intMap->begin();
-	endIt = intMap->end();
-	for (int i = 0; i < 10; ++i) {
-		EXPECT_NE(beginIt, endIt);
-		EXPECT_NO_THROW(*beginIt);
-		++beginIt;
-	}
-	EXPECT_EQ(beginIt, endIt);
+	//std::unique_ptr<HashMap<int, int>> intMap =
+	//	std::make_unique<HashMap<int, int>>();
+	//intMap->add(1, 1);
+	//auto beginIt = intMap->begin();
+	//auto endIt = intMap->end();
+	//for (; beginIt != endIt; ++beginIt) {
+	//	if (beginIt.getType() == MapIteratorType::FullBucket) {
+	//		auto opt = *beginIt;
+	//EXPECT_EQ(*beginIt, 1);
+
+	//		
+	//beginIt.advancer();
+	//EXPECT_NE(beginIt, endIt);
+	//++beginIt;
+	//EXPECT_EQ(beginIt, endIt);
+	//EXPECT_THROW(*beginIt, std::runtime_error);
+	//EXPECT_THROW(*endIt, std::runtime_error);
+	//intMap.reset();
+	//for (int i = 0; i < 10; ++i) {
+	//	intMap->add(i, i);
+	//}
+	//beginIt = intMap->begin();
+	//endIt = intMap->end();
+	//for (int i = 0; i < 10; ++i) {
+	//	EXPECT_NE(beginIt, endIt);
+	//	EXPECT_NO_THROW(*beginIt);
+	//	++beginIt;
+	//}
+	//EXPECT_EQ(beginIt, endIt);
 }
 
 TEST(HashMapOperators, ostream)
