@@ -139,7 +139,7 @@ private:
 	 * Advances index until next valid bucket (has a list), and returns an
 	 * iterator to the list.
 	 */
-	SLLIterator<HashNode<K, V>> advance();
+	void advance();
 
 	void setType();
 
