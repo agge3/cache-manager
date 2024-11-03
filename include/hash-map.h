@@ -100,7 +100,7 @@ std::ostream& operator<<(std::ostream&, const HashMap<K, V, F>&);
 /* 
  * @enum MapIteratorType
  * MapIterator can have multiple states that need to be handled differently.
- * Simple bitmask wrapper for state deduction of MapIterator.
+ * Simple wrapper for state deduction of MapIterator.
  */
 enum class MapIteratorType : bool {
 	EmptyBucket = false,
