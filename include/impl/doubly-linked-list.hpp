@@ -8,8 +8,6 @@
  * DoublyLinkedList and DoublyLinkedList helpers implementation.
  */
 
-#include "doubly-linked-list.h"
-
 #include <iostream>
 #include <exception>
 

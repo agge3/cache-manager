@@ -1,5 +1,3 @@
-#include "hash-map.h"
-
 #include <filesystem>
 #include <map>
 #include <vector>
@@ -83,13 +81,6 @@ constexpr bool csc::operator!=(const HashNode<K, V>& rhs,
 {
 	return !(rhs == lhs);
 }
-explicit MapIterator(typename HashMap<K, V, F>::ListPtr *table,
-						 std::size_t buckets, std::size_t index) :
-		_table(table), _buckets(buckets), _index(index), _listIt(advance()) {
-setType();
-}
-
-
 
 template <typename K, typename V, typename F>
 std::optional<V> MapIterator<K, V, F>::operator*()
@@ -111,17 +102,14 @@ typename MapIterator<K, V, F>::pointer MapIterator<K, V, F>::operator->()
 	return nullptr;
 }
 
-
-
-
 template <typename K, typename V, typename F>
 MapIterator<K, V, F>& MapIterator<K, V, F>::operator++()
 {
-	if (_index < _buckets - 1) {
-		throw std::runtime_exception("Attempt to increment iterator past end.");
+	if (_index > _buckets - 1) {
+		throw std::runtime_error("Attempt to increment iterator past end.");
 	}
 	if (_type == MapIteratorType::EmptyBucket) {
-		advance()
+		advance();
 	} else {
 		if (_listIt != _table[_index]->end()) {
 			++_listIt;
@@ -130,8 +118,9 @@ MapIterator<K, V, F>& MapIterator<K, V, F>::operator++()
 			advance();
 		}
 	}
-	}
+	return *this;
 }
+
 template <typename K, typename V, typename F>
 void MapIterator<K, V, F>::advance()
 {
@@ -167,40 +156,6 @@ std::size_t MapIterator<K, V, F>::getIndex() const
 	return _index;
 }
 
-//template <typename K, typename V, typename F>
-//void MapIterator<K, V, F>::setType()
-//{
-//	if (_index == 0) {
-//		_type = MapIteratorType::Begin;
-//	}
-//	if (_index = _buckets) {
-//		_type = MapIteratorType::End;
-//	}
-//	if (_table[_index] == nullptr) {
-//		_type = _type | MapIteratorType::EmptyBucket;
-//	}
-//	if (_table[_index] != nullptr) {
-//		_type = _type | MapIteratorType::FullBucket;
-//	}
-//	if (_listIt == _table[_index]->begin()) {
-//		_type = _type | MapIteratorType::BucketBegin;
-//	}
-//	if (_listIt == _table[_index]->end()) {
-//		_type = _type | MapIteratorType::BucketEnd;
-//	}
-//
-
-//template <typename K, typename V, typename F>
-//MapIteratorType MapIterator<K, V, F>::getType() const
-//	if (_type & MapIteratorType::EmptyBucket != 0) {
-//		return MapIteratorType::EmptyBucket;
-//	}
-//	if (_type & MapIterator::EmptyBucket == 0) {
-//		return MapIteratorType::FullBucket;
-//	}
-//	return MapIteratorType::Null;
-//}
-
 template <typename K, typename V, typename F>
 MapIterator<K, V, F> MapIterator<K, V, F>::operator++(int)
 {
@@ -222,26 +177,6 @@ bool MapIterator<K, V, F>::operator!=(const MapIterator& other) const
 {
 	return !(*this == other);
 }
-
-//template <typename K, typename V, typename F>
-//SLLIterator<HashNode<K, V>> MapIterator<K, V, F>::advance()
-//{
-//	while (_index < _buckets) {
-//		if (_table[_index] != nullptr && !_table[_index]->isEmpty()) {
-//			return _table[_index]->begin();
-//		}
-//		++_index;
-//	}
-//	return SLLIterator<HashNode<K, V>>(nullptr);
-//}
-//
-//void MapIterator<K, V, F>::bucketEnd() const
-//{
-//	if (_table[_index] == nullptr) {
-//		return false;
-//	}
-//	return _listIt != _table[_index]->end();
-//}
 
 template <typename K, typename V, typename F>
 HashMap<K, V, F>::HashMap() : 
@@ -312,7 +247,7 @@ HashMap<K, V, F>& HashMap<K, V, F>::operator=(HashMap<K, V, F>&& rhs) noexcept
 template <typename K, typename V, typename F>
 void HashMap<K, V, F>::add(const K& key, const V& value)
 {
-	std::size_t idx = _hash(key) % _buckets;
+	std::size_t idx = _hash(key) % (_buckets - 1);
 	if (_table[idx] == nullptr) {
 		_table[idx] = std::make_unique<SinglyLinkedList<HashNode<K, V>>>();
 	}
@@ -328,7 +263,7 @@ bool HashMap<K, V, F>::remove(const K& key)
 	if (isEmpty()) {
 		return false;
 	}
-	auto ptr = _table[_hash(key) % _buckets - 1].get();
+	auto ptr = _table[_hash(key) % (_buckets - 1)].get();
 	if (ptr == nullptr) {
 		return false;
 	}
@@ -344,7 +279,7 @@ std::optional<V> HashMap<K, V, F>::getItem(const K& key) const
 		return std::nullopt;
 	}
 
-	auto ptr = _table[_hash(key) % _buckets - 1].get();
+	auto ptr = _table[_hash(key) % (_buckets - 1)].get();
 	if (ptr == nullptr) {
 		return std::nullopt;
 	}
@@ -357,16 +292,13 @@ template <typename K, typename V, typename F>
 bool HashMap<K, V, F>::contains(const K& key) const
 {
 	if (isEmpty()) {
-		std::cout << "entering isEmpty\n";
 		return false;
 	}
 	assert(_table != nullptr);
-	auto ptr = _table[_hash(key) % _buckets - 1].get();
+	auto ptr = _table[_hash(key) % (_buckets - 1)].get();
 	if (ptr == nullptr) {
-		std::cout << "entering nullptr\n";
 		return false;
 	}
-	std::cout << "found pointer\n";
 	return ptr->contains(HashNode<K, V>(key));
 }
 
@@ -377,7 +309,7 @@ bool HashMap<K, V, F>::replace(const K& key, const V& value)
 		return false;
 	}
 
-	auto ptr = _table[_hash(key) % _buckets - 1].get();
+	auto ptr = _table[_hash(key) % (_buckets - 1)].get();
 	if (!ptr) {
 		return false;
 	}
@@ -478,5 +410,6 @@ void HashMap<K, V, F>::clear()
 	// When table is deleted, its smart ListPtrs will lose scope and call their
 	// destructors.
 	delete[] _table;
-	_table = nullptr;
+	_table = new ListPtr[_buckets];
+	_size = 0;
 }

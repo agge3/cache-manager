@@ -8,11 +8,11 @@
  * Test cases.
  */
 
-#include "test.h"
+#include "test.hpp"
 
-#include "singly-linked-list.h"
-#include "doubly-linked-list.h"
-#include "hash-map.h"
+#include "singly-linked-list.hpp"
+#include "doubly-linked-list.hpp"
+#include "hash-map.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -375,13 +375,13 @@ TEST(SinglyLinkedListTest, StressTest) {
 TEST(HashFunction, Integers)
 {
 	Hash<std::int32_t> hash;
-	for (std::int32_t i = 0x80000000; i < 0x7fffffff; ++i) {
-		EXPECT_EQ(hash(i), hash(i));
-	}
-	// smaller range... :)
-	//for (std::int32_t i = -100; i < 100; ++i) {
+	//for (std::int32_t i = 0x80000000; i < 0x7fffffff; ++i) {
 	//	EXPECT_EQ(hash(i), hash(i));
 	//}
+	// smaller range... :)
+	for (std::int32_t i = -100; i < 100; ++i) {
+		EXPECT_EQ(hash(i), hash(i));
+	}
 }
 
 class HashNodeTest : public testing::Test {
@@ -539,9 +539,9 @@ protected:
 		_noHashMap.add(0, 10);
 		_noHashMap.add(1, 11);
 		_noHashMap.add(2, 12);
+		_noHashMap.add(6, 16);
 		_noHashMap.add(7, 17);
 		_noHashMap.add(8, 18);
-		_noHashMap.add(9, 19);
 	}
 
 	HashMap<int, int> _intMap;
@@ -553,6 +553,23 @@ protected:
 
 	HashMap<int, int, NoHash<int>> _noHashMap;
 };
+
+TEST(HashFunction, NoHash)
+{
+	NoHash<int> hash;
+	for (int i = 0; i < 10; ++i) {
+		EXPECT_EQ(hash(i), i);
+	}
+}
+
+TEST(HashFunction, NoHashModulo)
+{
+	NoHash<int> hash;
+	const int SIZE = 16;
+	for (int i = 0; i < 10; ++i) {
+		EXPECT_EQ(hash(i) % (SIZE - 1), i);
+	}
+}
 
 TEST_F(HashMapTest, isEmpty)
 {
@@ -574,12 +591,86 @@ TEST_F(HashMapTest, getNumberOfItems)
 	EXPECT_EQ(_strIntMap.getNumberOfItems(), 3);
 }
 
-TEST_F(HashMapTest, MapIteratorBegin)
+TEST_F(HashMapTest, MapIterator)
 {
 	auto it = _noHashMap.begin();
 	EXPECT_TRUE(it.getType() == MapIteratorType::FullBucket);
+	EXPECT_TRUE(it.getIndex() == 0);
 	auto opt = *it;
-	std::cout << "Value of optional: " << *opt << "\n";
+	std::cout << "value of optional: " << *opt << "\n";
+	EXPECT_EQ(*opt, 10);
+
+	++it;
+	EXPECT_NE(it, _noHashMap.end());
+	EXPECT_TRUE(it.getType() == MapIteratorType::FullBucket);
+	EXPECT_TRUE(it.getIndex() == 1);
+	opt = *it;
+	std::cout << "value of optional: " << *opt << "\n";
+	EXPECT_EQ(*opt, 11);
+
+	++it;
+	EXPECT_NE(it, _noHashMap.end());
+	EXPECT_TRUE(it.getType() == MapIteratorType::FullBucket);
+	EXPECT_TRUE(it.getIndex() == 2);
+	opt = *it;
+	std::cout << "value of optional: " << *opt << "\n";
+	EXPECT_EQ(*opt, 12);
+
+	++it;
+	EXPECT_NE(it, _noHashMap.end());
+	EXPECT_TRUE(it.getType() == MapIteratorType::EmptyBucket);
+	EXPECT_TRUE(it.getIndex() == 3);
+	opt = *it;
+	EXPECT_FALSE(opt.has_value());
+
+	++it;
+	EXPECT_NE(it, _noHashMap.end());
+	EXPECT_TRUE(it.getType() == MapIteratorType::EmptyBucket);
+	EXPECT_TRUE(it.getIndex() == 4);
+	opt = *it;
+	EXPECT_FALSE(opt.has_value());
+
+	++it;
+	EXPECT_NE(it, _noHashMap.end());
+	EXPECT_TRUE(it.getType() == MapIteratorType::EmptyBucket);
+	EXPECT_TRUE(it.getIndex() == 5);
+	opt = *it;
+	EXPECT_FALSE(opt.has_value());
+
+	++it;
+	EXPECT_NE(it, _noHashMap.end());
+	EXPECT_TRUE(it.getType() == MapIteratorType::FullBucket);
+	EXPECT_TRUE(it.getIndex() == 6);
+	opt = *it;
+	std::cout << "value of optional: " << *opt << "\n";
+	EXPECT_EQ(*opt, 16);
+
+	++it;
+	EXPECT_NE(it, _noHashMap.end());
+	EXPECT_TRUE(it.getType() == MapIteratorType::FullBucket);
+	EXPECT_TRUE(it.getIndex() == 7);
+	opt = *it;
+	std::cout << "value of optional: " << *opt << "\n";
+	EXPECT_EQ(*opt, 17);
+
+	++it;
+	EXPECT_NE(it, _noHashMap.end());
+	EXPECT_TRUE(it.getType() == MapIteratorType::FullBucket);
+	EXPECT_TRUE(it.getIndex() == 8);
+	opt = *it;
+	std::cout << "value of optional: " << *opt << "\n";
+	EXPECT_EQ(*opt, 18);
+
+	++it;
+	EXPECT_TRUE(it == _noHashMap.end());
+}
+
+TEST_F(HashMapTest, MapIteratorBegin)
+{
+	//auto it = _noHashMap.begin();
+	//EXPECT_TRUE(it.getType() == MapIteratorType::FullBucket);
+	//auto opt = *it;
+	//std::cout << "Value of optional: " << *opt << "\n";
 
 	//std::vector<int> v(_intMap.getNumberOfItems());
 	//for (auto it = _intMap.begin(); it != _intMap.end(); ++it) {
@@ -599,10 +690,6 @@ TEST_F(HashMapTest, MapIteratorBegin)
 }
 
 TEST_F(HashMapTest, MapIteratorEnd) 
-{
-}
-
-TEST_F(HashMapTest, MapIterator)
 {
 }
 

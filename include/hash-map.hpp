@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "singly-linked-list.h"
+#include "singly-linked-list.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -123,7 +123,18 @@ public:
 
     explicit MapIterator(typename HashMap<K, V, F>::ListPtr *table,
 						 std::size_t buckets, std::size_t index) :
-		_table(table), _buckets(buckets), _index(index), _listIt(advance()) {}
+		_table(table), _buckets(buckets), _index(index),
+		_listIt(SLLIterator<HashNode<K, V>>(nullptr))
+	{
+		if (index < 1) {
+			setType();
+			if (_type == MapIteratorType::FullBucket) {
+				_listIt = _table[_index]->begin();
+			} else {
+				_listIt = SLLIterator<HashNode<K, V>>(nullptr);
+			}
+		}
+	}
 
 	std::optional<V> operator*();
 	pointer operator->();
@@ -177,7 +188,12 @@ public:
 	/** 
 	 * Destructor.
 	 */
-	~HashMap() { clear(); }
+	~HashMap()
+	{
+		delete[] _table;
+		_table = nullptr;
+		_size = 0;
+	}
 
 	/**
 	 * Copy constructor.
@@ -308,4 +324,4 @@ private:
 	F _hash;
 };
 }
-#include "hash-map.cpp"
+#include "impl/hash-map.hpp"
