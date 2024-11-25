@@ -1,8 +1,8 @@
 /**
- * @file singly-linked-list.h
+ * @file singly-linked-list.hpp
  * @class SinglyLinkedList<T>
  *
- * @author Kat Powell
+ * @author Kat Powell, Tyler Baxter
  * @version 1.0
  * @since 2024-09-19
  *
@@ -11,10 +11,8 @@
 
 #pragma once
 
-#include <cstddef>
-#include <iterator>
-#include <iostream>
 #include <optional>
+#include <iostream>
 
 /**
 * @namespace csc
@@ -256,5 +254,5 @@ private:
 	SLLNode<T>* _head;
 	std::size_t _size;
 };
-}
-#include "impl/singly-linked-list.hpp"
+} // End namespace csc
+#include "impl/singly-linked-list-impl.hpp"
