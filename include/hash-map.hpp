@@ -1,8 +1,8 @@
 /**
- * @file hash-map.h
+ * @file hash-map.hpp
  * @class HashMap
  *
- * @author Tyler Baxter
+ * @author Tyler Baxter, Kat Powell
  * @version 1.0
  * @since 2024-08-30
  *
@@ -15,7 +15,6 @@
 
 #include <cmath>
 #include <cstddef>
-#include <iterator>
 #include <string>
 #include <memory>
 #include <iostream>
@@ -79,12 +78,7 @@ public:
 	const K& getKey() const { return _key; }
 	const V& getItem() const { return _value; }
 	void setItem(const V& value) { _value = value; }
-protected:
-    // Disallow copy and assignment.
-    //HashNode(const HashNode& other);
-    //HashNode& operator=(const HashNode& other);
 private:
-	//const std::size_t _hash;
 	const K _key;
 	V _value;
 };
@@ -108,7 +102,7 @@ enum class MapIteratorType : bool {
 };
 
 /**
- * @class MapIterator<V>
+ * @class MapIterator
  * HashMap Iterator.
  */
 template <typename K, typename V, typename F>
@@ -147,11 +141,12 @@ public:
 	std::size_t getIndex() const;
 private:
 	/**
-	 * Advances index until next valid bucket (has a list), and returns an
-	 * iterator to the list.
+	 * Advances index and assigns list iterator if there's a list.
 	 */
 	void advance();
-
+	/**
+	 * Sets the MapIteratorType of the current HashMap table index.
+	 */
 	void setType();
 
 	typename HashMap<K, V, F>::ListPtr *_table;	// reference to the hash table
@@ -221,28 +216,23 @@ public:
 	friend class MapIterator<K, V, F>;
 
 	/**
-	 * Overloaded ostream operator, '<<'.
+	 * Overloaded ostream operator<<.
 	 */
 	friend std::ostream& operator<< <>(std::ostream& out,
 		const HashMap<K, V, F>& map);
 
 	/**
-	 * Associates the specified value with the specified key in this map.
+	 * Inserts a key-value pair into HashMap.
 	 *
-	 * @param int key
-	 * The key to be inserted.
-	 * @param int value
-	 * The value to be inserted.
+	 * @param K key The key to be inserted.
+	 * @param V value The value to be inserted.
 	 */
 	void add(const K& key, const V& value);	
 
 	/**
-	 * Removes the mapping for the specified key from this map if present.
+	 * Removes the key-value pair with this key in HashMap.
 	 *
-	 * @param int key
-	 * The key to remove the value.
-	 *
-	 * @return The value that was removed.
+	 * @param K key The key to remove.
 	 */
 	bool remove(const K& key);
 
@@ -250,13 +240,11 @@ public:
 	 * Removes the entry for the specified key only if it is currently mapped to 
 	 * the specified value.
 	 *
-	 * @param int key
-	 * The key to remove.
-	 * @param int value
-	 * The value to remove.
+	 * @param K key The key to remove.
+	 * @param V value The value to remove.
 	 *
-	 * @return TRUE if the key/value was from the hash map. FALSE if the 
-	 * key/value was not removed from the hash map.
+	 * @return TRUE if the key-value pair was removed from HashMap; FALSE if the 
+	 * key-value pair was not in and not removed from HashMap.
 	 */
 	bool remove(const K& key, const V& value);
 
@@ -283,8 +271,6 @@ public:
 	 */
 	bool replace(const K& key, const V& value);
 
-	//void traverse(void visit(V&)) const;
-
 	/**
 	* Returns the size of HashMap.
 	*
@@ -292,6 +278,11 @@ public:
 	*/
 	std::size_t getNumberOfItems() const;
 
+	/**
+	 * Returns the capacity of HashMap.
+	 *
+	 * @return std::size_t The capacity.
+	 */
 	std::size_t capacity() const;
 
 	/**
@@ -302,26 +293,29 @@ public:
 	bool isEmpty() const;
 
 	/**
-	 * xxx
+	 * Returns a MapIterator to the begin of HashMap.
 	 */
 	MapIterator<K, V, F> begin() const;
 
 	/**
-	 * xxx
+	 * Returns a MapIterator to the end of HashMap.
 	 */
 	MapIterator<K, V, F> end() const;
 
 	/**
-	 * Clears the contents and deallocates memory of HashMap.
+	 * Clears the contents of HashMap.
 	 */
 	void clear();
 private:
-	const std::size_t TABLE_BUCKETS = 16;	// Power of two for DJR % 2^k.
+	// Should be power of two for DJR % 2^k, because DJR hash function is 
+	// optimized for powers of two. Design spec asked for a prime number though,
+	// so prime number it is.
+	const std::size_t TABLE_BUCKETS = 101;
 
 	std::size_t _buckets;		
 	ListPtr *_table;
 	std::size_t _size;
 	F _hash;
 };
-}
-#include "impl/hash-map.hpp"
+} // End namespace csc
+#include "impl/hash-map-impl.hpp"

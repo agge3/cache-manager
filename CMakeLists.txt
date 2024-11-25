@@ -44,8 +44,7 @@ set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "")
 
 # Add source files to target(s).
-target_sources(cache-manager PRIVATE src/main.cpp
-	src/tests/unit-tests.cpp	
+target_sources(cache-manager PRIVATE src/cache-manager/tests/unit-tests.cpp
 )
 target_sources(hash-map PRIVATE src/hash-map/tests/unit-tests.cpp
 )

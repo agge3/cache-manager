@@ -24,7 +24,7 @@ public:
      */
     void put(const K& key, const V& value);
 private:
-	std::size_t _capacity
+	std::size_t _capacity;
 	std::unique_ptr<csc::HashMap<K, V>> _map;
 	std::unique_ptr<csc::LinkedList<K>> _queue;
 
