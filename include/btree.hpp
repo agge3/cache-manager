@@ -3,16 +3,22 @@
  * a page.
  */
 
-#include "btree.h"
-
 #include <optional>
 #include <iostream>
 #include <cassert>
-
-namespace csc {
+#include <memory>
+#include <cstddef>
 
 template <typename K, typename V>
-class BTree;
+class BTreeEntry;
+template <typename K, typename V>
+constexpr bool operator<(const BTreeEntry<K, V>&, const BTreeEntry<K, V>&);
+template <typename K, typename V>
+constexpr bool operator>(const BTreeEntry<K, V>&, const BTreeEntry<K, V>&);
+template <typename K, typename V>
+constexpr bool operator==(const BTreeEntry<K, V>&, const BTreeEntry<K, V>&);
+template <typename K, typename V>
+constexpr bool operator!=(const BTreeEntry<K, V>&, const BTreeEntry<K, V>&);
 
 /**
 * BTreeEntry is the key entry for each BTreeNode. Value can either be the value
@@ -28,22 +34,22 @@ public:
 
 	V *getValue() const
 	{
-		return value;
+		return _value;
 	}
 
-	bool operator<(const BTreeEntry<K, V>& e1, const BTreeEntry<K, V> e2)
+	friend constexpr bool operator<(const BTreeEntry<K, V>& e1, const BTreeEntry<K, V>& e2)
 	{
 		return e1.key < e2.key;
 	}
-	bool operator>(const BTreeEntry<K, V>& e1, const BTreeEntry<K, V> e2)
+	friend constexpr bool operator>(const BTreeEntry<K, V>& e1, const BTreeEntry<K, V>& e2)
 	{
 		return e1.key > e2.key;
 	}
-	bool operator==(const BTreeEntry<K, V>& e1, const BTreeEntry<K, V> e2)
+	friend constexpr bool operator==(const BTreeEntry<K, V>& e1, const BTreeEntry<K, V>& e2)
 	{
 		return e1.key == e2.key;
 	}
-	bool operator!=(const BTreeEntry<K, V>& e1, const BTreeEntry<K, V> e2)
+	friend constexpr bool operator!=(const BTreeEntry<K, V>& e1, const BTreeEntry<K, V>& e2)
 	{
 		return !(e1.key == e2.key);
 	}
@@ -53,13 +59,17 @@ private:
 };
 
 template <typename K, typename V>
+class BTree;
+
+template <typename K, typename V>
 class BTreeNode {
 public:
 
 BTreeNode(std::size_t maxKeys, bool leaf) :
 	MAX_KEYS(maxKeys), _leaf(leaf), _numKeys(0)
 {
-	_keys = new BTreeEntry<K, V>[MAX_KEYS];
+	// xxx
+	//_keys = new BTreeEntry<K, V>[MAX_KEYS];
 	_children = new BTreeNode<K, V>*[MAX_KEYS + 1];
 }
 
@@ -75,11 +85,9 @@ BTreeNode(std::size_t maxKeys, bool leaf) :
 private:
 friend class BTree<K, V>;
 
-
-
 const std::size_t MAX_KEYS;
-BTreeEntry<K, V> *keys;
-BTreeNode **_children;
+BTreeEntry<K, V> *_keys;
+BTreeNode<K, V> **_children;
 bool _leaf;
 std::size_t _numKeys;
 };
@@ -90,11 +98,10 @@ std::size_t _numKeys;
 template <typename K, typename V>
 class BTree {
 public:
-BTree(std::size_t maxKeys)
+BTree(std::size_t maxKeys) : MAX_KEYS(maxKeys)
 {
-	MAX_KEYS = maxKeys;
-	_root = new BTreeNode(MAX_KEYS, true);
-	assert(_root);
+	_root = new BTreeNode<K, V>(MAX_KEYS, true);
+	assert(_root != nullptr);
 	_size = 0;
 }
 
@@ -108,7 +115,7 @@ bool contains(const K& key)
 	return search(_root, key) != nullptr;
 }
 
-void clear(BTreeNode *node)
+void clear(BTreeNode<K, V> *node)
 {
 	if (node->_leaf) {
 		for (int i = 0; i < node->numKeys + 1; ++i) {
@@ -123,11 +130,11 @@ std::optional<V> get(const K& key)
 	if (_root == nullptr) {
 		return std::nullopt;
 	}
-	BTreeNode *node = search(_root, key);
+	BTreeNode<K, V> *node = search(_root, key);
 	if (node != nullptr) {
 		for (std::size_t i = 0; i < node->_numKeys; ++i) {
 			if (node->_keys[i] == key) {
-				return std::optional<V>(_node->_keys[i].value);
+				return std::optional<V>(node->_keys[i]->getValue());
 			}
 		}
 	}
@@ -150,7 +157,7 @@ bool add(const K& key, const V& value)
 	if (_root == nullptr) {
 		// Allocate memory for _root.
 		_root = new BTreeNode<K, V>(MAX_KEYS, true);
-		_root->keys[0] = { key, value }; // insert key-value pair
+		_root->keys[0] = new BTreeEntry<K, V>(key, value);
 		_root->_numKeys++;
 		++_size;
 		return true;
@@ -208,14 +215,14 @@ bool removeHelper(BTreeNode<K, V> *root, const K& key)
 }
 
 private:
-BTreeNode *search(BTreeNode<K, V> *root, const K& key)
+BTreeNode<K, V> *search(BTreeNode<K, V> *root, const K& key)
 {
-	std::size_t = 0;
+	std::size_t i = 0;
 	while (i < root->_numKeys && key > root->_keys[i]) {
 		++i;
 	}
 	if (i < root->_numKeys && key == root->_keys[i]) {
-		return node;
+		return root;
 	}
 	if (root->_leaf) {
 		return nullptr;	// searched all leaves and key was not found
@@ -232,26 +239,26 @@ void addHelper(BTreeNode<K, V> *root, const K& key, const V& value)
 			root->_keys[i + 1] = root->_keys[i];
 			--i;
 		}
-		root->_keys[i + 1] = new BTreeEntry(key, *value);
+		root->_keys[i + 1] = new BTreeEntry<K, V>(key, value);
 		root->_numKeys++;
 		++_size;
 	} else {
 		// Find the child which is going to have the new key.
-		while (i >= 0 && key <= node->_keys[i]) {
+		while (i >= 0 && key <= root->_keys[i]) {
 			--i;
 		}
 		// See if the found child is full.
-		if (node->_children[i]->_numKeys == MAX_KEYS) {
-			splitChild(node, i);
+		if (root->_children[i]->_numKeys == MAX_KEYS) {
+			splitChild(root, i);
 		}
        	// After the split, the middle key of children[i] goes up and 
 		// children[i] is split into two. See which of the two is going to have
 		// the new key.
-		if (_key > node->_keys[i + 1]) {
+		if (key > root->_keys[i + 1]) {
 			++i;	// adjust index if new key is greater
 		}
 		// Recursive call for the child.
-		addHelper(node->_children[i + 1], key, value);
+		addHelper(root->_children[i + 1], key, value);
 	}
 }
 
@@ -259,7 +266,7 @@ void splitChild(BTreeNode<K, V> *parent, std::size_t index)
 {
 	const int SPLIT = MAX_KEYS / 2;
 	BTreeNode<K, V> *fullChild = parent->_children[index];
-	BTreeNode<K, V> *newChild = new BTreeNode(SPLIT, fullChild->_leaf);
+	BTreeNode<K, V> *newChild = new BTreeNode<K, V>(SPLIT, fullChild->_leaf);
 	for (std::size_t i = 0; i < SPLIT; ++i) {
 		newChild->_keys[i] = fullChild->_keys[i + SPLIT + 1];
 	}
@@ -275,13 +282,14 @@ void splitChild(BTreeNode<K, V> *parent, std::size_t index)
 	parent->_numKeys++;
 }
 
-BTreeNode *_root;
+BTreeNode<K, V> *_root;
 std::size_t _size;
 const std::size_t MAX_KEYS;
 };
 
 
-// xxx
+/*
+ * xxx
 BTreeNode* addHelper(BTreeNode *node, const K& key, const V& value)
 {
 	int i = 0;
@@ -327,3 +335,4 @@ BTreeNode* addHelper(BTreeNode *node, const K& key, const V& value)
 		return split(node);
 	}
 }
+*/
