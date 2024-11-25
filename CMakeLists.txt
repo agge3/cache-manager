@@ -36,6 +36,7 @@ FetchContent_MakeAvailable(json)
 # Executable(s):
 add_executable(cache-manager)
 add_executable(hash-map)
+add_executable(btree)
 
 # Debug build compiler flags.
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")
@@ -48,6 +49,8 @@ target_sources(cache-manager PRIVATE src/cache-manager/tests/unit-tests.cpp
 )
 target_sources(hash-map PRIVATE src/hash-map/tests/unit-tests.cpp
 )
+target_sources(btree PRIVATE src/btree/tests/unit-tests.cpp
+)
 
 # Add include directories to target(s).
 # Local include directory.
@@ -55,6 +58,9 @@ target_include_directories(cache-manager PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
 target_include_directories(hash-map PRIVATE 
+	${CMAKE_CURRENT_SOURCE_DIR}/include/
+)
+target_include_directories(btree PRIVATE 
 	${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
 
@@ -67,10 +73,14 @@ target_link_libraries(hash-map PRIVATE
 	GTest::gtest_main
 	nlohmann_json::nlohmann_json
 )
+target_link_libraries(btree PRIVATE
+	GTest::gtest_main
+)
 
 include(GoogleTest)
 gtest_discover_tests(cache-manager)
 #gtest_discover_tests(hash-map)
+gtest_discover_tests(btree)
 
 # Copy necessary directories into build directory, for executable root access.
 add_custom_command(TARGET cache-manager PRE_BUILD

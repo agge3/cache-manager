@@ -1,0 +1,319 @@
+{
+    "cacheManager": [
+      {
+        "testCase1": [
+          {
+            "isEmpty": {}
+          },
+          {
+            "add": {"key" : 20, "fullName" : "John Doe2", "address" : "1234 Log St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 30, "fullName" : "John Doe3", "address" : "1234 School St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "clear": {}
+          },
+          {
+            "isEmpty": {}
+          },
+          {
+            "add": {"key" : 40, "fullName" : "John Doe4", "address" : "1234 Home St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 50, "fullName" : "John Doe5", "address" : "1234 State St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 106}
+          },
+          {
+            "isEmpty": {}
+          }
+        ],
+        "testCase2": [
+          {
+            "add": {"key" : 101, "fullName" : "John Smith", "address" : "123 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 102, "fullName" : "John Doe1", "address" : "1234 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 202, "fullName" : "John Doe2", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "add": {"key" : 303, "fullName" : "John Doe3", "address" : "1234 Elm St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 402, "fullName" : "John Doe4", "address" : "1234 Brown St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 502, "fullName" : "John Doe5", "address" : "1234 Jack St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 602, "fullName" : "John Doe6", "address" : "1234 Flower St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 702, "fullName" : "John Doe7", "address" : "1234 Auto St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "remove": {"key" : 202}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "contains": {"key" : 702}
+          },
+          {
+            "contains": {"key" : 202}
+          },
+          {
+            "contains": {"key" : 901}
+          },
+          {
+            "add": {"key" : 808, "fullName" : "John Doe8", "address" : "1234 Cabin St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 702}
+          },
+          {
+            "add": {"key" : 902, "fullName" : "Mary Smith", "address" : "12345 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          }
+        ],
+        "testCase3": [
+          {
+            "add": {"key" : 106, "fullName" : "Bill Smith1", "address" : "123 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 510, "fullName" : "Bill Do2e", "address" : "1234 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 108, "fullName" : "Bill Doe3", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 611, "fullName" : "Bill Doe4", "address" : "1234 Elm St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "contains": {"key" : 106}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "remove": {"key" : 106}
+          },
+          {
+            "contains": {"key" : 510}
+          },
+          {
+            "contains": {"key" : 106}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "add": {"key" : 110, "fullName" : "Bill Doe5", "address" : "1234 Brown St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 111, "fullName" : "Tony Do6e", "address" : "1234 Jack St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 712, "fullName" : "Tony Doe7", "address" : "1234 Flower St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 113, "fullName" : "Tony Doe8", "address" : "1234 Auto St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "remove": {"key" : 712}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "add": {"key" : 114, "fullName" : "Tony Doe9", "address" : "1234 Cabin St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 115, "fullName" : "Tony Smith10", "address" : "12345 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "getNumberOfItems": {}
+          }
+        ],
+        "testCase4": [
+          {
+            "add": {"key" : 101, "fullName" : "John Smith", "address" : "123 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 102, "fullName" : "John Doe1", "address" : "1234 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 103, "fullName" : "John Doe2", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 104, "fullName" : "John Doe3", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 105, "fullName" : "John Doe4", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 307, "fullName" : "John Doe5", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 307}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "add": {"key" : 408, "fullName" : "John Doe6", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 509, "fullName" : "John Doe7", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 509}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "add": {"key" : 201, "fullName" : "John Smith1", "address" : "1234 Elm St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 302, "fullName" : "John Smith2", "address" : "1234 Brown St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 403, "fullName" : "John Smith3", "address" : "1234 Jack St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 201}
+          },
+          {
+            "remove": {"key" : 101}
+          },
+          {
+            "add": {"key" : 504, "fullName" : "John Smith4", "address" : "1234 Flower St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 605, "fullName" : "John Smith5", "address" : "1234 Auto St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 206, "fullName" : "John Smith6", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 605}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "contains": {"key" : 509}
+          },
+          {
+            "contains": {"key" : 206}
+          },
+          {
+            "add": {"key" : 706, "fullName" : "John Doe8", "address" : "1234 Cabin St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "contains": {"key" : 706}
+          },
+          {
+            "getNumberOfItems": {}
+          }
+        ],
+		"testCase5": [
+          {
+            "add": {"key" : 101, "fullName" : "John Smith", "address" : "123 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 102, "fullName" : "John Doe1", "address" : "1234 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 103, "fullName" : "John Doe2", "address" : "1234 Oak St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "add": {"key" : 104, "fullName" : "John Doe3", "address" : "1234 Elm St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 105, "fullName" : "John Doe4", "address" : "1234 Brown St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 307, "fullName" : "John Doe5", "address" : "1234 Jack St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 101}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "add": {"key" : 202, "fullName" : "John Doe6", "address" : "1234 Flower St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 303, "fullName" : "John Doe7", "address" : "1234 Flower St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 404, "fullName" : "John Doe8", "address" : "1234 Flower St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 201, "fullName" : "John Doe9", "address" : "1234 Flower St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 404}
+          },
+          {
+            "add": {"key" : 302, "fullName" : "John Doe10", "address" : "1234 Flower St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 403, "fullName" : "John Doe11", "address" : "1234 Flower St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 504, "fullName" : "John Doe12", "address" : "1234 Auto St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 504}
+          },
+          {
+            "remove": {"key" : 201}
+          },
+          {
+            "getNumberOfItems": {}
+          },
+          {
+            "contains": {"key" : 201}
+          },
+          {
+            "contains": {"key" : 504}
+          },
+          {
+            "contains": {"key" : 403}
+          },
+          {
+            "add": {"key" : 808, "fullName" : "John Doe100", "address" : "1234 Cabin St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "add": {"key" : 902, "fullName" : "Mary Smith200", "address" : "12345 Main St", "city" : "Oakland", "state" : "CA", "zip" : "12345"}
+          },
+          {
+            "remove": {"key" : 303}
+          },
+          {
+            "getNumberOfItems": {}
+          }
+        ]
+      }
+    ]
+}
