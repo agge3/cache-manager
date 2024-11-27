@@ -45,7 +45,7 @@ set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "")
 
 # Add source files to target(s).
-target_sources(cache-manager PRIVATE src/cache-manager/tests/unit-tests.cpp
+target_sources(cache-manager PRIVATE src/cache-manager/main.cpp
 )
 target_sources(hash-map PRIVATE src/hash-map/tests/unit-tests.cpp
 )
@@ -85,7 +85,7 @@ gtest_discover_tests(btree)
 # Copy necessary directories into build directory, for executable root access.
 add_custom_command(TARGET cache-manager PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/external/milestone3/ $<TARGET_FILE_DIR:cache-manager>)
+        ${CMAKE_SOURCE_DIR}/external/milestone4/ $<TARGET_FILE_DIR:cache-manager>)
 add_custom_command(TARGET hash-map PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/external/milestone3/ $<TARGET_FILE_DIR:hash-map>)

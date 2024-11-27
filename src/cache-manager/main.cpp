@@ -1,3 +1,31 @@
+/**
+*
+* milestone4.cpp : This file contains the 'main' function. Program execution begins and ends there.
+*
+* 09/23/24 - Created by ChatGPT with prompt "write C++ program reads and parses the file: milestone4.json"
+*            The file: "milestones4.json" is in the following format:
+*
+
+{
+    "cacheManager": [
+        {"testCase1": [
+                {"add": 100},
+                {"add": 10},
+                {"add": 20}
+            ],
+        {"testCase2": [
+                {"add": 30},
+                {"add": 40},
+                {"add": 50},
+                {"add": 60},
+                {"add": 1000},
+                {"remove": 0}
+            ]
+        }
+    ]
+}
+*/
+
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "singly-linked-list.hpp"
@@ -5,6 +33,7 @@
 #include "cache-manager.hpp"
 
 #include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -13,6 +42,31 @@
 #include <random>
 
 namespace {
+
+using json = nlohmann::json;
+
+struct Data {
+	Data (const std::string& fullName, const std::string& address, 
+		const std::string& city, const std::string& state, 
+		const std::string& zip) :
+		_fullName(fullName), _address(address), _city(city), _state(state),
+		_zip(zip) {}
+	std::string _fullName;
+	std::string _address;
+	std::string _city;
+	std::string _state;
+	std::string _zip;
+};
+using DataPtr = Data*;
+
+using CacheManagerPtr = std::unique_ptr<CacheManager<int, DataPtr>>;
+#define CACHE_MANAGER_ALLOC(...) \
+	std::make_unique<CacheManager<int, DataPtr>>(__VA_ARGS__)
+
+// Return a raw pointer of CacheManager's unique pointer.
+using NodePtr = const DLLNode<DataPtr>*;
+using CachePtr = csc::DoublyLinkedList<DataPtr>*;
+using MapPtr = csc::HashMap<int, NodePtr>*;
 
 std::default_random_engine generator;
 std::uniform_int_distribution<int> intDistribution{1, 100};
@@ -786,10 +840,158 @@ TEST_F(CacheManagerTest, contains)
 	EXPECT_FALSE(_emptyStrIntCache.contains("Very long string with spaces and mixed case."));
 }
 
+/**
+*
+* processTestCase
+*
+* Method to process incoming json testcase file
+*
+* param: 
+*
+* returns: nothing
+*/
+void processTestCase(CacheManagerPtr& cacheManager, const std::string& testCaseName, const json& testCaseArray) {
+    std::cout << "Processing " << testCaseName << ":\n\n";
+
+    for (size_t i = 0; i < testCaseArray.size(); ++i) {
+        const json& entry = testCaseArray[i];
+
+        for (json::const_iterator it = entry.begin(); it != entry.end(); ++it) {
+            const std::string& actionName = it.key();
+            const json& details = it.value();
+
+            if (actionName == "isEmpty") {
+                bool result = cacheManager->isEmpty();
+                std::cout << "isEmpty: " << result << std::endl;
+            }
+            else if (actionName == "contains") {
+                int key = details["key"];
+                bool result = cacheManager->contains(key);
+                std::cout << "contains(" << key << "): " << result << std::endl;
+            }
+            else if (actionName == "getItem") {
+                int key = details["key"];
+				std::optional<Data*> opt = cacheManager->getItem(key);
+				std::string result = "0";	// default if there was no kvp
+				
+				if (opt.has_value()) {
+					Data *data = opt.value();
+					// xxx what is result supposed to be here? from my eye it
+					// seemed like a node was being printed without an
+					// overloaded ostream. So just a memory address?
+					// Assuming it's one of the strings with the Data struct.
+					std::string result = data->_fullName;
+				}
+
+                std::cout << "getItem(" << key << "): " << result << std::endl;
+            }
+            else if (actionName == "getNumberOfItems") {
+                size_t result = cacheManager->getNumberOfItems();
+                std::cout << "getNumberOfItems: " << result << std::endl;
+            }
+           else if (actionName == "add") {
+				// xxx list destructor needs to be good on pop nodes for raw
+				// pointer. Pretty sure it is, but double-check.
+				Data *data = new Data(
+					details["fullName"], details["address"], details["city"], 
+					details["state"], details["zip"]);
+                cacheManager->add(details["key"], data);
+			}
+            else if (actionName == "remove") {
+                int key = details["key"];
+                cacheManager->remove(details["key"]);
+            }
+            else if (actionName == "clear") {
+                cacheManager->clear();
+            }
+        }
+    }
+}
+
+/**
+*
+* printTable
+*
+* Method to print out the contents of table
+*
+* param: HashTable inputTable - pointer to hash table to print out
+*
+* returns: nothing, but output is sent to console
+*/
+void printTable(const MapPtr& map) {
+    std::cout << "\nTable contents " << "(" << map->getNumberOfItems() <<
+		" entries):\n\n";
+	std::cout << *map;
+    std::cout << "\nEnd of table\n";
+}
+
+/**
+*
+* printList
+*
+* Method to print out the contents of a linked list
+*
+* param: DoublyLinkedList myList - list to print out
+*
+* returns: nothing, but output is sent to console
+*/
+void printList(const CachePtr& myList) {
+    if (!myList) {
+        std::cout << "\nList is empty.\n";
+        return;
+    }
+
+    // while there are nodes to process
+    std::cout << "List contents in order:" << std::endl;
+	// xxx maybe change iterator if print is consistent.
+	std::cout << *myList << std::endl;
+}
+
 } // End namespace anonymous
 
-int main(int argc, char **argv)
-{
+/**
+*
+* main
+*
+* Processing starts and ends with this method
+*
+* param: none
+*
+* returns: nothing, but output is sent to console
+*/
+int main(int argc, char **argv) {
+    // Allocate CacheManager.
+	CacheManagerPtr cacheManager = CACHE_MANAGER_ALLOC(101);
+
+    // Load the JSON file
+    std::ifstream inputFile("milestone4.json");
+    if (!inputFile.is_open()) {
+        std::cerr << "Failed to open the file.\n";
+        return 1;
+    }
+
+    json data;
+    inputFile >> data;
+    inputFile.close();
+
+    // Process the test cases in the json file
+    for (size_t i = 0; i < data["cacheManager"].size(); ++i) {
+        const json& testCase = data["cacheManager"][i];
+        for (json::const_iterator it = testCase.begin(); it != testCase.end(); ++it) {
+            const std::string& testCaseName = it.key();
+            const json& testCaseArray = it.value();
+            processTestCase(cacheManager, testCaseName, testCaseArray);
+
+            // print out the table
+            printTable(cacheManager->getTable());
+
+            printList(cacheManager->getFifoList());
+
+            // clear cacheManager out for the next test case
+            cacheManager->clear();
+        }
+    }
+
 	// Run Google test suite.
 	std::cout << "\nRunning Google test suite:\n";
 	::testing::InitGoogleTest(&argc, argv);	
