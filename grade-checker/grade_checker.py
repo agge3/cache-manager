@@ -1,3 +1,18 @@
+"""
+Comments for File, Class and Method headers
+Implementations for all of the required methods
+Matching expected output for our supplied testcases
+Run unpublished testcases with expected output (we never got around to this)
+
+Global variables
+Static variables or methods
+Hard coded values (i.e., sizes of Hashtable, arrays, or cache, etc.)
+Lack of header files (all code in one file)
+Methods without any parameters (with the exception of getters/main)
+Use of STL before Milestone 4 (the implementations of the Data Structures should be hand-written, not use STL)
+Others?
+"""
+
 import os
 import subprocess
 import shutil
@@ -5,7 +20,6 @@ import sys
 import re
 from sympy import primerange
 from dateutil import parser
-
 
 def _is_windows():
     """ Check if the OS is Windows. """
@@ -149,6 +163,7 @@ class Build:
                 check=True,
             )
             matches = result.stdout.strip().splitlines()
+            #matches = result.stdout
             return matches[0] if matches else None
         except subprocess.CalledProcessError as e:
             print(f"Error while searching for .sln file: {e.stderr}")
@@ -526,6 +541,9 @@ class Grader:
             if any(str(prime) in buf for prime in primes):
                 return pts
 
+        return 0
+
+    def store_impl(self):
         return 0
 
 
