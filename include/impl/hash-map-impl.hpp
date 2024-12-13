@@ -9,6 +9,7 @@
  * HashMap and HashMap helpers.
  */
 
+#include <memory>
 #include <stdexcept>
 #include <cassert>
 
@@ -391,16 +392,17 @@ std::ostream& csc::operator<<(std::ostream& out, const HashMap<K, V, F>& map)
 			empty = false;
 			auto valueOpt = *it;  // Get the optional value
         	if (valueOpt.has_value()) {  // Check if it has a value
+				auto v = valueOpt.value();
             	if (!full) {
                 	if (first) {
-                    	out << "Index: " << index << ": " << valueOpt.value(); // Print the value
+                    	out << "Index: " << index << ": " << v; // Print the value
                     	first = false;
                 	} else {
-						out << "\n\nIndex: " << index << ": " << valueOpt.value(); // Print the value
+						out << "\n\nIndex: " << index << ": " << v; // Print the value
                 		full = true;
 					}
             	} else {
-                	out << ", " << valueOpt.value(); // Print the value
+                	out << ", " << v; // Print the value
             	}
         	}
     	}

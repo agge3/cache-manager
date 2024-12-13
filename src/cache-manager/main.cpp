@@ -59,13 +59,13 @@ struct Data {
 };
 using DataPtr = Data*;
 
-using CacheManagerPtr = std::unique_ptr<CacheManager<int, DataPtr>>;
+using CacheManagerPtr = std::unique_ptr<CacheManager<int, int>>;
 #define CACHE_MANAGER_ALLOC(...) \
-	std::make_unique<CacheManager<int, DataPtr>>(__VA_ARGS__)
+	std::make_unique<CacheManager<int, int>>(__VA_ARGS__)
 
 // Return a raw pointer of CacheManager's unique pointer.
-using NodePtr = const DLLNode<DataPtr>*;
-using CachePtr = csc::DoublyLinkedList<DataPtr>*;
+using NodePtr = const DLLNode<int>*;
+using CachePtr = csc::DoublyLinkedList<int>*;
 using MapPtr = csc::HashMap<int, NodePtr>*;
 
 std::default_random_engine generator;
@@ -871,16 +871,11 @@ void processTestCase(CacheManagerPtr& cacheManager, const std::string& testCaseN
             }
             else if (actionName == "getItem") {
                 int key = details["key"];
-				std::optional<Data*> opt = cacheManager->getItem(key);
-				std::string result = "0";	// default if there was no kvp
+				std::optional<int> opt = cacheManager->getItem(key);
+				int result = 0;	// default if there was no kvp
 				
 				if (opt.has_value()) {
-					Data *data = opt.value();
-					// xxx what is result supposed to be here? from my eye it
-					// seemed like a node was being printed without an
-					// overloaded ostream. So just a memory address?
-					// Assuming it's one of the strings with the Data struct.
-					std::string result = data->_fullName;
+					int result = opt.value();
 				}
 
                 std::cout << "getItem(" << key << "): " << result << std::endl;
@@ -892,10 +887,11 @@ void processTestCase(CacheManagerPtr& cacheManager, const std::string& testCaseN
            else if (actionName == "add") {
 				// xxx list destructor needs to be good on pop nodes for raw
 				// pointer. Pretty sure it is, but double-check.
-				Data *data = new Data(
-					details["fullName"], details["address"], details["city"], 
-					details["state"], details["zip"]);
-                cacheManager->add(details["key"], data);
+				// xxx for data struct:
+				//Data *data = new Data(
+				//details["fullName"], details["address"], details["city"], 
+				//details["state"], details["zip"]);
+                cacheManager->add(details["key"], details["key"]);
 			}
             else if (actionName == "remove") {
                 int key = details["key"];
@@ -921,8 +917,52 @@ void processTestCase(CacheManagerPtr& cacheManager, const std::string& testCaseN
 void printTable(const MapPtr& map) {
     std::cout << "\nTable contents " << "(" << map->getNumberOfItems() <<
 		" entries):\n\n";
-	std::cout << *map;
-    std::cout << "\nEnd of table\n";
+
+    bool empty = false;
+	bool full = false;
+	bool first = true;
+
+    for (auto it = map->begin(); it != map->end(); ++it) {
+        auto type = it.getType();
+        std::size_t index = it.getIndex();
+
+        if (type == MapIteratorType::EmptyBucket) {
+			full = false;
+			if (!empty) {
+				if (first) {
+					std::cout << "Empty: " << index;
+					first = false;
+					empty = true;
+				} else { 
+					std::cout << "\n\nEmpty: " << index;
+		 			empty = true;
+				}
+			} else {
+				std::cout << ", " << index;
+			}
+        } else if (type == MapIteratorType::FullBucket) {
+			empty = false;
+			auto valueOpt = *it;  // Get the optional value
+        	if (valueOpt.has_value()) {  // Check if it has a value
+				auto val = valueOpt.value();
+				int v = val->getElement();	
+            	if (!full) {
+                	if (first) {
+						std::cout << "Index: " << index << ": " << v; // Print the value
+                    	first = false;
+                	} else {
+						std::cout << "\n\nIndex: " << index << ": " << v; // Print the value
+                		full = true;
+					}
+            	} else {
+					std::cout << ", " << v; // Print the value
+            	}
+        	}
+    	}
+	}
+	std::cout << "\n";
+
+    std::cout << "\nEnd of table\n\n";
 }
 
 /**
@@ -943,8 +983,7 @@ void printList(const CachePtr& myList) {
 
     // while there are nodes to process
     std::cout << "List contents in order:" << std::endl;
-	// xxx maybe change iterator if print is consistent.
-	std::cout << *myList << std::endl;
+	std::cout << *myList << "\n" << std::endl;
 }
 
 } // End namespace anonymous
@@ -993,7 +1032,7 @@ int main(int argc, char **argv) {
     }
 
 	// Run Google test suite.
-	std::cout << "\nRunning Google test suite:\n";
+	std::cout << "Running Google test suite:\n";
 	::testing::InitGoogleTest(&argc, argv);	
     return RUN_ALL_TESTS();
 }
