@@ -4,3 +4,6 @@ doc/latex
 NOTES
 notes.txt
 grade-checker/.venv
+src/wip
+src/bak
+examples
