@@ -1,7 +1,7 @@
 /**
  * @file test.cpp
  *
- * @author Tyler Baxter
+ * @author agge3
  * @version 1.0
  * @since 2024-09-21
  *
@@ -54,7 +54,7 @@ int randomInt() {
 * Tests for DoublyLinkedList.
 *
 * @credit OpenAI's ChatGPT
-* @modified 2024-09-21 Tyler Baxter
+* @modified 2024-09-21 agge3
 */
 void testDoublyLinkedList()
 {

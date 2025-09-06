@@ -1,7 +1,7 @@
 /**
  * @file doubly-linked-list.cpp
  *
- * @author Tyler Baxter
+ * @author agge3
  * @version 1.0
  * @since 2024-09-21
  *

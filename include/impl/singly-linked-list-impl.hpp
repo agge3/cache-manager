@@ -2,7 +2,7 @@
  * @file singly-linked-list-impl.cpp
  * @class SinglyLinkedList<T>
  *
- * @author Kat Powell
+ * @author kpowkitty
  * @version 1.0
  * @since 2024-09-19
  *

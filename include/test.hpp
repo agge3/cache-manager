@@ -2,7 +2,7 @@
  * @file test.hpp
  * @namespace test
  *
- * @author Tyler Baxter
+ * @author agge3
  * @version 1.0
  * @since 2024-08-30
  *

@@ -2,7 +2,7 @@
  * @file hash-map-impl.hpp
  * @class HashMap
  *
- * @author Tyler Baxter, Kat Powell
+ * @author agge3, kpowkitty
  * @version 1.0
  * @since 2024-08-30
  *

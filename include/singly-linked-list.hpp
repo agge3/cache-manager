@@ -2,7 +2,7 @@
  * @file singly-linked-list.hpp
  * @class SinglyLinkedList<T>
  *
- * @author Kat Powell, Tyler Baxter
+ * @author kpowkitty, agge3
  * @version 1.0
  * @since 2024-09-19
  *
