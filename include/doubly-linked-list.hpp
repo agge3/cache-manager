@@ -290,4 +290,4 @@ private:
 	std::size_t _size;
 };
 }
-#include "impl/doubly-linked-list.hpp"
+#include "impl/doubly-linked-list-impl.hpp"
