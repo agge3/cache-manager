@@ -1,5 +1,5 @@
 /**
- * @file test.h
+ * @file test.hpp
  * @namespace test
  *
  * @author Tyler Baxter
@@ -11,14 +11,12 @@
 
 #pragma once
 
-#include <gtest/gtest.h>	// include gtest when test.h is included
+#include <string>
 
 namespace test {
 
-/**
- * Main driver function for all test cases.
- */
-void test();
+std::string randomString();
+int randomInt();
 
 /**
 * Unit tests for DoublyLinkedList.
@@ -26,6 +24,11 @@ void test();
 * @credit OpenAI's ChatGPT
 * Prompt: "Write me test cases for this class, with no frameworks, in cpp."
 */
-void doublyLinkedList();
+void testDoublyLinkedList();
+
+/**
+ * Main driver function for all test cases.
+ */
+void test();
 
 }

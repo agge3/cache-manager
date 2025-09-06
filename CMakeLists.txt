@@ -35,8 +35,6 @@ FetchContent_MakeAvailable(json)
 
 # Executable(s):
 add_executable(cache-manager)
-add_executable(hash-map)
-add_executable(btree)
 
 # Debug build compiler flags.
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")
@@ -45,22 +43,13 @@ set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "")
 
 # Add source files to target(s).
-target_sources(cache-manager PRIVATE src/cache-manager/main.cpp
-)
-target_sources(hash-map PRIVATE src/hash-map/tests/unit-tests.cpp
-)
-target_sources(btree PRIVATE src/btree/tests/unit-tests.cpp
+target_sources(cache-manager PRIVATE src/main.cpp
+	src/test.cpp
 )
 
 # Add include directories to target(s).
 # Local include directory.
 target_include_directories(cache-manager PRIVATE 
-	${CMAKE_CURRENT_SOURCE_DIR}/include/
-)
-target_include_directories(hash-map PRIVATE 
-	${CMAKE_CURRENT_SOURCE_DIR}/include/
-)
-target_include_directories(btree PRIVATE 
 	${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
 
@@ -69,26 +58,14 @@ target_link_libraries(cache-manager PRIVATE
 	GTest::gtest_main
 	nlohmann_json::nlohmann_json
 )
-target_link_libraries(hash-map PRIVATE
-	GTest::gtest_main
-	nlohmann_json::nlohmann_json
-)
-target_link_libraries(btree PRIVATE
-	GTest::gtest_main
-)
 
 include(GoogleTest)
 gtest_discover_tests(cache-manager)
-#gtest_discover_tests(hash-map)
-gtest_discover_tests(btree)
 
 # Copy necessary directories into build directory, for executable root access.
 add_custom_command(TARGET cache-manager PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/external/milestone4/ $<TARGET_FILE_DIR:cache-manager>)
-add_custom_command(TARGET hash-map PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/external/milestone3/ $<TARGET_FILE_DIR:hash-map>)
 
 # Build documentation with Doxygen.
 # Only build documentation for release build.
