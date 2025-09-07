@@ -1,17 +1,60 @@
 # cache-manager
-Database LRU cache with B-tree indexes
+Database LRU cache with B-tree indexes.
 
-# Description
+## Description
 The expected outcomes of cache-manager are to reimplement data structures and 
 methods of the C++ STL and Java SE API. Those "from scratch" implementations 
 will be used to implement a ground-up database LRU cache with B-tree indexes.
 
-# TODO
+## Building
+Build uses CMake.  
+**Linux**
+```bash
+mkdir build
+cd build
+cmake ../
+make all
+
+# to run test suite
+./cache-manager
+```
+**Visual Studio**  
+Install CMake plugin.
+
+## Organization
+`include`
+ * `singly-linked-list.hpp` - SinglyLinkedList share header.
+ * `doubly-linked-list.hpp` - DoublyLinkedList share header.
+ * `hash-map.hpp` - HashMap share header.
+ * `cache-manager.hpp` - CacheManager share header.
+ * `test` - Hand-rolled test suite (not GTest).
+ * `impl` - Template implementations.
+   * `singly-linked-list-impl.hpp` - SinglyLinkedList template implementation.
+   * `doubly-linked-list-impl.hpp` - DoublyLinkedList template implementation.
+   * `hash-map.hpp-impl` - HashMap template implementation.
+   * `cache-manager-impl.hpp` - CacheManager template implementation.
+
+`src`
+ * `main.cpp` - Main driver with GTest test cases, to run CacheManager and
+                all test suites.
+ * `test.cpp` - Hand-rolled test suite (not GTest) implementation.
+
+`doc` - Class and sequence diagrams, and Doxygen build target.  
+
+`config` - Project configuration files (e.g., Doxyfile).  
+
+`tools` - Utility tools and scripts (bash).  
+
+`external` - External libraries and resources.
+ * `lib`
+ * `milestoneX` - Milestone JSON configuration (for main driver test cases).  
+
+## TODO
  * B-tree unimplemented
 
-# HashMap Description
+## HashMap Description
 
-# Credit
+## Credit
 **Inspirations**
  * CPP STL
  * cppreference.com
