@@ -8,7 +8,7 @@ will be used to implement a ground-up database LRU cache with B-tree indexes.
 
 ## Building
 Build uses CMake.  
-**Linux**
+#### Linux
 ```bash
 mkdir build
 cd build
@@ -18,7 +18,7 @@ make all
 # to run test suite
 ./cache-manager
 ```
-**Visual Studio**  
+#### Visual Studio
 Install CMake plugin.
 
 ## Organization
@@ -51,8 +51,6 @@ Install CMake plugin.
 
 ## TODO
  * B-tree unimplemented
-
-## HashMap Description
 
 ## Credit
 **Inspirations**
