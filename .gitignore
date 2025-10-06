@@ -11,3 +11,5 @@ examples
 out
 include/bak
 include/wip
+run.sh
+perf.sh
