@@ -288,6 +288,7 @@ private:
 	DLLNode<T> *_head;
 	DLLNode<T> *_tail;
 	std::size_t _size;
+	std::mutex _mutex;
 };
 }
 #include "impl/doubly-linked-list-impl.hpp"

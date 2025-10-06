@@ -12,6 +12,7 @@
 #include <memory>
 #include <stdexcept>
 #include <cassert>
+#include <mutex>
 
 using namespace csc;
 
@@ -111,6 +112,7 @@ typename MapIterator<K, V, F>::pointer MapIterator<K, V, F>::operator->()
 template <typename K, typename V, typename F>
 MapIterator<K, V, F>& MapIterator<K, V, F>::operator++()
 {
+	// xxx just remove empty buckets criteria
 	if (_index > _buckets - 1) {
 		throw std::runtime_error("Attempt to increment iterator past end.");
 	}

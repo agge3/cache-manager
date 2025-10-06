@@ -19,6 +19,7 @@
 #include <memory>
 #include <iostream>
 #include <optional>
+#include <mutex>
 
 /**
 * @namespace csc
@@ -316,6 +317,7 @@ private:
 	ListPtr *_table;
 	std::size_t _size;
 	F _hash;
+	std::mutex _mutex;
 };
 } // End namespace csc
 #include "impl/hash-map-impl.hpp"
