@@ -459,7 +459,6 @@ std::optional<T> ConcurrentList<T>::get(const ListNode<T> *ptr)
 	return !ptr ? std::nullopt : std::optional<T>(ptr->ele);
 }
 
-}
 template <typename T>
 bool ConcurrentList<T>::remove(const T& element)
 {
