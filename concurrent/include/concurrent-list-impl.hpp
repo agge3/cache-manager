@@ -87,7 +87,7 @@ ConcurrentList<T>::ConcurrentList(const ConcurrentList<T>& other)
 	// Check if list to be copied has any nodes.
 	// copy with global read lock on other to snapshot
 	std::shared_lock<std::shared_mutex> other_g(other._mutex);
-	if (!other.empty()) {
+	if (!other.isEmpty()) {
 		copyCallingListEmpty(other);
 	}
 }
@@ -122,10 +122,10 @@ ConcurrentList<T>& ConcurrentList<T>::operator=(
 
 	// We've proceeded, the lists have different addresses and are distinct.
 	// We don't need to check if _size is the same; not random access!
-	if (rhs.empty()) {
+	if (rhs.isEmpty()) {
 		unsafeClear();
 	}
-	else if (empty()) {
+	else if (isEmpty()) {
 		copyCallingListEmpty(rhs);
 	}
 	else if (_size == rhs._size) {
@@ -293,7 +293,7 @@ ListIterator<T> ConcurrentList<T>::unsafeEnd() const
 }
 
 template <typename T>
-bool ConcurrentList<T>::empty() const
+bool ConcurrentList<T>::isEmpty() const
 {
 	std::shared_lock<std::shared_mutex> g(_mutex);
 	return _head == nullptr && _tail == nullptr && _size == 0;
@@ -313,7 +313,7 @@ std::size_t ConcurrentList<T>::size() const
 
 	while (cur) {
 		++size;
-		cur = cur->next;
+		cur = cur->_next;
 	}
 
 	return size;
@@ -358,8 +358,8 @@ const ListNode<T>* ConcurrentList<T>::pushFront(const T& element)
 		return _head;
 	}
 
-	ptr->next = _head;
-	_head->prev = ptr;
+	ptr->_next = _head;
+	_head->_prev = ptr;
 	_head = ptr;
 
 	// Increment size, node has been added.
@@ -379,17 +379,17 @@ std::optional<T> ConcurrentList<T>::popFront()
 	}
 	
 	if (_head == _tail) {
-		T ele = _head->ele;
+		T ele = _head->_ele;
 		delete _head;
 		_head = _tail = nullptr;
 		_size = 0;
 		return std::optional<T>(ele);
 	}
 
-	T ele = _head->ele;
+	T ele = _head->_ele;
 	auto tmp = _head;
-	_head = _head->next;
-	_head->prev = nullptr;
+	_head = _head->_next;
+	_head->_prev = nullptr;
 	delete tmp;
 	tmp = nullptr;
 	--_size;
@@ -410,8 +410,8 @@ const ListNode<T>* ConcurrentList<T>::pushBack(const T& element)
 		return _head;
 	}
 
-	_tail->next = ptr;
-	ptr->prev = _tail;
+	_tail->_next = ptr;
+	ptr->_prev = _tail;
 	_tail = ptr;
 
 	++_size;	// Increment _size, node has been added.
@@ -430,17 +430,17 @@ std::optional<T> ConcurrentList<T>::popBack()
 	}
 	
 	if (_head == _tail) {
-		T ele = _tail->ele;
+		T ele = _tail->_ele;
 		delete _tail;
 		_head = _tail = nullptr;
 		_size = 0;
 		return std::optional<T>(ele);
 	}
 
-	T ele = _tail->ele;
+	T ele = _tail->_ele;
 	auto tmp = _tail;
-	_tail = _tail->prev;
-	_tail->next = nullptr;
+	_tail = _tail->_prev;
+	_tail->_next = nullptr;
 	delete tmp;
 	tmp = nullptr;
 	--_size;
@@ -456,7 +456,7 @@ const ListNode<T>* ConcurrentList<T>::get(const T& element)
 template <typename T>
 std::optional<T> ConcurrentList<T>::get(const ListNode<T> *ptr)
 {
-	return !ptr ? std::nullopt : std::optional<T>(ptr->ele);
+	return !ptr ? std::nullopt : std::optional<T>(ptr->_ele);
 }
 
 template <typename T>
@@ -472,10 +472,10 @@ bool ConcurrentList<T>::remove(const T& element)
 		}
 
 		// Handle head and tail cases.
-		if (_head->ele == element) {
+		if (_head->_ele == element) {
 			popFront();
 			return true;
-		} else if (_tail->ele == element) {
+		} else if (_tail->_ele == element) {
 			// `else if` to lock control flow into `size > 1` for tail case.
 			popBack();
 			return true;
@@ -501,14 +501,16 @@ bool ConcurrentList<T>::remove(const T& element)
 
 template <typename T>
 bool ConcurrentList<T>::unlinkImpl(ListNode<T> *ptr) {
-	std::unique_lock lk{node->mtx, std::defer_lock};
-	std::unique_lock nlk{node->next->mtx, std::defer_lock};
-	std::unique_lock plk{node->prev->mtx, std::defer_lock};
+	std::unique_lock lk{ptr->_mtx, std::defer_lock};
+	std::unique_lock nlk{ptr->_next->_mtx, std::defer_lock};
+	std::unique_lock plk{ptr->_prev->_mtx, std::defer_lock};
 	std::lock(lk, nlk, plk);
 
-	node->next->prev = node->prev;
-	node->prev->next = node->next;
-	node->next = next->prev = nullptr;
+	ptr->_next->_prev = ptr->_prev;
+	ptr->_prev->_next = ptr->_next;
+	ptr->_next = ptr->_prev = nullptr;
+	
+	return true;
 }
 
 template <typename T>
@@ -530,15 +532,15 @@ bool ConcurrentList<T>::unlink(const ListNode<T> *ptr)
 		}
 
 		if (node == _head) {
-			_head->next->prev = nullptr;
-			_head = _head->next;
-			node->next = node->prev = nullptr;
+			_head->next->_prev = nullptr;
+			_head = _head->_next;
+			node->_next = node->_prev = nullptr;
 			return true;
 		} else if (node == _tail) {
 			// `else if` will trap us in a condition where `size() > 1`.
-			_tail->prev->next = null;
-			_tail = _tail->prev;
-			node->next = node->prev = nullptr;
+			_tail->_prev->_next = nullptr;
+			_tail = _tail->_prev;
+			node->_next = node->_prev = nullptr;
 			return true;
 		}
 	}
@@ -557,24 +559,24 @@ const ListNode<T>* ConcurrentList<T>::search(const T& element) const
 	if (!_head) {
 		return nullptr;
 	}
-	if (!_head->next) {
+	if (!_head->_next) {
 		return _head;
 	}
-	const ListNode<T> *curr = _head->next;
+	const ListNode<T> *curr = _head->_next;
 	g.unlock();
 
-	std::shared_lock lk{curr->mtx};
+	std::shared_lock lk{curr->_mtx};
 	while (curr) {
-		if (curr->ele == element) {
+		if (curr->_ele == element) {
 			return curr;
 		}
 
-		const ListNode<T> *next = curr->next;
+		const ListNode<T> *next = curr->_next;
 		if (!next) {
 			return nullptr;
 		}
 
-		std::shared_lock nlk{next->mtx};
+		std::shared_lock nlk{next->_mtx};
 		lk.unlock();
 		curr = next;
 		lk = std::move(nlk);
@@ -601,26 +603,26 @@ bool ConcurrentList<T>::contains(const ListNode<T> *ptr) const
 	if (!_head) {
 		return nullptr;
 	}
-	if (!_head->next) {
+	if (!_head->_next) {
 		return _head;
 	}
-	const ListNode<T> *curr = _head->next;
+	const ListNode<T> *curr = _head->_next;
 	g.unlock();
 
 	// Iterate looking for matching address of parameter pointer against
 	// a ConcurrentList pointer.
-	std::shared_lock lk{curr->mtx};
+	std::shared_lock lk{curr->_mtx};
 	while (curr) {
 		if (curr == ptr) {
 			return curr;
 		}
 
-		const ListNode<T> *next = curr->next;
+		const ListNode<T> *next = curr->_next;
 		if (!next) {
 			return nullptr;
 		}
 
-		std::shared_lock nlk{next->mtx};
+		std::shared_lock nlk{next->_mtx};
 		lk.unlock();
 		curr = next;
 		lk = std::move(nlk);
@@ -630,20 +632,38 @@ bool ConcurrentList<T>::contains(const ListNode<T> *ptr) const
 }
 
 template <typename T>
+bool ConcurrentList<T>::isConsistent() const {
+    std::shared_lock<std::shared_mutex> g(_mutex);
+
+    auto node = _head;
+    ListNode<T>* prev = nullptr;
+    size_t count = 0;
+
+    while (node) {
+        if (node->_prev != prev) return false;
+        prev = node;
+        node = node->_next;
+        ++count;
+    }
+
+    return count == _size;  // assuming _size is atomically maintained
+}
+
+template <typename T>
 void ConcurrentList<T>::clear()
 {
 	std::shared_lock g{_mutex};
 	if (_head) {
 		ListNode<T>* curr = _head;
-		curr = curr->next;
 		delete _head;
 		_head = nullptr;
+		curr = curr->_next;
 		g.unlock();
-		std::unique_lock lk{curr->mtx};
-		ListNode<T>* currNext = curr->next;
+		std::unique_lock lk{curr->_mtx};
+		ListNode<T>* currNext = curr->_next;
 		while (currNext) {
-			currNext = curr->next();
-			std::unique_lock nlk{currNext->mtx};
+			currNext = curr->_next;
+			std::unique_lock nlk{currNext->_mtx};
 			delete curr;
 			curr = currNext;
 			lk = std::move(nlk);
@@ -656,3 +676,18 @@ void ConcurrentList<T>::clear()
 		_head = _tail = curr = currNext = nullptr;
 	}
 }
+
+template <typename T>
+void ConcurrentList<T>::unsafeClear()
+{
+    ListNode<T>* curr = _head;
+    while (curr) {
+        ListNode<T>* next = curr->_next;
+        delete curr;
+        curr = next;
+    }
+    _head = nullptr;
+    _tail = nullptr;
+    _size = 0;
+}
+

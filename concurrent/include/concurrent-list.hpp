@@ -31,7 +31,7 @@ struct ListNode {
 	T _ele;
 	ListNode *_next;
 	ListNode *_prev;
-	std::shared_mutex _mtx;
+	mutable std::shared_mutex _mtx;
 
 	ListNode(const T& ele) :
 		_ele(ele), _next(nullptr), _prev(nullptr) {}
@@ -92,11 +92,6 @@ public:
 	 * Default constructor.
 	 */
 	ConcurrentList() : _head(nullptr), _tail(nullptr), _size(0) {}
-
-	/**
-	 * Destructor.
-	 */
-	~ConcurrentList() { unsafeClear(); }
 
 	/**
 	 * Copy constructor.
@@ -273,16 +268,31 @@ public:
 	*
 	* @return TRUE if empty; FALSE if not empty.
 	*/
-	bool empty() const;
+	bool isEmpty() const;
 
 	void link(ListNode<T> *node);
 
-	void unlink(ListNode<T> *node);
+	bool unlink(const ListNode<T> *node);
+	
+	bool unlinkImpl(ListNode<T> *node);
+	
+	/**
+	 * For testing purposes only.
+	 * Validates lists after threaded manipulation.
+	 */
+	bool isConsistent() const;
+	
+	void clear();
 
 	/**
 	* Clears all ConcurrentList's ListNodes and deallocates their memory.
 	*/
 	void unsafeClear();
+	
+	/**
+	 * Destructor.
+	 */
+	~ConcurrentList() { unsafeClear(); }
 private:
 	/**
 	 * Copy constructor helper for empty calling ConcurrentList.
@@ -312,7 +322,9 @@ private:
 	ListNode<T> *_head;
 	ListNode<T> *_tail;
 	std::size_t _size;
-	std::shared_mutex _mutex;
+	// XXX Two options: mutable mutex since it is used in const functions,
+	// Or discard the const on the methods.
+	mutable std::shared_mutex _mutex;
 };
 }
 #include "concurrent-list-impl.hpp"

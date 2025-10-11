@@ -37,7 +37,7 @@ FetchContent_MakeAvailable(json)
 add_executable(cache-manager)
 
 # Debug build compiler flags.
-set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")
+set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -fsanitize=address")
 
 # Release build compiler flags.
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "")
@@ -61,11 +61,6 @@ target_link_libraries(cache-manager PRIVATE
 
 include(GoogleTest)
 gtest_discover_tests(cache-manager)
-
-# Copy necessary directories into build directory, for executable root access.
-add_custom_command(TARGET cache-manager PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/external/milestone4/ $<TARGET_FILE_DIR:cache-manager>)
 
 # Build documentation with Doxygen.
 # Only build documentation for release build.

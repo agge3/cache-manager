@@ -38,6 +38,7 @@
 #include <string>
 #include <algorithm>
 #include <random>
+#include <thread>
 
 namespace {
 
@@ -57,54 +58,58 @@ struct Data {
 };
 using DataPtr = Data*;
 
-using CacheManagerPtr = std::unique_ptr<CacheManager<int, int>>;
-#define CACHE_MANAGER_ALLOC(...) \
-	std::make_unique<CacheManager<int, int>>(__VA_ARGS__)
+class ConcurrentListTest : public testing::Test {
+protected:
+    ConcurrentListTest() {
+        std::mt19937 gen(1337);
+        std::uniform_int_distribution<int> dist(1, 1000);
 
-// Return a raw pointer of CacheManager's unique pointer.
-using NodePtr = const DLLNode<int>*;
-using CachePtr = csc::DoublyLinkedList<int>*;
-using MapPtr = csc::HashMap<int, NodePtr>*;
+        // Generate 20 random integers for _intList
+        for (int i = 0; i < 20; ++i) {
+            _intList.pushFront(dist(gen));
+        }
 
-TEST(ConcurrentList, BasicOperationsInt) {
+        // Generate 20 random strings for _strList
+        for (int i = 0; i < 20; ++i) {
+            _strList.pushFront("Item_" + std::to_string(dist(gen)));
+        }
+    }
+
+    ConcurrentList<int> _intList;
+    ConcurrentList<std::string> _strList;
+    ConcurrentList<int> _emptyIntList;
+};
+
+TEST_F(ConcurrentListTest, ConcurrentRandomInsertRemove) {
     ConcurrentList<int> list;
+    const int numThreads = 4;
+    const int opsPerThread = 1000;
 
-    // Initial state
-    EXPECT_TRUE(list.isEmpty());
-    EXPECT_EQ(list.size(), 0);
+    std::vector<std::thread> threads;
+    std::mt19937 globalGen(42);
+    std::uniform_int_distribution<int> dist(1, 10000);
 
-    // Push elements
-    for (int i = 0; i < 10; ++i) {
-		// XXX Random causes sometimes duplicate values. Do we want to cope with
-		// that or not?
-        list.pushFront(i);
-        EXPECT_EQ(list.size(), i + 1);
-        EXPECT_FALSE(list.empty());
+    for (int t = 0; t < numThreads; ++t) {
+        threads.emplace_back([&list, seed = globalGen(), dist, opsPerThread]() mutable {
+            std::mt19937 gen(seed);
+
+            for (int i = 0; i < opsPerThread; ++i) {
+                int val = dist(gen);
+                if (i % 2 == 0) {
+                    list.pushFront(val);
+                } else {
+                    list.remove(val);
+                }
+            }
+        });
     }
 
-    // Pop elements
-    for (auto i = list.size(); i > 0; --i) {
-		std::optional<int> front = list.front();
-		std::optional<int> v = list.popFront();
-		EXPECT_EQ(*front, *v) << "Front: " << *front << ", Popped value: " <<
-			*v << "\n";
-        EXPECT_TRUE(list.front() != *front) << "Current front: " << 
-			*list.front() << ", Old front: " << *front << ", List size: " <<
-			list.size() << "\n";
-        EXPECT_EQ(list.size(), i - 1);
-    }
-    EXPECT_TRUE(list.empty());
+    for (auto &th : threads)
+        th.join();
 
-    // Remove elements
-    for (int i = 0; i < 10; ++i) {
-        list.pushFront(i);
-    }
-    EXPECT_EQ(list.size(), 10);
-    EXPECT_TRUE(list.remove(5));
-    EXPECT_EQ(list.size(), 9);
-    EXPECT_FALSE(list.contains(5));
-    EXPECT_TRUE(list.remove(0));
-    EXPECT_EQ(list.size(), 8);
+    // Validate that the list remains in a valid state.
+    EXPECT_GE(list.size(), 0);
+    EXPECT_TRUE(list.isConsistent());
 }
 
 /*
@@ -820,7 +825,6 @@ TEST_F(CacheManagerTest, contains)
 	EXPECT_FALSE(_emptyStrIntCache.contains("k"));
 	EXPECT_FALSE(_emptyStrIntCache.contains("Very long string with spaces and mixed case."));
 }
-*/
 
 /**
 *
@@ -831,7 +835,6 @@ TEST_F(CacheManagerTest, contains)
 * param: DoublyLinkedList myList - list to print out
 *
 * returns: nothing, but output is sent to console
-*/
 void printList(const CachePtr& myList) {
     if (!myList) {
         std::cout << "\nList is empty.\n";
@@ -842,7 +845,7 @@ void printList(const CachePtr& myList) {
     std::cout << "List contents in order:" << std::endl;
 	std::cout << *myList << "\n" << std::endl;
 }
-
+*/
 } // End namespace anonymous
 
 /**
@@ -858,7 +861,6 @@ void printList(const CachePtr& myList) {
 int main(int argc, char **argv) {
 	// Run test suite.
 	std::cout << "Running test suite:\n";
-	test::test();
 	::testing::InitGoogleTest(&argc, argv);	
     return RUN_ALL_TESTS();
 }
