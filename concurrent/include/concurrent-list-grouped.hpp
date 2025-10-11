@@ -1,7 +1,7 @@
 /*
- * @file groupedfinegrained-list.hpp
+ * @file concurrent-list-grouped.hpp
  *
- * @author agge3
+ * @author agge3, kpowkitty
  * @version 1.0
  * @since 2024-09-21
  *

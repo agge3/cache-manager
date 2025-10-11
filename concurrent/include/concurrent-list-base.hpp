@@ -1,7 +1,7 @@
 /*
- * @file concurrent-list.hpp
+ * @file concurrent-list-base.hpp
  *
- * @author agge3
+ * @author agge3, kpowkitty
  * @version 2.0
  * @since 2024-09-21
  *
