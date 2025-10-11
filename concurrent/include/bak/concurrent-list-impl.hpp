@@ -652,29 +652,18 @@ bool ConcurrentList<T>::isConsistent() const {
 template <typename T>
 void ConcurrentList<T>::clear()
 {
-	std::shared_lock g{_mutex};
-	if (_head) {
-		ListNode<T>* curr = _head;
-		delete _head;
-		_head = nullptr;
-		curr = curr->_next;
-		g.unlock();
-		std::unique_lock lk{curr->_mtx};
-		ListNode<T>* currNext = curr->_next;
-		while (currNext) {
-			currNext = curr->_next;
-			std::unique_lock nlk{currNext->_mtx};
-			delete curr;
-			curr = currNext;
-			lk = std::move(nlk);
-		}
-		if (curr) {
-			delete curr;
-		}
-		g.lock();
-		_size = 0;
-		_head = _tail = curr = currNext = nullptr;
+	// Need exclusive control over list when modifying
+	std::unique_lock<std::shared_mutex> g{_mutex};
+
+	ListNode<T>* curr = _head;
+	while (curr) {
+		ListNode<T> *next = curr->_next;
+		delete curr;
+		curr = next;
 	}
+
+	_head = _tail = nullptr;
+	_size = 0;
 }
 
 template <typename T>
