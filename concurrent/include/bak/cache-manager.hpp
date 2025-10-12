@@ -1,10 +1,7 @@
 #pragma once
 
 #include "concurrent-list.hpp"
-
-#include "tbb/concurrent_unbounded_queue.h"
-#include "tbb/concurrent_unordered_map.h"
-#include "tbb/concurrent_multiset.h"
+#include "concurrent-map.hpp"
 
 #include <memory>
 #include <optional>
@@ -14,40 +11,40 @@
 
 namespace cm {
 
-using NodePtr = const DLLNode<V>*;
-using CachePtr = 
 
 static constexpr less(const Node& lhs, const Node& rhs) noexcept {
 	return lhs.value < rhs.value;
 }
 
 template <typename K, typename V, typename Cmp = less>
-class CacheManager {
+class ICacheManager {
+private:
+	using NodePtr = const DLLNode<V>*;
+	
 	size_t _capacity;
 	size_t _size;
 
 	std::mutex _mutex;
 
-	cm::concurrent_list<V> _cache;
-	tbb::concurrent_unordered_map<K, NodePtr> _map;
-	tbb::concurrent_multiset<NodePtr,
-		std::function<bool(const NodePtr&, const NodePtr&)>> _sorted;
-
+	IConcurrentList<V> _cache;
+	IConcurrentHashMap<K, NodePtr> _map;
+	IConcurrentBst<K, Cmp> _sorted;
 public:
 	explicit CacheManager(size_t capacity, Cmp cmp = Cmp()) :
 		_capacity(capacity),
 		_sorted(cmp)
-	{}
+	{
+	}
 
 	std::optional<V> getItem(const K& key) {
-		auto it = map.find(key);
-		if (it == map.end()) {
+		auto it = _map.find(key);
+		if (it == _map.end()) {
 			return std::nullopt;
 		}
 
 		NodePtr node = it->second;
 
-		queue.push(node);
+		_cache.removeAndPushFront(node);
 
 		return node->value;
 	}
@@ -55,16 +52,16 @@ public:
 	bool add(const K& key, const V& value) {
 		NodePtr node;
 
-		auto it = map.find(key);
-		if (it != map.end()) {
+		auto it = _map.find(key);
+		if (it != _map.end()) {
 			// update
 			node = it->second;
-			{
-				// atomic synchronization of containers
-				std::lock_guard<std::mutex> lk(_mutex);
-				node->value = value;
-				queue.push(node);
-			}
+
+			// atomic synchronization of containers
+			std::lock_guard<std::mutex> lk(_mutex);
+			node->value = value;
+			_cache.removeAndPushFront(node);
+
 			return true;
 		}
 
@@ -72,13 +69,12 @@ public:
 		{
 			// atomic synchronization of containers
 			std::lock_guard<std::mutex> lk(_mutex);
-			map.insert({key, node});
-			sorted.insert(node);
-			queue.push(node);
-			++_size;
+			_map.insert({key, node});
+			_sorted.insert(node);
+			_cache.pushFront(node);
 		}
 
-		if (_size >= _capacity) {
+		if (_cache.unsafeSize() >= _capacity) {
 			evict();
 		}
 
@@ -86,14 +82,12 @@ public:
 	}
 
 	size_t getNumberOfItems() const {
-		return _size;
+		return _cache.unsafeSize();
 	}
 
 	bool remove(const K&key) {
 		auto it = _map.find(key);
 		if (it != _map.end()) {
-			assert(!_cache.try_pop(node));
-			assert(!_sorted.contains(node));
 			return false;
 		}
 
@@ -120,4 +114,14 @@ public:
 private:
 	void evict() {
 	}
-}:
+};
+
+template <typename K, typename V, typename Cmp = less>
+class CoarseCacheManager {
+private:
+};
+
+template <typename K, typename V, typename Cmp = less>
+class FineCacheManager {
+private:
+};
