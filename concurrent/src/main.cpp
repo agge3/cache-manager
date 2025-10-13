@@ -16,8 +16,8 @@
 namespace cm {
 
 int main(int argc, char **argv) {
-	IConcurrentList<int> *coarse = new CoarseConcurrentList<int>;
-	IConcurrentList<int> *fine = new FineConcurrentList<int>;
+	auto *coarse = new CoarseConcurrentList<int>;
+	auto *fine = new FineConcurrentList<int>;
 	auto m = tbb::concurrent_unordered_map<int, int>{};
 
 	return 0;

@@ -7,7 +7,7 @@ project(cache-manager
     LANGUAGES CXX)
 
 # Use CXX 17+.
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Version numbers:
@@ -67,7 +67,8 @@ FetchContent_MakeAvailable(tbb)
 add_executable(cache-manager)
 
 # Debug build compiler flags.
-set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -fsanitize=address")
+set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -fsanitize=address
+-fno-diagnostics-color")
 
 # Release build compiler flags.
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "")

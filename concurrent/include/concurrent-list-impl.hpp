@@ -8,8 +8,10 @@
  * IConcurrentList interface implementation.
  */
 
-template <typename T>
-typename ListIterator<T>::const_reference ListIterator<T>::operator*()
+using namespace cm;
+
+template <typename T, typename DerivedNode>
+typename ListIterator<T, DerivedNode>::const_reference ListIterator<T, DerivedNode>::operator*()
 {
 	if (!_node) {
 		throw std::runtime_error("Attempt to dereference a null iterator.");
@@ -17,8 +19,8 @@ typename ListIterator<T>::const_reference ListIterator<T>::operator*()
 	return _node->ele;
 }
 
-template <typename T>
-typename ListIterator<T>::pointer ListIterator<T>::operator->()
+template <typename T, typename DerivedNode>
+typename ListIterator<T, DerivedNode>::pointer ListIterator<T, DerivedNode>::operator->()
 {
 	if (!_node) {
 		throw std::runtime_error("Attempt to dereference a null iterator.");
@@ -26,8 +28,8 @@ typename ListIterator<T>::pointer ListIterator<T>::operator->()
 	return &(_node->ele);
 }
 
-template <typename T>
-ListIterator<T>& ListIterator<T>::operator++()
+template <typename T, typename DerivedNode>
+ListIterator<T, DerivedNode>& ListIterator<T, DerivedNode>::operator++()
 {
 	if (_node) {
 		_node = _node->next;
@@ -35,16 +37,16 @@ ListIterator<T>& ListIterator<T>::operator++()
 	return *this;
 }
 
-template <typename T>
-ListIterator<T> ListIterator<T>::operator++(int)
+template <typename T, typename DerivedNode>
+ListIterator<T, DerivedNode> ListIterator<T, DerivedNode>::operator++(int)
 {
 	ListIterator tmp = *this;
 	++(*this);
 	return tmp;
 }
 
-template <typename T>
-ListIterator<T>& ListIterator<T>::operator--()
+template <typename T, typename DerivedNode>
+ListIterator<T, DerivedNode>& ListIterator<T, DerivedNode>::operator--()
 {
 	if (_node) {
 		_node = _node->prev;
@@ -52,28 +54,28 @@ ListIterator<T>& ListIterator<T>::operator--()
 	return *this;
 }
 
-template <typename T>
-ListIterator<T> ListIterator<T>::operator--(int)
+template <typename T, typename DerivedNode>
+ListIterator<T, DerivedNode> ListIterator<T, DerivedNode>::operator--(int)
 {
 	ListIterator tmp = *this;
 	--(*this);
 	return tmp;
 }
 
-template <typename T>
-bool ListIterator<T>::operator==(const ListIterator& other) const
+template <typename T, typename DerivedNode>
+bool ListIterator<T, DerivedNode>::operator==(const ListIterator& other) const
 {
 	return _node == other._node;
 }
 
-template <typename T>
-bool ListIterator<T>::operator!=(const ListIterator& other) const
+template <typename T, typename DerivedNode>
+bool ListIterator<T, DerivedNode>::operator!=(const ListIterator& other) const
 {
 	return _node != other._node;
 }
 
-template <typename T>
-IConcurrentList<T>::IConcurrentList(const IConcurrentList<T>& other)
+template <typename T, typename DerivedNode>
+IConcurrentList<T, DerivedNode>::IConcurrentList(const IConcurrentList<T, DerivedNode>& other)
 {
 	// Check if list to be copied has any nodes.
 	// copy with global read lock on other to snapshot
@@ -83,8 +85,8 @@ IConcurrentList<T>::IConcurrentList(const IConcurrentList<T>& other)
 	}
 }
 
-template <typename T>
-IConcurrentList<T>::IConcurrentList(IConcurrentList<T>&& other) noexcept
+template <typename T, typename DerivedNode>
+IConcurrentList<T, DerivedNode>::IConcurrentList(IConcurrentList<T, DerivedNode>&& other) noexcept
 {
 	// Two steps:
 	// 	1. Steal the r-value rist's resources.
@@ -95,9 +97,9 @@ IConcurrentList<T>::IConcurrentList(IConcurrentList<T>&& other) noexcept
 	*this = std::move(other);
 }
 
-template <typename T>
-IConcurrentList<T>& IConcurrentList<T>::operator=(
-	const IConcurrentList<T>& rhs)
+template <typename T, typename DerivedNode>
+IConcurrentList<T, DerivedNode>& IConcurrentList<T, DerivedNode>::operator=(
+	const IConcurrentList<T, DerivedNode>& rhs)
 {
 	// Check if both lists have the same address; then they're the same.
 	if (&rhs == this) {
@@ -108,7 +110,7 @@ IConcurrentList<T>& IConcurrentList<T>::operator=(
 
 	// acquire both global locks in fixed order to avoid deadlock:
 	// xxx can we acquire other read and self write?
-	std::scoped_lock lock g(_mutex, rhs._mutex);
+	std::scoped_lock g(_mutex, rhs._mutex);
 
 	// We've proceeded, the lists have different addresses and are distinct.
 	// We don't need to check if _size is the same; not random access!
@@ -132,9 +134,9 @@ IConcurrentList<T>& IConcurrentList<T>::operator=(
 	return *this;
 }
 
-template <typename T>
-IConcurrentList<T>& IConcurrentList<T>::operator=(
-	IConcurrentList<T>&& rhs) noexcept
+template <typename T, typename DerivedNode>
+IConcurrentList<T, DerivedNode>& IConcurrentList<T, DerivedNode>::operator=(
+	IConcurrentList<T, DerivedNode>&& rhs) noexcept
 {
 	// Check for self-assignment.
 	if (this != &rhs) {
@@ -158,9 +160,9 @@ IConcurrentList<T>& IConcurrentList<T>::operator=(
 	return *this;
 }
 
-template <typename T>
+template <typename T, typename DerivedNode>
 std::ostream& cm::operator<<(std::ostream& out,
-	const IConcurrentList<T>& list)
+	const IConcurrentList<T, DerivedNode>& list)
 {
 	out << "[ ";
 	bool first = true;
@@ -179,21 +181,21 @@ std::ostream& cm::operator<<(std::ostream& out,
 	return out;
 }
 
-template <typename T>
-void IConcurrentList<T>::copyCallingListEmpty(
-	const IConcurrentList<T>& other) {
+template <typename T, typename DerivedNode>
+void IConcurrentList<T, DerivedNode>::copyCallingListEmpty(
+	const IConcurrentList<T, DerivedNode>& other) {
 	// It's assumed calling object is empty, so we don't need to check.
 	// Assign caller _size as other _size.
 	_size = other._size;
 	// Create _head for caller.
-	_head = new ListNode<T>(other._head->ele);
+	_head = new ListNodeT(other._head->ele);
 	// curr at _head, otherCurr at other _head
-	ListNode<T> *curr = _head;
-	ListNode<T> *otherCurr = other._head;
+	ListNodeT *curr = _head;
+	ListNodeT *otherCurr = other._head;
 	// Loop through all other list nodes and create for caller list.
 	for (int i = 1; i < _size; ++i) {
 		otherCurr = otherCurr->next;
-		curr->next = new ListNode<T>(otherCurr->ele, nullptr, curr);
+		curr->next = new ListNodeT(otherCurr->ele, nullptr, curr);
 		curr = curr->next;
 	}
 	_tail = curr;
@@ -201,12 +203,12 @@ void IConcurrentList<T>::copyCallingListEmpty(
 	curr = otherCurr = nullptr;
 }
 
-template <typename T>
-void IConcurrentList<T>::copyListsSameLength(
-	const IConcurrentList<T>& other)
+template <typename T, typename DerivedNode>
+void IConcurrentList<T, DerivedNode>::copyListsSameLength(
+	const IConcurrentList<T, DerivedNode>& other)
 {
-	ListNode<T> *curr = _head;
-	ListNode<T> *otherCurr = other._head;
+	ListNodeT *curr = _head;
+	ListNodeT *otherCurr = other._head;
 	while (curr != nullptr) {
 		curr->ele = otherCurr->ele;
 		curr = curr->next;
@@ -216,13 +218,13 @@ void IConcurrentList<T>::copyListsSameLength(
 	curr = otherCurr = nullptr;
 }
 
-template <typename T>
-void IConcurrentList<T>::copyCallingListLonger(
-	const IConcurrentList<T>& other)
+template <typename T, typename DerivedNode>
+void IConcurrentList<T, DerivedNode>::copyCallingListLonger(
+	const IConcurrentList<T, DerivedNode>& other)
 {
 	// Create curr for caller and other _head.
-	ListNode<T>* curr = _head;
-	ListNode<T>* otherCurr = other._head;
+	ListNodeT* curr = _head;
+	ListNodeT* otherCurr = other._head;
 	// Iterate through, stopping at _tail node of other.
 	while (otherCurr != nullptr) {
 		curr->ele = otherCurr->ele;
@@ -245,12 +247,12 @@ void IConcurrentList<T>::copyCallingListLonger(
 	curr = otherCurr = nullptr;
 }
 
-template <typename T>
-void IConcurrentList<T>::copyCallingListShorter(
-	const IConcurrentList<T>& other)
+template <typename T, typename DerivedNode>
+void IConcurrentList<T, DerivedNode>::copyCallingListShorter(
+	const IConcurrentList<T, DerivedNode>& other)
 {
-	ListNode<T>* curr = _head;
-	ListNode<T>* otherCurr = other._head;
+	ListNodeT* curr = _head;
+	ListNodeT* otherCurr = other._head;
 	while (curr != nullptr) {
 		curr->ele = otherCurr->ele;
 		curr = curr->next;
@@ -260,7 +262,7 @@ void IConcurrentList<T>::copyCallingListShorter(
 	curr = _tail;
 	// Second loop to create new nodes for remaining nodes of caller.
 	while (otherCurr != nullptr) {
-		curr->next = new ListNode<T>(otherCurr->ele, nullptr, curr);
+		curr->next = new ListNodeT(otherCurr->ele, nullptr, curr);
 		curr = curr->next;
 		otherCurr = otherCurr->next;
 	}
@@ -272,51 +274,51 @@ void IConcurrentList<T>::copyCallingListShorter(
 	curr = otherCurr = nullptr;
 }
 
-template <typename T>
-bool IConcurrentList<T>::isEmpty() const
+template <typename T, typename DerivedNode>
+bool IConcurrentList<T, DerivedNode>::isEmpty() const
 {
 	std::shared_lock<std::shared_mutex> g(_mutex);
 	return _head == nullptr && _tail == nullptr && _size == 0;
 }
 
-template <typename T>
-std::optional<T> IConcurrentList<T>::front() const
+template <typename T, typename DerivedNode>
+std::optional<T> IConcurrentList<T, DerivedNode>::front() const
 {
 	std::shared_lock<std::shared_mutex> g(_mutex);
 	return !_head ? std::nullopt : std::optional<T>(_head->ele);
 }
 
-template <typename T>
-std::optional<T> IConcurrentList<T>::back() const
+template <typename T, typename DerivedNode>
+std::optional<T> IConcurrentList<T, DerivedNode>::back() const
 {
 	std::shared_lock<std::shared_mutex> g(_mutex);
 	return !_tail ? std::nullopt : std::optional<T>(_tail->ele);
 }
 
-template <typename T>
-std::size_t IConcurrentList<T>::unsafeSize() const
+template <typename T, typename DerivedNode>
+std::size_t IConcurrentList<T, DerivedNode>::unsafeSize() const
 {
 	return _size;
 }
 
-template <typename T>
-ListIterator<T> IConcurrentList<T>::unsafeBegin() const
+template <typename T, typename DerivedNode>
+ListIterator<T, DerivedNode> IConcurrentList<T, DerivedNode>::unsafeBegin() const
 {
-	return ListIterator<T>(_head);
+	return ListIterator<T, DerivedNode>(_head);
 }
 
-template <typename T>
-ListIterator<T> IConcurrentList<T>::unsafeEnd() const
+template <typename T, typename DerivedNode>
+ListIterator<T, DerivedNode> IConcurrentList<T, DerivedNode>::unsafeEnd() const
 {
-	return ListIterator<T>(nullptr);
+	return ListIterator<T, DerivedNode>(nullptr);
 }
 
-template <typename T>
-void IConcurrentList<T>::unsafeClear()
+template <typename T, typename DerivedNode>
+void IConcurrentList<T, DerivedNode>::unsafeClear()
 {
-    ListNode<T>* curr = _head;
+    ListNodeT* curr = _head;
     while (curr) {
-        ListNode<T>* next = curr->next;
+        ListNodeT* next = curr->next;
         delete curr;
         curr = next;
     }
