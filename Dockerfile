@@ -5,7 +5,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=America/Los_Angles
 
 
-RUN apt-get update && apt-get install -y linux-tools-common linux-tools-generic gcc git wget vim
+RUN apt-get update && apt-get install -y \
+	linux-tools-common linux-tools-generic git wget vim	cmake build-essential \
+	software-properties-common
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
