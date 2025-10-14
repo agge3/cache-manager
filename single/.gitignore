@@ -1,0 +1,15 @@
+build
+doc/html
+doc/latex
+NOTES
+notes.txt
+grade-checker/.venv
+src/wip
+src/bak
+src/btree
+examples
+out
+include/bak
+include/wip
+run.sh
+perf.sh
