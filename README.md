@@ -23,31 +23,44 @@ Install CMake plugin.
 
 ## Organization
 `include`
- * `singly-linked-list.hpp` - SinglyLinkedList share header.
- * `doubly-linked-list.hpp` - DoublyLinkedList share header.
- * `hash-map.hpp` - HashMap share header.
- * `cache-manager.hpp` - CacheManager share header.
- * `test` - Hand-rolled test suite (not GTest).
- * `impl` - Template implementations.
-   * `singly-linked-list-impl.hpp` - SinglyLinkedList template implementation.
-   * `doubly-linked-list-impl.hpp` - DoublyLinkedList template implementation.
-   * `hash-map.hpp-impl` - HashMap template implementation.
-   * `cache-manager-impl.hpp` - CacheManager template implementation.
+ * `cache-manager.hpp` - CacheManager template header and implementation.
+ * `concurrent-list.hpp` - ConcurrentList interface and specializations.
+ * `concurrent-list-impl.hpp` - ConcurrentList interface concrete
+                                implementation.
+ * `coarse-concurrent-list-impl.hpp` - CoarseConcurrentList implementation.
+ * `fine-concurrent-list-impl.hpp` - FineConcurrentList implementation (WARNING:
+                                     has races).
 
 `src`
- * `main.cpp` - Main driver with GTest test cases, to run CacheManager and
+ * `main.cpp` - Main driver and test runner.
+
+`single` - Single-threaded CacheManager.
+ * `include`
+   * `singly-linked-list.hpp` - SinglyLinkedList share header.
+   * `doubly-linked-list.hpp` - DoublyLinkedList share header.
+   * `hash-map.hpp` - HashMap share header.
+   * `cache-manager.hpp` - CacheManager share header.
+   * `test` - Hand-rolled test suite (not GTest).
+   * `impl` - Template implementations.
+     * `singly-linked-list-impl.hpp` - SinglyLinkedList template implementation.
+     * `doubly-linked-list-impl.hpp` - DoublyLinkedList template implementation.
+     * `hash-map.hpp-impl` - HashMap template implementation.
+     * `cache-manager-impl.hpp` - CacheManager template implementation.
+
+ * `src`
+   * `main.cpp` - Main driver with GTest test cases, to run CacheManager and
                 all test suites.
- * `test.cpp` - Hand-rolled test suite (not GTest) implementation.
+   * `test.cpp` - Hand-rolled test suite (not GTest) implementation.
 
-`doc` - Class and sequence diagrams, and Doxygen build target.  
+ * `doc` - Class and sequence diagrams, and Doxygen build target.  
 
-`config` - Project configuration files (e.g., Doxyfile).  
+ * `config` - Project configuration files (e.g., Doxyfile).  
 
-`tools` - Utility tools and scripts (bash).  
+ * `tools` - Utility tools and scripts (bash).  
 
-`external` - External libraries and resources.
- * `lib`
- * `milestoneX` - Milestone JSON configuration (for main driver test cases).  
+ * `external` - External libraries and resources.
+   * `lib`
+   * `milestoneX` - Milestone JSON configuration (for main driver test cases).  
 
 ## TODO
  * B-tree unimplemented
