@@ -14,3 +14,9 @@ RUN ln -fs /usr/lib/linux-tools/*/perf /usr/bin/perf
 RUN ln -fs /usr/lib/linux-tools/*/bpftool /usr/bin/bpftool
 
 RUN ln -fs /usr/lib/linux-tools/*/rtla /usr/bin/rtla
+
+WORKDIR /cm
+
+COPY . /cm
+
+ENTRYPOINT ["/cm/run.sh"]

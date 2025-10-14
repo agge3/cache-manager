@@ -2,3 +2,15 @@ build
 NOTES
 notes.txt
 out
+doc/html
+doc/latex
+grade-checker/.venv
+src/wip
+src/bak
+src/btree
+examples
+include/bak
+include/wip
+run.sh
+perf.sh
+.DS_Store
