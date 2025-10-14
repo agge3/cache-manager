@@ -289,8 +289,7 @@ std::optional<T> IConcurrentList<T, DerivedNode>::front() const
 }
 
 template <typename T, typename DerivedNode>
-std::optional<T> IConcurrentList<T, DerivedNode>::back() const
-{
+std::optional<T> IConcurrentList<T, DerivedNode>::back() const {
 	std::shared_lock<std::shared_mutex> g(_mutex);
 	return !_tail ? std::nullopt : std::optional<T>(_tail->ele);
 }

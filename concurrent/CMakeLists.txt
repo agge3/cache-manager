@@ -1,5 +1,5 @@
 # Tested CMake versions:
-cmake_minimum_required(VERSION 3.14...3.27)
+cmake_minimum_required(VERSION 3.14...3.28)
 
 # Project name, description, language, etc.
 project(cache-manager
@@ -67,8 +67,8 @@ FetchContent_MakeAvailable(tbb)
 add_executable(cache-manager)
 
 # Debug build compiler flags.
-set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall -fsanitize=address
--fno-diagnostics-color")
+set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Wall -fsanitize=address -fno-diagnostics-color")
+set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Wall -fsanitize=thread -O1 -fno-diagnostics-color")
 
 # Release build compiler flags.
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "")

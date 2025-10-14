@@ -69,7 +69,7 @@ using namespace cm;
 template <typename T>
 std::size_t FineConcurrentList<T>::size() const
 {
-	std::shared_lock<std::shared_mutex> g(this->_mutex);
+	std::shared_lock<std::shared_mutex> rg(this->_mutex);
 
 	size_t size = 0;
 
@@ -93,7 +93,7 @@ const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::pushFron
 	// critical section
 	auto *ptr = new typename FineConcurrentList<T>::ListNodeT(element);
 
-	std::unique_lock<std::shared_mutex> g(this->_mutex);
+	std::unique_lock<std::shared_mutex> wg(this->_mutex);
 
 	if (!this->_head) {
 		this->_head = this->_tail = ptr;
@@ -119,7 +119,7 @@ const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::pushFron
 template <typename T>
 std::optional<T> FineConcurrentList<T>::popFront()
 {
-	std::unique_lock<std::shared_mutex> g(this->_mutex);
+	std::unique_lock<std::shared_mutex> wg(this->_mutex);
 	return POP_FRONT;
 }
 
@@ -130,7 +130,7 @@ const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::pushBack
 	// critical section
 	auto *ptr = new typename FineConcurrentList<T>::ListNodeT(element);
 
-	std::unique_lock<std::shared_mutex> g(this->_mutex);
+	std::unique_lock<std::shared_mutex> wg(this->_mutex);
 	if (!this->_head) {
 		this->_head = this->_tail = ptr;
 		++this->_size;	// Increment this->_size, node has been added.
@@ -150,7 +150,7 @@ const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::pushBack
 template <typename T>
 std::optional<T> FineConcurrentList<T>::popBack()
 {
-	std::unique_lock<std::shared_mutex> g(this->_mutex);
+	std::unique_lock<std::shared_mutex> wg(this->_mutex);
 	return POP_BACK;
 }
 
@@ -169,9 +169,10 @@ std::optional<T> FineConcurrentList<T>::get(const typename FineConcurrentList<T>
 template <typename T>
 bool FineConcurrentList<T>::remove(const T& element)
 {
+	// fast checks under global lock (write lock because head/tail check is
+	// cheap and modification can occur in same operation):
 	{
-		// fast checks under global lock
-		std::shared_lock<std::shared_mutex> g(this->_mutex);
+		std::unique_lock wg{this->_mutex};
 
 		// Only remove if list has nodes.
 		if (!this->_head) {
@@ -188,9 +189,9 @@ bool FineConcurrentList<T>::remove(const T& element)
 			return true;
 		}
 	}
+	// NOTE: Handled head and tail, so safe to assume `size() > 2`.
 
 	// General case:
-	// Already handled head and tail, so safe to assume `size() > 2`.
 	typename FineConcurrentList<T>::ListNodeT *node = const_cast<typename FineConcurrentList<T>::ListNodeT*>(search(element));
 	if (!node) {
 		return false;
@@ -213,9 +214,10 @@ bool FineConcurrentList<T>::remove(const typename FineConcurrentList<T>::ListNod
 		return false;
 	}
 
+	// fast checks under global lock (write lock because head/tail check is
+	// cheap and modification can occur in same operation):
 	{
-		// fast checks under global lock
-		std::shared_lock<std::shared_mutex> g(this->_mutex);
+		std::unique_lock wg{this->_mutex};
 
 		// Only remove if list has nodes.
 		if (!this->_head) {
@@ -255,13 +257,31 @@ bool FineConcurrentList<T>::removeAndPushFront(const typename FineConcurrentList
 		return false;
 	}
 
-	auto *n = const_cast<typename FineConcurrentList<T>::ListNodeT*>(node);
+	auto *mut = const_cast<typename FineConcurrentList<T>::ListNodeT*>(node);
+	// check if already at front under read lock, before releasing to rely on
+	// hand-over-hand locks in middle of list:
+	// xxx does this actually increase performance? these operations might be so
+	// fast the lock overhead is greater
+	{
+		std::shared_lock<std::shared_mutex> rg(this->_mutex);
+		if (mut == this->_head) {
+			return true;
+		}
+	}
 
-	unlink(n);
+	if (!unlink(mut)) {
+		return false;
+	}
 
-	std::unique_lock<std::shared_mutex> g(this->_mutex);
-	n->next = this->_head;
-	this->_head = n;
+	std::unique_lock<std::shared_mutex> wg(this->_mutex);
+	mut->next = this->_head;
+	if (this->_head) {
+		this->_head->prev = mut;
+	}
+	this->_head = mut;
+	if (!this->_tail) {
+		this->_tail = this->_head;
+	}
 
 	return true;
 }
@@ -279,11 +299,15 @@ bool FineConcurrentList<T>::unlink(const typename FineConcurrentList<T>::ListNod
 
 	// Handle head and tail:
 	{
-		std::unique_lock<std::shared_mutex> g(this->_mutex);
+		std::unique_lock<std::shared_mutex> wg(this->_mutex);
 		if (!this->_head) {	// empty list
 			return false;
 		}
-
+		if (!this->_head->next) {
+			this->_head = this->_tail = nullptr;
+			mut->next = mut->prev = nullptr;
+			return true;
+		}
 		if (mut == this->_head) {
 			this->_head->next->prev = nullptr;
 			this->_head = this->_head->next;

@@ -7,6 +7,7 @@
  *
  * CoarseConcurrentList concrete implementation.
  */
+#include "concurrent-list.hpp"
 #include <iostream>
 #include <exception>
 #include <shared_mutex>
@@ -98,7 +99,7 @@ using namespace cm;
 
 template <typename T>
 size_t CoarseConcurrentList<T>::size() const {
-    std::shared_lock<std::shared_mutex> lk(this->_mutex);
+    std::shared_lock<std::shared_mutex> rg(this->_mutex);
     return this->_size;
 }
 
@@ -107,7 +108,7 @@ const typename CoarseConcurrentList<T>::ListNodeT* CoarseConcurrentList<T>::push
     // heap allocate before write lock to optimize allocation out of
     // critical section
     auto *ptr = new typename CoarseConcurrentList<T>::ListNodeT(element);
-    std::unique_lock<std::shared_mutex> lk(this->_mutex);
+    std::unique_lock<std::shared_mutex> wg(this->_mutex);
     if (!this->_head) {
         this->_head = ptr;
         this->_tail = this->_head;
@@ -128,7 +129,7 @@ const typename CoarseConcurrentList<T>::ListNodeT* CoarseConcurrentList<T>::push
 
 template <typename T>
 std::optional<T> CoarseConcurrentList<T>::popFront() {
-    std::unique_lock<std::shared_mutex> lk(this->_mutex);
+    std::unique_lock<std::shared_mutex> wg(this->_mutex);
 	return POP_FRONT;
 }
 
@@ -137,7 +138,7 @@ const typename CoarseConcurrentList<T>::ListNodeT* CoarseConcurrentList<T>::push
     // heap allocate before write lock to optimize allocation out of
     // critical section
     auto *ptr = new typename CoarseConcurrentList<T>::ListNodeT(element);
-    std::unique_lock<std::shared_mutex> lk(this->_mutex);
+    std::unique_lock<std::shared_mutex> wg(this->_mutex);
     if (this->_head == nullptr) {
         this->_head = ptr;
         this->_tail = this->_head;
@@ -148,12 +149,13 @@ const typename CoarseConcurrentList<T>::ListNodeT* CoarseConcurrentList<T>::push
 	ptr->prev = this->_tail;
 	this->_tail->next = ptr;
     this->_tail = ptr;
+	++this->_size;
     return this->_tail;
 }
 
 template <typename T>
 std::optional<T> CoarseConcurrentList<T>::popBack() {
-    std::unique_lock<std::shared_mutex> write_lk(this->_mutex);
+    std::unique_lock<std::shared_mutex> rg(this->_mutex);
 	return POP_BACK;
 }
 
@@ -173,44 +175,65 @@ std::optional<T> CoarseConcurrentList<T>::get(const typename CoarseConcurrentLis
 
 template <typename T>
 bool CoarseConcurrentList<T>::remove(const T& element) {
-    std::shared_lock<std::shared_mutex> read_lk(this->_mutex);
-    // Only remove if list has nodes.
-	if (!this->_head) {
-		return false;
+	// simple O(1) cases (just hold write lock because head check is cheap):
+	{
+    	std::unique_lock<std::shared_mutex> wg(this->_mutex);
+    	// Only remove if list has nodes.
+		if (!this->_head) {
+			return false;
+		}
+
+    	// Handle head and tail cases.
+    	if (this->_head->ele == element) {
+			POP_FRONT;
+    	    return true;
+    	} else if (this->_tail->ele == element) {
+    	    // else if to lock control flow into size > 1 for tail case.
+			POP_BACK;
+    	    return true;
+    	}
+	}
+    // NOTE: Handled head and tail, so safe to assume size() > 2.
+
+	// try optimistic read under read lock only first:
+	const typename CoarseConcurrentList<T>::ListNodeT *node;
+	{
+		std::shared_lock<std::shared_mutex> rg(this->_mutex);
+    	node = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(SEARCH_ELE(element));
+    	if (!node) {
+    	    return false;
+    	}
 	}
 
-    // Handle head and tail cases.
-    if (this->_head->ele == element) {
-		std::unique_lock<std::shared_mutex> write_lk(this->_mutex);
-		POP_FRONT;
-        return true;
-    } else if (this->_tail->ele == element) {
-        // else if to lock control flow into size > 1 for tail case.
-		std::unique_lock<std::shared_mutex> write_lk(this->_mutex);
-		POP_BACK;
-        return true;
-    }
+	// validate and remove:
+	{
+		std::unique_lock<std::shared_mutex> wg(this->_mutex);
+		// verify consistency
+		if (node == this->_head || node == this->_tail || node->prev->next != node || node->next->prev != node) {
+			// NOTE: two choices:
+			// 	(1) recursively call, with possible unbounded removal loop
+			// 	(2) find under write lock and guarantee removal happens in this
+			// 	    function call, even though optimistic search failed
+			// we choose (2), so that unbounded edge-case can't occur
+    		node = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(SEARCH_ELE(element));
+		}
 
-    // General case:
-    // Already handled head and tail, so safe to assume size() > 2.
-    auto *node = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(SEARCH_ELE(element));
-    if (!node) {
-        return false;
-    }
+		node->next->prev = node->prev;
+		node->prev->next = node->next;
+    	--this->_size;
 
-    std::unique_lock<std::shared_mutex> write_lk(this->_mutex);
-	node->next->prev = node->prev;
-	node->prev->next = node->next;
-    --this->_size;
-
-    delete node;
-    node = nullptr;
-    return true;
+    	delete node;
+    	node = nullptr;
+    	return true;
+	}
 }
 
 template <typename T>
 bool CoarseConcurrentList<T>::remove(const typename CoarseConcurrentList<T>::ListNodeT *node) {
-    std::shared_lock<std::shared_mutex> read_lk(this->_mutex);
+    // Cast away the client's const, we're in our owned instance.
+    auto *mut = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(node);
+
+    std::unique_lock<std::shared_mutex> wg(this->_mutex);
     // Only remove if list has nodes.
 	if (!this->_head) {
 		return false;
@@ -218,21 +241,16 @@ bool CoarseConcurrentList<T>::remove(const typename CoarseConcurrentList<T>::Lis
 
     // Handle head and tail cases.
     if (this->_head == node) {
-		std::unique_lock<std::shared_mutex> write_lk(this->_mutex);
 		POP_FRONT;
         return true;
     } else if (this->_tail == node) {
         // else if to lock control flow into size > 1 for tail case.
-		std::unique_lock<std::shared_mutex> write_lk(this->_mutex);
 		POP_BACK;
         return true;
     }
 
     // General case:
     // Already handled head and tail, so safe to assume size() > 2.
-    typename CoarseConcurrentList<T>::ListNodeT *mut = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(node);
-
-    std::unique_lock<std::shared_mutex> write_lk(this->_mutex);
 	mut->next->prev = mut->prev;
 	mut->prev->next = mut->next;
     --this->_size;
@@ -249,18 +267,19 @@ bool CoarseConcurrentList<T>::unlink(const typename CoarseConcurrentList<T>::Lis
 
 template <typename T>
 bool CoarseConcurrentList<T>::removeAndPushFront(const typename CoarseConcurrentList<T>::ListNodeT *node) {
+    // Cast away the client's const, we're in our owned instance.
+    auto *mut = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(node);
+
 	// don't lock list if nullptr
 	if (!node) {
 		return false;
 	}
 
-	std::shared_lock<std::shared_mutex> rg(this->_mutex);
+	std::unique_lock<std::shared_mutex> wg(this->_mutex);
     // empty list
 	if (!this->_head) {
         return false;
     }
-    // Cast away the client's const, we're in our owned instance.
-    auto *mut = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(node);
 
     // Handle head and tail.
     if (mut == this->_head) {
@@ -269,7 +288,6 @@ bool CoarseConcurrentList<T>::removeAndPushFront(const typename CoarseConcurrent
 	}
     if (mut == this->_tail) {
         // else if will trap us in a condition where size() > 1.
-        std::unique_lock<std::shared_mutex> wg(this->_mutex);
 		this->_tail->prev->next = nullptr;
 		this->_tail = this->_tail->prev;
 		this->_head->prev = mut;
@@ -280,7 +298,6 @@ bool CoarseConcurrentList<T>::removeAndPushFront(const typename CoarseConcurrent
     }
 
     // General case:
-    std::unique_lock<std::shared_mutex> wg(this->_mutex);
 	mut->prev->next = mut->next;
 	mut->next->prev = mut->prev;
 	this->_head->prev = mut;

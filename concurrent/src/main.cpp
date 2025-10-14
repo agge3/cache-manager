@@ -12,6 +12,7 @@
 #include <iomanip>
 
 #include "concurrent-list.hpp"
+#include "cache-manager.hpp"
 
 namespace cm {
 
@@ -19,6 +20,7 @@ int main(int argc, char **argv) {
 	auto *coarse = new CoarseConcurrentList<int>;
 	auto *fine = new FineConcurrentList<int>;
 	auto m = tbb::concurrent_unordered_map<int, int>{};
+	auto cache = new CacheManager<int, int>(5);
 
 	return 0;
 }

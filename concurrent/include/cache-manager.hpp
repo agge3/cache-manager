@@ -1,7 +1,9 @@
 #pragma once
 
 #include "concurrent-list.hpp"
-#include "concurrent-map.hpp"
+
+#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_set.h>
 
 #include <functional>
 #include <memory>
@@ -9,44 +11,41 @@
 #include <cassert>
 #include <mutex>
 #include <exception>
+#include <utility>
+#include <format>
+#include <optional>
 
 namespace cm {
 
-using NodePtr = const DLLNode<V>*;
-
 template <typename K, typename V>
-struct ListEntry {
-	K key;
-	V val;
+using ListEntry = std::pair<K, V>;	// cache key, cache value
+
+template <typename T>
+struct Less {
+	constexpr bool operator()(const T &lhs, const T &rhs) {
+		return lhs.value.second < rhs.value.second;
+	}
 };
 
-template <typename K, typename Ptr>
-struct BstEntry {
-	K key;
-	Ptr ptr;
-};
-	
-using BstEntry = std::pair<K, Ptr>;
-
-struct NodeLess {
-	constexpr bool operator()(const Node& lhs, const Node& rhs) const noexcept {
-		return lhs.value < rhs.value;
+template <typename T>
+struct Greater {
+	constexpr bool operator()(const T &lhs, const T &rhs) {
+		return lhs.value.second > rhs.value.second;
 	}
 };
 
 template <
 	typename K,
 	typename V,
-	typename Cmp = NodeLess,
-	typename ConcurrentListT = CoarseGrainedList<ListEntry>
-	typename ConcurrentHashMapT = tbb::concurrent_unordered_map<K, NodePtr>,
-	typename ConcurrentBstT = tbb::concurrent_multiset<BstEntry,
-		std::function<bool(const NodePtr&, const NodePtr&)>
+	typename ConcurrentListT = CoarseConcurrentList<ListEntry<K, V>>,
+	typename ListNodePtrT = std::shared_ptr<CoarseListNode<ListEntry<K, V>>>,
+	typename ConcurrentHashMapT = tbb::concurrent_unordered_map<K, ListNodePtrT>,
+	typename Cmp = Less<ListNodePtrT>,
+	typename ConcurrentBstT = tbb::concurrent_set<ListNodePtrT, Cmp>
 >
 class CacheManager {
 private:
 	size_t _capacity;
-	size_t _size;
 
 	std::mutex _mutex;
 
@@ -54,8 +53,11 @@ private:
 	ConcurrentHashMapT _map;
 	ConcurrentBstT _sorted;
 public:
+	using ListNodePtr = ListNodePtrT;
+
 	explicit CacheManager(size_t capacity, Cmp cmp = Cmp()) :
 		_capacity(capacity),
+		_map(capacity),
 		_sorted(cmp)
 	{}
 
@@ -65,36 +67,33 @@ public:
 			return std::nullopt;
 		}
 
-		NodePtr node = it->second;
+		auto node = it->second;
 
-		_cache.removeAndPushFront(node);
+		_cache.removeAndPushFront(node.get());
 
-		return node->value;
+		return node->ele.second;
 	}
 
 	bool add(const K& key, const V& value) {
-		NodePtr node;
-
 		auto it = _map.find(key);
 		if (it != _map.end()) {
 			// update
-			node = it->second;
+			auto node = it->second;
 
 			// atomic synchronization of containers
-			std::lock_guard<std::mutex> lk(_mutex);
-			node->value = value;
-			_cache.removeAndPushFront(node);
+			std::lock_guard<std::mutex> g(_mutex);
+			node->ele.second = value;
+			_cache.removeAndPushFront(node.get());
 
 			return true;
 		}
 
-		node = std::make_shared<Node>(Node{key, value});
 		{
 			// atomic synchronization of containers
-			std::lock_guard<std::mutex> lk(_mutex);
-			_map.insert({key, node});
-			_sorted.insert(node);
-			_cache.pushFront(node);
+			std::lock_guard<std::mutex> g(_mutex);
+			auto ptr = std::make_shared<ListNodePtr>(pushFront(value));
+			_map.insert({key, ptr});
+			_sorted.insert(ptr);
 		}
 
 		if (_cache.unsafeSize() >= _capacity) {
@@ -106,7 +105,7 @@ public:
 
 	bool isEmpty() const {
 #ifndef NDEBUG
-		std::lock_guard<std::mutex> lk(_mutex);
+		std::lock_guard<std::mutex> g(_mutex);
 		assert(_cache.isEmpty() == _map.empty() &&
 			_map.empty() == _sorted.empty());
 #endif
@@ -115,11 +114,11 @@ public:
 
 	bool contains(const K& key) const {
 #ifndef NDEBUG
-		std::lock_guard<std::mutex> lk(_mutex);
+		std::lock_guard<std::mutex> g(_mutex);
 		auto it = _map.find(key);
 		if (it != _map.end()) {
-			assert(_cache.contains(it->second));
-			assert(_sorted.contains({key, it->second}));
+			assert(_cache.contains(it->second.get()));
+			assert(_sorted.contains(it->second));
 		}
 #endif
 		return _map.find(key) != _map.end();
@@ -127,7 +126,7 @@ public:
 
 	size_t getNumberOfItems() const {
 #ifndef NDEBUG
-		std::lock_guard<std::mutex> lk(_mutex);
+		std::lock_guard<std::mutex> g(_mutex);
 		assert(_cache.unsafeSize() == _map.unsafe_size() &&
 			_map.unsafe_size() == _sorted.unsafe_size());
 #endif
@@ -136,11 +135,11 @@ public:
 
 	bool remove(const K&key) {
 		auto it = _map.find(key);
-		if (it != _map.end()) {
+		if (it == _map.end()) {
 			return false;
 		}
 
-		NodePtr node = it->second;
+		auto node = it->second;
 		
 		// atomic synchronization of containers
 		std::lock_guard<std::mutex> lk(_mutex);
@@ -148,16 +147,15 @@ public:
 		_map.unsafe_erase(key);
 		assert(!_map.contains(key));
 
-		_sorted.unsafe_erase({key, node});
-		assert(!_sorted.contains({key, it->second}));
+		_sorted.unsafe_erase(node);
+		assert(!_sorted.contains(node));
 
-		if (!_cache.remove(node)) {
+		if (!_cache.remove(node.get())) {
 			throw std::runtime_error(std::format(
 				"Cache failed to pop (key, value): ({}, {})",
-				key, node->value));
+				key, node->ele.second));
 		}
-		assert(!_cache.contains(it->second));
-		assert(!node);
+		assert(!_cache.contains(node.get()));
 
 		assert(_cache.unsafeSize() == _map.unsafe_size() &&
 			_map.unsafe_size() == _sorted.unsafe_size());
@@ -167,7 +165,7 @@ public:
 
 	void clear() {
 		// atomic synchronization of containers
-		std::lock_guard<std::mutex> lk(_mutex);
+		std::lock_guard<std::mutex> g(_mutex);
 
 		_cache.clear();
 		_map.clear();
@@ -182,23 +180,24 @@ private:
 		// atomic synchronization of containers
 		std::lock_guard<std::mutex> lk(_mutex);
 
-		std::optional<ListEntry> opt = _cache.back();
+		std::optional<ListEntry<K, V>> opt = _cache.back();
 		if (!opt) {
 			throw std::runtime_error(
 				"Cache expected to evict, but nothing to evict");
 		}
-		ListEntry lentry = *opt;
+		ListEntry<K, V> lentry = *opt;
 
-		auto it = _cache.find(lentry.key);
-		if (it == _cache.end()) {
+		auto it = _map.find(lentry.first);
+		if (it == _map.end()) {
 			throw std::runtime_error(std::format(
 				"Cache attempted to evict key {}, but not found in map",
-				lentry.key);
+				lentry.first));
 		}
-		auto node = it->second;
 
-		_sorted.unsafe_erase({lentry.key, node});
-		_map.unsafe_erase(lentry.key);
+		_sorted.unsafe_erase(it->second);
+		_map.unsafe_erase(it);
 		_cache.popBack();
 	}
 };
+
+} // end namespace cm
