@@ -31,7 +31,7 @@ Concurrent cache-manager:
 - **Coarse-Grained Concurrent List:**  
   Custom FIFO queue ensuring thread-safe operations across multiple producers and consumers.
 
-Single-threaded cache-manager implements hand-rolled data structures (hashmap, SLL, DLL, (WIP) Btree)
+Single-threaded cache-manager implements hand-rolled data structures (hashmap, SLL, DLL)
 
 ---
 
@@ -139,6 +139,6 @@ Install CMake plugin.
 
 Authors
 
-[@agge3](github.com/agge3)
+[@agge3](github.com/agge3)  
 [@kpowkitty](github.com/kpowkitty)
 
