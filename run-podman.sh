@@ -1,3 +1,7 @@
-podman build .
+#!/usr/bin/env bash
 
-podman run --privileged -it --rm <containername> bash
+NAME="cm"
+
+podman build -t "$NAME" .
+
+podman run --privileged -it --rm "$NAME" bash
