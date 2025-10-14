@@ -100,7 +100,7 @@ public:
 	IConcurrentList<T, DerivedNode>& operator=(IConcurrentList<T, DerivedNode>&& rhs) noexcept;
 
 	/**
-	 * FriunsafeEnd declaration of ListIterator.
+	 * Friend declaration of ListIterator.
 	 */
 	friend class ListIterator<T, DerivedNode>;
 
