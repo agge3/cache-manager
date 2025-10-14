@@ -3,5 +3,4 @@
 NAME="cm"
 
 podman build -t "$NAME" .
-
-podman run --privileged -it --rm "$NAME" bash
+podman run --privileged -it --rm "$NAME"

@@ -2,7 +2,7 @@
 
 set -eou pipefail
 
-BUILD_DIR=${BUILD_DIR:-build}
+BUILD_DIR=${BUILD_DIR:-"ctr-build"}
 RUN_CMD=${RUN_CMD:-"./cache-manager"}
 PERF_MODE=${PERF_MODE:-false}
 
