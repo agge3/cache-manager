@@ -1,10 +1,19 @@
 # cache-manager
-Database LRU cache with B-tree indexes.
+Concurrent LRU cache with `O(logn)` sorted index. Single-threaded
+implementation with initial design documentation is included in `single`.
 
 ## Description
 The expected outcomes of cache-manager are to reimplement data structures and 
 methods of the C++ STL and Java SE API. Those "from scratch" implementations 
-will be used to implement a ground-up database LRU cache with B-tree indexes.
+will be used to implement a ground-up database LRU cache with `O(logn)` sorted
+index.
+
+## Running
+Run script assumes `podman`. See `run-podman.sh` for specific `Docker` run
+configuration (NOTE: there's no specifics).
+```bash
+./run-podman.sh
+```
 
 ## Building
 Build uses CMake.  
