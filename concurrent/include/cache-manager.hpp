@@ -33,7 +33,7 @@ struct Less {
             return lhs->ele.first < rhs->ele.first;
 		}
 		// tie breaker for strict weak ordering
-        return lhs.get() < rhs.get();
+        return lhs < rhs;
 	}
 };
 
@@ -48,7 +48,7 @@ struct Greater {
             return lhs->ele.first > rhs->ele.first;
 		}
 		// tie breaker for strict weak ordering
-        return lhs.get() > rhs.get();
+        return lhs > rhs;
 	}
 };
 
@@ -56,7 +56,7 @@ template <
 	typename K,
 	typename V,
 	typename ConcurrentListT = CoarseConcurrentList<ListEntry<K, V>>,
-	typename ListNodePtrT = std::shared_ptr<CoarseListNode<ListEntry<K, V>>>,
+	typename ListNodePtrT = const CoarseListNode<ListEntry<K, V>> *,
 	typename ConcurrentHashMapT = tbb::concurrent_unordered_map<K, ListNodePtrT>,
 	typename Cmp = Less<ListNodePtrT>,
 	typename ConcurrentBstT = tbb::concurrent_set<ListNodePtrT, Cmp>
@@ -89,7 +89,7 @@ public:
 		
 		auto node = it->second;
 
-		if (!_cache.removeAndPushFront(node.get())) {
+		if (!_cache.removeAndPushFront(node)) {
 			return std::nullopt;
 		}
 
@@ -97,16 +97,15 @@ public:
 	}
 
 	bool add(const K& key, const V& value) {
-		auto it = _map.find(key);
+		auto it = _map.find(key);	// xxx th
 		if (it != _map.end()) {
 			// update
-			auto node = it->second;
-			
+			auto node = const_cast<CoarseListNode<ListEntry<K, V>> *>(it->second);
 			{
 				// atomic synchronization of containers
 				std::lock_guard<std::mutex> g(_mutex);
 				node->ele.second = value;
-				_cache.removeAndPushFront(node.get());
+				_cache.removeAndPushFront(const_cast<const CoarseListNode<ListEntry<K , V>> *>(node));
 			}
 
 			return true;
@@ -114,12 +113,9 @@ public:
 
 		{
 			// atomic synchronization of containers
-			std::lock_guard<std::mutex> g(_mutex);
-			auto ptr = _cache.pushFront({key, value});
-			auto node = std::shared_ptr<CoarseListNode<ListEntry<K, V>>>(
-				const_cast<CoarseListNode<ListEntry<K,V>>*>(ptr)
-			);
-			_map.insert({key, node});
+			std::lock_guard<std::mutex> g(_mutex);	// xxx th
+			auto node = _cache.pushFront(ListEntry<K, V>{key, value});
+			_map.insert({key, node});	// xxx th
 			_sorted.insert(node);
 		}
 
@@ -144,7 +140,7 @@ public:
 		std::lock_guard<std::mutex> g(_mutex);
 		auto it = _map.find(key);
 		if (it != _map.end()) {
-			assert(_cache.contains(it->second.get()));
+			assert(_cache.contains(it->second));
 			assert(_sorted.contains(it->second));
 		}
 #endif
@@ -177,12 +173,12 @@ public:
 		_sorted.unsafe_erase(node);
 		assert(!_sorted.contains(node));
 
-		if (!_cache.remove(node.get())) {
+		if (!_cache.remove(node)) {
 			throw std::runtime_error(std::format(
 				"Cache failed to pop (key, value): ({}, {})",
 				key, node->ele.second));
 		}
-		assert(!_cache.contains(node.get()));
+		assert(!_cache.contains(node));
 
 		assert(_cache.size() == _map.size() &&
 			_map.size() == _sorted.size());
