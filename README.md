@@ -1,7 +1,8 @@
-<<<<<<< HEAD
-# cache-manager
+# Cache Manager
 Concurrent LRU cache with `O(logn)` sorted index. Single-threaded
 implementation with initial design documentation is included in `single`.
+
+---
 
 ## Description
 The expected outcomes of cache-manager are to reimplement data structures and 
@@ -9,14 +10,46 @@ methods of the C++ STL and Java SE API. Those "from scratch" implementations
 will be used to implement a ground-up database LRU cache with `O(logn)` sorted
 index.
 
-## Running
-Run script assumes `podman`. See `run-podman.sh` for specific `Docker` run
-configuration (NOTE: there's no specifics).
-```bash
-./run-podman.sh
-```
+---
+
+## Tech Stack
+
+- **Language:** C++20  
+- **Concurrency:** [Intel Threading Building Blocks (TBB)](https://github.com/oneapi-src/oneTBB)  
+- **Testing:** GoogleTest / GoogleMock  
+- **Containerization:** Podman  
+- **Build System:** CMake (3.14–3.28)
+
+---
+
+## Key Components
+
+Concurrent cache-manager:
+- **LRU Cache Core:**  
+  Implements least-recently-used eviction policy with atomic synchronization and TBB concurrent data structures.
+
+- **Coarse-Grained Concurrent List:**  
+  Custom FIFO queue ensuring thread-safe operations across multiple producers and consumers.
+
+Single-threaded cache-manager implements hand-rolled data structures (hashmap, SLL, DLL, (WIP) Btree)
+
+---
+
+## Dependencies
+
+| Dependency | Minimum Version | Notes |
+|-------------|-----------------|-------|
+| Podman | Latest stable | For containerized build & test |
+| C++ Compiler | C++20-compliant | GCC ≥ 10.2 or Clang ≥ 12 recommended |
+| CMake | 3.14 – 3.28 | For project configuration |
+| Intel TBB | — | Used for concurrent containers |
+| GTest / GMock | — | Unit testing framework |
+
+---
 
 ## Organization
+On branch `concurrency`
+
 `include`
  * `cache-manager.hpp` - CacheManager template header and implementation.
  * `concurrent-list.hpp` - ConcurrentList interface and specializations.
@@ -57,6 +90,34 @@ configuration (NOTE: there's no specifics).
    * `lib`
    * `milestoneX` - Milestone JSON configuration (for main driver test cases).  
 
+---
+
+## Running
+Run script assumes `podman`. See `run-podman.sh` for specific `Docker` run
+configuration (NOTE: there's no specifics).
+```bash
+./run-podman.sh
+```
+
+---
+
+## Building
+Build uses CMake.  
+#### Linux
+```bash
+mkdir build
+cd build
+cmake ../
+make all
+
+# to run test suite
+./cache-manager
+```
+#### Visual Studio
+Install CMake plugin.
+
+---
+
 ## Credit 
 
 **Inspirations**
@@ -73,3 +134,11 @@ configuration (NOTE: there's no specifics).
 * https://redis.io/glossary/lru-cache/
 * https://www.usenix.org/system/files/conference/nsdi13/nsdi13-final197.pdf
 * https://priorart.ip.com/IPCOM/000196714/High-Performance-Cache-With-LRU-Replacement-Policy
+
+---
+
+Authors
+
+[@agge3](github.com/agge3)
+[@kpowkitty](github.com/kpowkitty)
+
