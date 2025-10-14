@@ -230,10 +230,13 @@ bool CoarseConcurrentList<T>::remove(const T& element) {
 
 template <typename T>
 bool CoarseConcurrentList<T>::remove(const typename CoarseConcurrentList<T>::ListNodeT *node) {
-    // Cast away the client's const, we're in our owned instance.
-    auto *mut = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(node);
+	if (!node) {
+		return false;
+	}
 
     std::unique_lock<std::shared_mutex> wg(this->_mutex);
+    // Cast away the client's const, we're in our owned instance.
+    auto *mut = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(node);
     // Only remove if list has nodes.
 	if (!this->_head) {
 		return false;
@@ -267,43 +270,42 @@ bool CoarseConcurrentList<T>::unlink(const typename CoarseConcurrentList<T>::Lis
 
 template <typename T>
 bool CoarseConcurrentList<T>::removeAndPushFront(const typename CoarseConcurrentList<T>::ListNodeT *node) {
-    // Cast away the client's const, we're in our owned instance.
-    auto *mut = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(node);
-
 	// don't lock list if nullptr
 	if (!node) {
 		return false;
 	}
 
 	std::unique_lock<std::shared_mutex> wg(this->_mutex);
+    // Cast away the client's const, we're in our owned instance.
+    auto *mut = const_cast<typename CoarseConcurrentList<T>::ListNodeT*>(node);
     // empty list
 	if (!this->_head) {
         return false;
     }
 
-    // Handle head and tail.
+    // Handle head.
     if (mut == this->_head) {
         // Do nothing, but return TRUE for success.
         return true;
 	}
+
+	// Set up for tail vs. non-tail.
     if (mut == this->_tail) {
         // else if will trap us in a condition where size() > 1.
-		this->_tail->prev->next = nullptr;
 		this->_tail = this->_tail->prev;
-		this->_head->prev = mut;
-		mut->prev = nullptr;
-		mut->next = this->_head;
-		this->_head = mut;
-        return true;
-    }
+		this->_tail->next = nullptr;
+    } else {
+		mut->prev->next = mut->next;
+		mut->next->prev = mut->prev;
+	}
 
-    // General case:
-	mut->prev->next = mut->next;
-	mut->next->prev = mut->prev;
+	// Finish swapping node to front.
 	this->_head->prev = mut;
+	mut->prev = nullptr;
 	mut->next = this->_head;
 	this->_head = mut;
-    return true;
+    
+	return true;
 }
 
 template <typename T>
@@ -335,7 +337,7 @@ void CoarseConcurrentList<T>::clear() {
         typename CoarseConcurrentList<T>::ListNodeT* currNext;
         while (curr != nullptr) {
             currNext = curr->next;
-            delete curr;
+			delete curr;
             curr = currNext;
         }
         this->_size = 0;

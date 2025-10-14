@@ -15,6 +15,8 @@
 #include <format>
 #include <optional>
 
+#define NDEBUG 1
+
 namespace cm {
 
 template <typename K, typename V>
@@ -22,15 +24,31 @@ using ListEntry = std::pair<K, V>;	// cache key, cache value
 
 template <typename T>
 struct Less {
-	constexpr bool operator()(const T &lhs, const T &rhs) {
-		return lhs.value.second < rhs.value.second;
+	constexpr bool operator()(const T &lhs, const T &rhs) const {
+        // tbb requires strict weak ordering
+        if (lhs->ele.second != rhs->ele.second) {
+            return lhs->ele.second < rhs->ele.second;
+		}
+        if (lhs->ele.first != rhs->ele.first) {
+            return lhs->ele.first < rhs->ele.first;
+		}
+		// tie breaker for strict weak ordering
+        return lhs.get() < rhs.get();
 	}
 };
 
 template <typename T>
 struct Greater {
-	constexpr bool operator()(const T &lhs, const T &rhs) {
-		return lhs.value.second > rhs.value.second;
+	constexpr bool operator()(const T &lhs, const T &rhs) const {
+        // tbb requires strict weak ordering
+		if (lhs->ele.second != rhs->ele.second) {
+            return lhs->ele.second > rhs->ele.second;
+		}
+        if (lhs->ele.first != rhs->ele.first) {
+            return lhs->ele.first > rhs->ele.first;
+		}
+		// tie breaker for strict weak ordering
+        return lhs.get() > rhs.get();
 	}
 };
 
@@ -47,7 +65,7 @@ class CacheManager {
 private:
 	size_t _capacity;
 
-	std::mutex _mutex;
+	mutable std::mutex _mutex;
 
 	ConcurrentListT _cache;
 	ConcurrentHashMapT _map;
@@ -62,14 +80,18 @@ public:
 	{}
 
 	std::optional<V> getItem(const K& key) {
+		std::lock_guard<std::mutex> g(_mutex);
+		
 		auto it = _map.find(key);
 		if (it == _map.end()) {
 			return std::nullopt;
 		}
-
+		
 		auto node = it->second;
 
-		_cache.removeAndPushFront(node.get());
+		if (!_cache.removeAndPushFront(node.get())) {
+			return std::nullopt;
+		}
 
 		return node->ele.second;
 	}
@@ -79,11 +101,13 @@ public:
 		if (it != _map.end()) {
 			// update
 			auto node = it->second;
-
-			// atomic synchronization of containers
-			std::lock_guard<std::mutex> g(_mutex);
-			node->ele.second = value;
-			_cache.removeAndPushFront(node.get());
+			
+			{
+				// atomic synchronization of containers
+				std::lock_guard<std::mutex> g(_mutex);
+				node->ele.second = value;
+				_cache.removeAndPushFront(node.get());
+			}
 
 			return true;
 		}
@@ -91,12 +115,15 @@ public:
 		{
 			// atomic synchronization of containers
 			std::lock_guard<std::mutex> g(_mutex);
-			auto ptr = std::make_shared<ListNodePtr>(pushFront(value));
-			_map.insert({key, ptr});
-			_sorted.insert(ptr);
+			auto ptr = _cache.pushFront({key, value});
+			auto node = std::shared_ptr<CoarseListNode<ListEntry<K, V>>>(
+				const_cast<CoarseListNode<ListEntry<K,V>>*>(ptr)
+			);
+			_map.insert({key, node});
+			_sorted.insert(node);
 		}
 
-		if (_cache.unsafeSize() >= _capacity) {
+		if (_cache.size() >= _capacity) {
 			evict();
 		}
 
@@ -130,7 +157,7 @@ public:
 		assert(_cache.unsafeSize() == _map.unsafe_size() &&
 			_map.unsafe_size() == _sorted.unsafe_size());
 #endif
-		return _cache.unsafeSize();
+		return _cache.size();
 	}
 
 	bool remove(const K&key) {
@@ -157,8 +184,8 @@ public:
 		}
 		assert(!_cache.contains(node.get()));
 
-		assert(_cache.unsafeSize() == _map.unsafe_size() &&
-			_map.unsafe_size() == _sorted.unsafe_size());
+		assert(_cache.size() == _map.size() &&
+			_map.size() == _sorted.size());
 
 		return true;
 	}

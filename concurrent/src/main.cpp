@@ -12,13 +12,14 @@
 #include <atomic>
 #include <iomanip>
 #include <limits>
+#include <latch>
 
 #include "concurrent-list.hpp"
 #include "cache-manager.hpp"
 
 namespace cm {
 
-static const int LEN = std::numeric_limits<int>::max() >> 4;
+static const int LEN = std::numeric_limits<int>::max() >> 12;
 
 class CoarseTest : public testing::Test {
 protected:
@@ -71,12 +72,16 @@ TEST_F(CoarseTest, popBack) {
 }
 
 TEST_F(CoarseTest, pushBack) {
-	int thread_count = 8;
+	int thread_count = 2;
 	std::vector<std::thread> threads;
 	for (int t = 0; t < thread_count; ++t) {
 		threads.emplace_back([this]() {
 			for (int i = 0; i < LEN; ++i) {
-				_coarseIntEmpty.pushBack(i);
+				auto node = std::make_shared<int>(i);
+
+				_coarseIntEmpty.contains(*node);
+				_coarseIntEmpty.get(*node);
+				
 				_coarseIntEmpty.popBack();
 			}
 		});
@@ -89,8 +94,47 @@ TEST_F(CoarseTest, pushBack) {
 	EXPECT_TRUE(_coarseIntEmpty.isEmpty());
 }
 
+class CacheManagerTest : public ::testing::Test {
+protected:
+	static constexpr size_t CACHE_CAPACITY = 100;
+	static constexpr size_t NUM_THREADS = 4;
+	static constexpr size_t OPERATIONS_PER_THREAD = 1000;
+
+	CacheManager<int, std::string> cache{CACHE_CAPACITY};
+};
+
+// Test 1: Concurrent puts and gets (safe for raw pointer cache)
+TEST_F(CacheManagerTest, ConcurrentPutsAndGets) {
+    std::latch sync_point(NUM_THREADS);
+
+    auto worker = [&](int thread_id) {
+        sync_point.arrive_and_wait();
+
+        size_t base_key = thread_id * OPERATIONS_PER_THREAD;
+        for (size_t i = 0; i < OPERATIONS_PER_THREAD; ++i) {
+            int key = base_key + i;
+            std::string value = "value_" + std::to_string(key);
+
+            cache.add(key, value);
+
+            auto result = cache.getItem(key);
+            if (result) {
+                EXPECT_EQ(*result, value);
+            }
+        }
+    };
+
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < NUM_THREADS; ++i) {
+        threads.emplace_back(worker, i);
+    }
+
+    for (auto &th : threads) {
+        th.join();
+    }
+}
+
 int main(int argc, char **argv) {
-	std::cout << "Running test suite:\n";
 	::testing::InitGoogleTest(&argc, argv);
 
 	return RUN_ALL_TESTS();

@@ -66,9 +66,11 @@ FetchContent_MakeAvailable(tbb)
 # Executable(s):
 add_executable(cache-manager)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -fsanitize=thread -O1 -fno-diagnostics-color")
+
 # Debug build compiler flags.
 #set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Wall -fsanitize=address -fno-diagnostics-color")
-set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Wall -fsanitize=thread -O1 -fno-diagnostics-color")
+#set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Wall -fsanitize=thread -O1 -fno-diagnostics-color")
 
 # Release build compiler flags.
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "")
