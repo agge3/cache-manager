@@ -4,6 +4,7 @@
 
 #include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_set.h>
+#include <tbb/enumerable_thread_specific.h>
 
 #include <functional>
 #include <memory>
@@ -11,13 +12,101 @@
 #include <cassert>
 #include <mutex>
 #include <exception>
+#include <unordered_map>
 #include <utility>
 #include <format>
-#include <optional>
 
 #define NDEBUG 1
 
 namespace cm {
+
+struct Benchmark {
+	size_t hits = 0;
+	size_t misses = 0;
+	size_t evictions = 0;
+	float hit_ratio = 0;
+	float calc_hit_ratio() const {
+		const float total = static_cast<float>(hits) + misses;
+		return total == 0.0f ? 0.0f : static_cast<float>(hits) / total;
+	};
+};
+
+struct NoneBench {
+	static inline void hit() {}
+	static inline void miss() {}
+	static inline void eviction() {}
+	static Benchmark aggregate() { return {}; }
+};
+
+struct ThreadBench {
+	static inline std::mutex registry_mutex;
+	static inline std::vector<Benchmark *> registry;
+	static thread_local Benchmark local_bench;
+
+	static void register_thread() {
+		static thread_local bool registered = []{
+			std::lock_guard<std::mutex> g(registry_mutex);
+			registry.push_back(&local_bench);
+			return true;
+		}();
+		[[maybe_unused]] registered;
+	}
+
+	static inline void hit() {
+		register_thread();
+		++local_bench.hits;
+	}
+	static inline void miss() {
+		register_thread();
+		++local_bench.misses;
+	}
+	static inline void eviction() {
+		register_thread();
+		++local_bench.evictions;
+	}
+
+	static Benchmark aggregate() {
+		std::lock_guard<std::mutex> g(registry_mutex);
+		Benchmark bm{};
+		for (auto &p : registry) {
+			bm.hits += p->hits;
+			bm.misses += p->misses;
+			bm.evictions += p->evictions;
+		}
+		bm.hit_ratio = bm.calc_hit_ratio();
+		return bm;
+	}
+};
+
+struct TbbBench {
+	static inline tbb::enumerable_thread_specific<Benchmark> ets;
+
+	static inline void hit() {
+		++ets.local().hits;
+	}
+	static inline void miss() {
+		++ets.local().misses;
+	}
+	static inline void eviction() {
+		++ets.local().evictions;
+	}
+
+	static Benchmark aggregate() {
+		Benchmark bm{};
+		for (auto &t : ets) {
+			bm.hits += t.hits;
+			bm.misses += t.misses;
+			bm.evictions += t.evictions;
+		}
+		bm.hit_ratio = bm.calc_hit_ratio();
+		return bm;
+	}
+};
+
+template <typename BenchT>
+Benchmark getBenchmark() {
+	return BenchT::aggregate();
+}
 
 template <typename K, typename V>
 using ListEntry = std::pair<K, V>;	// cache key, cache value
@@ -55,10 +144,11 @@ struct Greater {
 template <
 	typename K,
 	typename V,
+	typename BenchT = NoneBench,
 	typename ConcurrentListT = CoarseConcurrentList<ListEntry<K, V>>,
 	typename ListNodePtrT = const CoarseListNode<ListEntry<K, V>> *,
-	typename ConcurrentHashMapT = tbb::concurrent_unordered_map<K, ListNodePtrT>,
 	typename Cmp = Less<ListNodePtrT>,
+	typename ConcurrentHashMapT = tbb::concurrent_unordered_map<K, ListNodePtrT>,
 	typename ConcurrentBstT = tbb::concurrent_set<ListNodePtrT, Cmp>
 >
 class CacheManager {
@@ -79,20 +169,30 @@ public:
 		_sorted(cmp)
 	{}
 
+	void unsafeWarmCache(std::vector<std::pair<K, V>> data) {
+		size_t size = data.size();
+		for (auto i = 0; i < 2 * size; ++i) {
+			add(data[i % size].first, data[i % size].second);
+		}
+	}
+
 	std::optional<V> getItem(const K& key) {
 		std::lock_guard<std::mutex> g(_mutex);
 		
 		auto it = _map.find(key);
 		if (it == _map.end()) {
+			BenchT::miss();
 			return std::nullopt;
 		}
 		
 		auto node = it->second;
 
 		if (!_cache.removeAndPushFront(node)) {
+			BenchT::miss();
 			return std::nullopt;
 		}
 
+		BenchT::hit();
 		return node->ele.second;
 	}
 
@@ -106,16 +206,19 @@ public:
 				auto node = const_cast<CoarseListNode<ListEntry<K, V>> *>(it->second);
 				node->ele.second = value;
 				_cache.removeAndPushFront(const_cast<const CoarseListNode<ListEntry<K , V>> *>(node));
+				BenchT::hit();
 				return true;
 			}
 
 			auto node = _cache.pushFront(ListEntry<K, V>{key, value});
 			_map.insert({key, node});
 			_sorted.insert(node);
+			BenchT::miss();
 		}
 
 		// loose lock check
 		if (_cache.size() >= _capacity) {
+			BenchT::eviction();
 			evict();
 		}
 
@@ -140,7 +243,14 @@ public:
 			assert(_sorted.contains(it->second));
 		}
 #endif
-		return _map.find(key) != _map.end();
+		auto it = _map.find(key);
+		if (it != _map.end()) {
+			BenchT::hit();
+			return true;
+		} else {
+			BenchT::miss();
+			return false;
+		}
 	}
 
 	size_t getNumberOfItems() const {
@@ -155,8 +265,10 @@ public:
 	bool remove(const K&key) {
 		auto it = _map.find(key);
 		if (it == _map.end()) {
+			BenchT::miss();
 			return false;
 		}
+		BenchT::hit();
 
 		auto node = it->second;
 		
@@ -193,6 +305,10 @@ public:
 		assert(_cache.isEmpty());
 		assert(_map.empty());
 		assert(_sorted.empty());
+	}
+
+	static Benchmark benchmark() {
+		return BenchT::aggregate();
 	}
 private:
 	void evict() {
