@@ -6,10 +6,10 @@ doc/html
 doc/latex
 grade-checker/.venv
 src/wip
-src/bak
 src/btree
 examples
-include/bak
 include/wip
 perf.sh
 .DS_Store
+bak
+ctr-build
