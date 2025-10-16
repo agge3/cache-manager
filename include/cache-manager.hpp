@@ -109,6 +109,9 @@ void printBenchmark(const Benchmark& bm) {
 		<< "hit ratio:\t" << bm.hit_ratio << "\n";
 }
 
+void writeBenchmark(const Benchmark &bm) {
+}
+
 template <typename K, typename V>
 using ListEntry = std::pair<K, V>; // cache key, cache value
 

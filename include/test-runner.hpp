@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "cache-manager.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include <thread>
@@ -111,11 +113,12 @@ private:
 struct TestCfg {
 	size_t threads;
 	size_t iter;
+	size_t capacity;
 	DistrCfg distr_cfg;
 	std::any distr_data;
 	std::vector<std::function<void(std::any&)>> fns;
-	TestCfg(size_t threads, size_t iter, const DistrCfg& distr_cfg) :
-		threads(threads), iter(iter), distr_cfg(distr_cfg) {}
+	TestCfg(size_t threads, size_t iter, size_t capacity, const DistrCfg& distr_cfg) :
+		threads(threads), iter(iter), capacity(capacity), distr_cfg(distr_cfg) {}
 };
 
 // opaque pointer for storing different TestCfg template specializations
@@ -123,7 +126,7 @@ using TestCfgHandle = std::unique_ptr<TestCfg>;
 
 using TestCfgs = std::vector<TestCfgHandle>;
 
-TestCfgHandle makeTestCfg(size_t threads, size_t iter, const DistrCfg &distr_cfg, const std::vector<std::function<void(std::any&)>> &fns) {
+TestCfgHandle makeTestCfg(size_t threads, size_t iter, size_t capacity, onst DistrCfg &distr_cfg, std::vector<std::string> &fns) {
 	switch (distr_cfg.type) {
 	case DistrType::INT: {
 		std::vector<std::function<void(const std::vector<int>&)>> typed_fns;
@@ -132,7 +135,7 @@ TestCfgHandle makeTestCfg(size_t threads, size_t iter, const DistrCfg &distr_cfg
 				f(const_cast<std::any&>(v));
 			});
 		}
-		auto test = std::make_unique<TestCfg>(threads, iter, distr_cfg);
+		auto test = std::make_unique<TestCfg>(threads, iter, capacity, distr_cfg);
 		Distribution<int> dist(dist_cfg);
 		dist.generate();
 		test->distr_data = dist.data();
@@ -146,7 +149,7 @@ TestCfgHandle makeTestCfg(size_t threads, size_t iter, const DistrCfg &distr_cfg
 				f(const_cast<std::any&>(v));
 			});
 		}
-		auto test = std::make_unique<TestCfg>(threads, iter, distr_cfg);
+		auto test = std::make_unique<TestCfg>(threads, iter, capacity, distr_cfg);
 		Distribution<double> dist(dist_cfg);
 		dist.generate();
 		test->distr_data = dist.data();
@@ -160,7 +163,7 @@ TestCfgHandle makeTestCfg(size_t threads, size_t iter, const DistrCfg &distr_cfg
 				f(const_cast<std::any&>(v));
 			});
 		}
-		auto test = std::make_unique<TestCfg>(threads, iter, distr_cfg);
+		auto test = std::make_unique<TestCfg>(threads, iter, capacity, distr_cfg);
 		Distribution<std::string> dist(dist_cfg);
 		dist.generate();
 		test->distr_data = dist.data();
@@ -221,10 +224,15 @@ TestCfgs readConfig(const std::string &path) {
 		std::string name = t["name"];
 		size_t threads = static_cast<size_t>(t["threads"]);
 		size_t iter = static_cast<size_t>(t["iter"]);
-		std::vector<std::function<void(std::any&)>> fns;
+		size_t capacity = static_cast<size_t>(t["capacity"]);
 		auto functions = t["functions"];
+		std::vector<std::string> fns;
+		fns.reserve(functions.size());
+		for (const auto &f : functions) {
+			fns.push_back(f.get<std::string>());
+		}
 		DistrCfg distr_cfg = parseDistrCfg(t);
-		tests.push_back(makeTestCfg(threads, iter, distr_cfg, functions));
+		tests.push_back(makeTestCfg(threads, iter, capacity, distr_cfg, fns));
 	}
 
 	return tests;
@@ -237,28 +245,66 @@ public:
 
 	void run() {
 		for (auto &t : _tests) {
-			for (auto i = 0; i < t->iter; ++i) {
-				runTest(*t);
+			std::cout << "INFO: running test: " << t->name << "\n";
+			switch (t->distr_cfg.type) {
+			case DistrType::INT:
+				runTest<int>(*t);
+				break;
+			case DistrType::DOUBLE:
+				runTest<double>(*t);
+				break;
+			case DistrType::STRING:
+				runTest<std::string>(*t);
+				break;
+			default:
+				throw std::runtime_error("invalid distribution type");
 			}
+			std::cout << "INFO: completed test: " << t->name << "\n";
 		}
 	}
 
 	void expect() {
 	}
 private:
+	template <typename T>
 	void runTest(const TestCfg &test) {
-		std::vector<std::thread> pool;
+		cm::CacheManager<T, T, cm::TbbBench> cache(test.capacity);
+		const auto &data = std::any_cast<const std::vector<T> &>(test.distr_data);
+		std::vector<T> keys = test.distr_data;
+		size_t size = data.size();
+		std::reverse(keys.begin(), keys.end());
+		for (auto i = 0; i < test.iter; ++i) {
+			
+			std::vector<std::thread> pool;
+			for (auto i = 0; i < test.threads; ++i) {
+				pool.emplace_back([&test]() {
+					for (const auto &f : test.fns) {
+						for (auto j = 0; j < size; ++j) {
+							T &key = keys[j];
+							T &val = data[j];
+							if (f == "add") {
+								auto res = cache.add(key, val);
+							} else if (f == "get") {
+								auto res = cache.get(key);
+							} else if (f == "contains") {
+								auto res = cache.contains(key);
+							} else if (f == "remove") {
+								auto res = cache.remove(key, val);
+							} else {
+								std::cerr << "ERROR: invalid function in configuration: " << f << "\n";
+							}
+						}
+					}
+				});
+			}
 
-		for (auto i = 0; i < test.threads; ++i) {
-			pool.emplace_back([&test]() {
-				for (const auto &f : test.fns) {
-					f(test.distr_data);
-				}
-			});
-		}
+			for (auto &th : pool) {
+				th.join();
+			}
 
-		for (auto &th : pool) {
-			th.join();
+			auto bm = cache.benchmark();
+			cm::printBenchmark(bm);
+			cm::writeBenchmark(bm);
 		}
 	}
 
