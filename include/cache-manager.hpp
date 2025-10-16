@@ -15,6 +15,7 @@
 #include <optional>
 #include <unordered_map>
 #include <utility>
+#include <iostream>
 
 #define NDEBUG 1
 
@@ -97,8 +98,15 @@ struct TbbBench {
 	}
 };
 
-template <typename BenchT> Benchmark getBenchmark() {
+template <typename BenchT> Benchmark benchmark() {
 	return BenchT::aggregate();
+}
+
+void printBenchmark(const Benchmark& bm) {
+	std::cout << "hits:\t" << bm.hits << "\n"
+		<< "misses:\t" << bm.misses << "\n"
+		<< "evictions:\t" << bm.evictions << "\n"
+		<< "hit ratio:\t" << bm.hit_ratio << "\n";
 }
 
 template <typename K, typename V>
@@ -185,7 +193,7 @@ class CacheManager {
 	bool add(const K &key, const V &value) {
 		// xxx can be more fine-grained. was causing races
 		{
-			std::lock_guard<std::mutex> g(_mutex);
+			std::lock_guard<std::mutex> g(_mutex);	// locked here
 			auto it = _map.find(key);
 			if (it != _map.end()) {
 				// update
@@ -199,7 +207,7 @@ class CacheManager {
 			}
 
 			auto node = _cache.pushFront(ListEntry<K, V>{key, value});
-			_map.insert({key, node});
+			_map.insert({key, node});	// xxx th
 			_sorted.insert(node);
 			BenchT::miss();
 		}
@@ -231,7 +239,8 @@ class CacheManager {
 			assert(_sorted.contains(it->second));
 		}
 #endif
-		auto it = _map.find(key);
+		std::lock_guard<std::mutex> g(_mutex);
+		auto it = _map.find(key);	// xxx th
 		if (it != _map.end()) {
 			BenchT::hit();
 			return true;
@@ -251,6 +260,8 @@ class CacheManager {
 	}
 
 	bool remove(const K &key) {
+		// xxx better granularity
+		std::lock_guard<std::mutex> g(_mutex);
 		auto it = _map.find(key);
 		if (it == _map.end()) {
 			BenchT::miss();
@@ -259,9 +270,6 @@ class CacheManager {
 		BenchT::hit();
 
 		auto node = it->second;
-
-		// atomic synchronization of containers
-		std::lock_guard<std::mutex> lk(_mutex);
 
 		_map.unsafe_erase(key);
 		assert(!_map.contains(key));

@@ -99,7 +99,7 @@ class CacheManagerTest : public ::testing::Test {
 	static constexpr size_t NUM_THREADS = 4;
 	static constexpr size_t OPERATIONS_PER_THREAD = 1000;
 
-	CacheManager<int, std::string> cache{CACHE_CAPACITY};
+	CacheManager<int, std::string, TbbBench> cache{CACHE_CAPACITY};
 };
 
 // Test 1: Concurrent puts and gets (safe for raw pointer cache)
@@ -116,9 +116,22 @@ TEST_F(CacheManagerTest, ConcurrentPutsAndGets) {
 
 			cache.add(key, value);
 
-			auto result = cache.getItem(key);
-			if (result) {
-				EXPECT_EQ(*result, value);
+			auto item = cache.getItem(key);
+			auto contains = cache.contains(key);
+			auto empty = cache.isEmpty();
+			auto size = cache.getNumberOfItems();
+			if (item) {
+				EXPECT_EQ(*item, value);
+				EXPECT_EQ(contains, true);
+				EXPECT_EQ(empty, false);
+				EXPECT_FALSE(empty);
+				EXPECT_TRUE(size > 0);
+
+				//auto remove = cache.remove(key);
+				//EXPECT_EQ(remove, true);
+				EXPECT_FALSE(cache.contains(key));
+			} else {
+				EXPECT_EQ(contains, false);
 			}
 		}
 	};
@@ -131,6 +144,9 @@ TEST_F(CacheManagerTest, ConcurrentPutsAndGets) {
 	for (auto &th : threads) {
 		th.join();
 	}
+
+	auto bm = cache.benchmark();
+	printBenchmark(bm);
 }
 
 int main(int argc, char **argv) {

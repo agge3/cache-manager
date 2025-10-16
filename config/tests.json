@@ -1,0 +1,199 @@
+{
+  "tests": [
+    {
+      "name": "basic_operations_single_thread",
+      "threads": 1,
+      "iter": 100,
+      "functions": ["add", "get", "contains", "remove"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 100,
+        "min": 0,
+        "max": 1000
+      }
+    },
+    {
+      "name": "concurrent_reads_low_contention",
+      "threads": 4,
+      "iter": 1000,
+      "functions": ["get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 500,
+        "min": 0,
+        "max": 10000
+      }
+    },
+    {
+      "name": "concurrent_reads_high_contention",
+      "threads": 16,
+      "iter": 10000,
+      "functions": ["get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 100,
+        "min": 0,
+        "max": 50
+      }
+    },
+    {
+      "name": "concurrent_writes_low_contention",
+      "threads": 4,
+      "iter": 1000,
+      "functions": ["add"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 10000
+      }
+    },
+    {
+      "name": "concurrent_writes_high_contention",
+      "threads": 16,
+      "iter": 5000,
+      "functions": ["add"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 200,
+        "min": 0,
+        "max": 100
+      }
+    },
+    {
+      "name": "mixed_read_write_balanced",
+      "threads": 8,
+      "iter": 5000,
+      "functions": ["add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 500,
+        "min": 0,
+        "max": 1000
+      }
+    },
+    {
+      "name": "mixed_read_write_read_heavy",
+      "threads": 8,
+      "iter": 10000,
+      "functions": ["get", "get", "get", "add"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 300,
+        "min": 0,
+        "max": 500
+      }
+    },
+    {
+      "name": "mixed_read_write_write_heavy",
+      "threads": 8,
+      "iter": 5000,
+      "functions": ["add", "add", "add", "get"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 400,
+        "min": 0,
+        "max": 2000
+      }
+    },
+    {
+      "name": "eviction_stress_test",
+      "threads": 8,
+      "iter": 10000,
+      "functions": ["add", "add", "get"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 100,
+        "min": 0,
+        "max": 50
+      }
+    },
+    {
+      "name": "remove_heavy_workload",
+      "threads": 8,
+      "iter": 5000,
+      "functions": ["add", "remove", "get"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 300,
+        "min": 0,
+        "max": 500
+      }
+    },
+    {
+      "name": "string_keys_concurrent",
+      "threads": 8,
+      "iter": 5000,
+      "functions": ["add", "get", "contains"],
+      "distr": {
+        "type": "string",
+        "gen": "uniform",
+        "count": 500,
+        "min": 0,
+        "max": 25
+      }
+    },
+    {
+      "name": "high_thread_count_stress",
+      "threads": 32,
+      "iter": 10000,
+      "functions": ["add", "get"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 200,
+        "min": 0,
+        "max": 300
+      }
+    },
+    {
+      "name": "cache_warmup_performance",
+      "threads": 1,
+      "iter": 1,
+      "functions": ["warmup"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 10000,
+        "min": 0,
+        "max": 100000
+      }
+    },
+    {
+      "name": "sequential_operations",
+      "threads": 1,
+      "iter": 10000,
+      "functions": ["add", "get", "remove"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 5000
+      }
+    },
+    {
+      "name": "double_values_concurrent",
+      "threads": 8,
+      "iter": 5000,
+      "functions": ["add", "get"],
+      "distr": {
+        "type": "double",
+        "gen": "normal",
+        "count": 500,
+        "min": 0,
+        "max": 1000
+      }
+    }
+  ]
+}

@@ -96,6 +96,11 @@ target_link_libraries(cache-manager PRIVATE
 include(GoogleTest)
 gtest_discover_tests(cache-manager)
 
+# Copy necessary directories into build directory, for executable root access.
+add_custom_command(TARGET cache-manager PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/config/* $<TARGET_FILE_DIR:cache-manager>)
+
 # Build documentation with Doxygen.
 # Only build documentation for release build.
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
