@@ -11,8 +11,8 @@
 using namespace cm;
 
 template <typename T, typename DerivedNode>
-typename ListIterator<T, DerivedNode>::const_reference ListIterator<T, DerivedNode>::operator*()
-{
+typename ListIterator<T, DerivedNode>::const_reference
+ListIterator<T, DerivedNode>::operator*() {
 	if (!_node) {
 		throw std::runtime_error("Attempt to dereference a null iterator.");
 	}
@@ -20,8 +20,8 @@ typename ListIterator<T, DerivedNode>::const_reference ListIterator<T, DerivedNo
 }
 
 template <typename T, typename DerivedNode>
-typename ListIterator<T, DerivedNode>::pointer ListIterator<T, DerivedNode>::operator->()
-{
+typename ListIterator<T, DerivedNode>::pointer
+ListIterator<T, DerivedNode>::operator->() {
 	if (!_node) {
 		throw std::runtime_error("Attempt to dereference a null iterator.");
 	}
@@ -29,8 +29,7 @@ typename ListIterator<T, DerivedNode>::pointer ListIterator<T, DerivedNode>::ope
 }
 
 template <typename T, typename DerivedNode>
-ListIterator<T, DerivedNode>& ListIterator<T, DerivedNode>::operator++()
-{
+ListIterator<T, DerivedNode> &ListIterator<T, DerivedNode>::operator++() {
 	if (_node) {
 		_node = _node->next;
 	}
@@ -38,16 +37,14 @@ ListIterator<T, DerivedNode>& ListIterator<T, DerivedNode>::operator++()
 }
 
 template <typename T, typename DerivedNode>
-ListIterator<T, DerivedNode> ListIterator<T, DerivedNode>::operator++(int)
-{
+ListIterator<T, DerivedNode> ListIterator<T, DerivedNode>::operator++(int) {
 	ListIterator tmp = *this;
 	++(*this);
 	return tmp;
 }
 
 template <typename T, typename DerivedNode>
-ListIterator<T, DerivedNode>& ListIterator<T, DerivedNode>::operator--()
-{
+ListIterator<T, DerivedNode> &ListIterator<T, DerivedNode>::operator--() {
 	if (_node) {
 		_node = _node->prev;
 	}
@@ -55,28 +52,25 @@ ListIterator<T, DerivedNode>& ListIterator<T, DerivedNode>::operator--()
 }
 
 template <typename T, typename DerivedNode>
-ListIterator<T, DerivedNode> ListIterator<T, DerivedNode>::operator--(int)
-{
+ListIterator<T, DerivedNode> ListIterator<T, DerivedNode>::operator--(int) {
 	ListIterator tmp = *this;
 	--(*this);
 	return tmp;
 }
 
 template <typename T, typename DerivedNode>
-bool ListIterator<T, DerivedNode>::operator==(const ListIterator& other) const
-{
+bool ListIterator<T, DerivedNode>::operator==(const ListIterator &other) const {
 	return _node == other._node;
 }
 
 template <typename T, typename DerivedNode>
-bool ListIterator<T, DerivedNode>::operator!=(const ListIterator& other) const
-{
+bool ListIterator<T, DerivedNode>::operator!=(const ListIterator &other) const {
 	return _node != other._node;
 }
 
 template <typename T, typename DerivedNode>
-IConcurrentList<T, DerivedNode>::IConcurrentList(const IConcurrentList<T, DerivedNode>& other)
-{
+IConcurrentList<T, DerivedNode>::IConcurrentList(
+	const IConcurrentList<T, DerivedNode> &other) {
 	// Check if list to be copied has any nodes.
 	// copy with global read lock on other to snapshot
 	std::shared_lock<std::shared_mutex> other_g(other._mutex);
@@ -86,8 +80,8 @@ IConcurrentList<T, DerivedNode>::IConcurrentList(const IConcurrentList<T, Derive
 }
 
 template <typename T, typename DerivedNode>
-IConcurrentList<T, DerivedNode>::IConcurrentList(IConcurrentList<T, DerivedNode>&& other) noexcept
-{
+IConcurrentList<T, DerivedNode>::IConcurrentList(
+	IConcurrentList<T, DerivedNode> &&other) noexcept {
 	// Two steps:
 	// 	1. Steal the r-value rist's resources.
 	// 	2. NULL the r-value list.
@@ -98,9 +92,8 @@ IConcurrentList<T, DerivedNode>::IConcurrentList(IConcurrentList<T, DerivedNode>
 }
 
 template <typename T, typename DerivedNode>
-IConcurrentList<T, DerivedNode>& IConcurrentList<T, DerivedNode>::operator=(
-	const IConcurrentList<T, DerivedNode>& rhs)
-{
+IConcurrentList<T, DerivedNode> &IConcurrentList<T, DerivedNode>::operator=(
+	const IConcurrentList<T, DerivedNode> &rhs) {
 	// Check if both lists have the same address; then they're the same.
 	if (&rhs == this) {
 		std::cerr << "Attempted assignment to self.";
@@ -116,17 +109,13 @@ IConcurrentList<T, DerivedNode>& IConcurrentList<T, DerivedNode>::operator=(
 	// We don't need to check if _size is the same; not random access!
 	if (rhs.isEmpty()) {
 		unsafeClear();
-	}
-	else if (isEmpty()) {
+	} else if (isEmpty()) {
 		copyCallingListEmpty(rhs);
-	}
-	else if (_size == rhs._size) {
+	} else if (_size == rhs._size) {
 		copyListsSameLength(rhs);
-	}
-	else if (_size > rhs._size) {
+	} else if (_size > rhs._size) {
 		copyCallingListShorter(rhs);
-	}
-	else if (_size < rhs._size) {
+	} else if (_size < rhs._size) {
 		copyCallingListLonger(rhs);
 	}
 
@@ -135,9 +124,8 @@ IConcurrentList<T, DerivedNode>& IConcurrentList<T, DerivedNode>::operator=(
 }
 
 template <typename T, typename DerivedNode>
-IConcurrentList<T, DerivedNode>& IConcurrentList<T, DerivedNode>::operator=(
-	IConcurrentList<T, DerivedNode>&& rhs) noexcept
-{
+IConcurrentList<T, DerivedNode> &IConcurrentList<T, DerivedNode>::operator=(
+	IConcurrentList<T, DerivedNode> &&rhs) noexcept {
 	// Check for self-assignment.
 	if (this != &rhs) {
 		std::unique_lock<std::shared_mutex> g(_mutex);
@@ -161,9 +149,8 @@ IConcurrentList<T, DerivedNode>& IConcurrentList<T, DerivedNode>::operator=(
 }
 
 template <typename T, typename DerivedNode>
-std::ostream& cm::operator<<(std::ostream& out,
-	const IConcurrentList<T, DerivedNode>& list)
-{
+std::ostream &cm::operator<<(std::ostream &out,
+							 const IConcurrentList<T, DerivedNode> &list) {
 	out << "[ ";
 	bool first = true;
 	{
@@ -183,7 +170,7 @@ std::ostream& cm::operator<<(std::ostream& out,
 
 template <typename T, typename DerivedNode>
 void IConcurrentList<T, DerivedNode>::copyCallingListEmpty(
-	const IConcurrentList<T, DerivedNode>& other) {
+	const IConcurrentList<T, DerivedNode> &other) {
 	// It's assumed calling object is empty, so we don't need to check.
 	// Assign caller _size as other _size.
 	_size = other._size;
@@ -205,8 +192,7 @@ void IConcurrentList<T, DerivedNode>::copyCallingListEmpty(
 
 template <typename T, typename DerivedNode>
 void IConcurrentList<T, DerivedNode>::copyListsSameLength(
-	const IConcurrentList<T, DerivedNode>& other)
-{
+	const IConcurrentList<T, DerivedNode> &other) {
 	ListNodeT *curr = _head;
 	ListNodeT *otherCurr = other._head;
 	while (curr != nullptr) {
@@ -220,17 +206,16 @@ void IConcurrentList<T, DerivedNode>::copyListsSameLength(
 
 template <typename T, typename DerivedNode>
 void IConcurrentList<T, DerivedNode>::copyCallingListLonger(
-	const IConcurrentList<T, DerivedNode>& other)
-{
+	const IConcurrentList<T, DerivedNode> &other) {
 	// Create curr for caller and other _head.
-	ListNodeT* curr = _head;
-	ListNodeT* otherCurr = other._head;
+	ListNodeT *curr = _head;
+	ListNodeT *otherCurr = other._head;
 	// Iterate through, stopping at _tail node of other.
 	while (otherCurr != nullptr) {
 		curr->ele = otherCurr->ele;
 		if (otherCurr->next == nullptr) {
-		   _tail = curr;
-		   curr->next = nullptr;
+			_tail = curr;
+			curr->next = nullptr;
 		}
 		curr = curr->next;
 		otherCurr = otherCurr->next;
@@ -249,10 +234,9 @@ void IConcurrentList<T, DerivedNode>::copyCallingListLonger(
 
 template <typename T, typename DerivedNode>
 void IConcurrentList<T, DerivedNode>::copyCallingListShorter(
-	const IConcurrentList<T, DerivedNode>& other)
-{
-	ListNodeT* curr = _head;
-	ListNodeT* otherCurr = other._head;
+	const IConcurrentList<T, DerivedNode> &other) {
+	ListNodeT *curr = _head;
+	ListNodeT *otherCurr = other._head;
 	while (curr != nullptr) {
 		curr->ele = otherCurr->ele;
 		curr = curr->next;
@@ -275,15 +259,13 @@ void IConcurrentList<T, DerivedNode>::copyCallingListShorter(
 }
 
 template <typename T, typename DerivedNode>
-bool IConcurrentList<T, DerivedNode>::isEmpty() const
-{
+bool IConcurrentList<T, DerivedNode>::isEmpty() const {
 	std::shared_lock<std::shared_mutex> g(_mutex);
 	return _head == nullptr && _tail == nullptr && _size == 0;
 }
 
 template <typename T, typename DerivedNode>
-std::optional<T> IConcurrentList<T, DerivedNode>::front() const
-{
+std::optional<T> IConcurrentList<T, DerivedNode>::front() const {
 	std::shared_lock<std::shared_mutex> g(_mutex);
 	return !_head ? std::nullopt : std::optional<T>(_head->ele);
 }
@@ -295,33 +277,31 @@ std::optional<T> IConcurrentList<T, DerivedNode>::back() const {
 }
 
 template <typename T, typename DerivedNode>
-std::size_t IConcurrentList<T, DerivedNode>::unsafeSize() const
-{
+std::size_t IConcurrentList<T, DerivedNode>::unsafeSize() const {
 	return _size;
 }
 
 template <typename T, typename DerivedNode>
-ListIterator<T, DerivedNode> IConcurrentList<T, DerivedNode>::unsafeBegin() const
-{
+ListIterator<T, DerivedNode>
+IConcurrentList<T, DerivedNode>::unsafeBegin() const {
 	return ListIterator<T, DerivedNode>(_head);
 }
 
 template <typename T, typename DerivedNode>
-ListIterator<T, DerivedNode> IConcurrentList<T, DerivedNode>::unsafeEnd() const
-{
+ListIterator<T, DerivedNode>
+IConcurrentList<T, DerivedNode>::unsafeEnd() const {
 	return ListIterator<T, DerivedNode>(nullptr);
 }
 
 template <typename T, typename DerivedNode>
-void IConcurrentList<T, DerivedNode>::unsafeClear()
-{
-    ListNodeT* curr = _head;
-    while (curr) {
-        ListNodeT* next = curr->next;
-        delete curr;
-        curr = next;
-    }
-    _head = nullptr;
-    _tail = nullptr;
-    _size = 0;
+void IConcurrentList<T, DerivedNode>::unsafeClear() {
+	ListNodeT *curr = _head;
+	while (curr) {
+		ListNodeT *next = curr->next;
+		delete curr;
+		curr = next;
+	}
+	_head = nullptr;
+	_tail = nullptr;
+	_size = 0;
 }

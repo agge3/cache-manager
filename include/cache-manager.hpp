@@ -2,19 +2,19 @@
 
 #include "concurrent-list.hpp"
 
-#include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_set.h>
+#include <tbb/concurrent_unordered_map.h>
 #include <tbb/enumerable_thread_specific.h>
 
+#include <cassert>
+#include <exception>
+#include <format>
 #include <functional>
 #include <memory>
-#include <optional>
-#include <cassert>
 #include <mutex>
-#include <exception>
+#include <optional>
 #include <unordered_map>
 #include <utility>
-#include <format>
 
 #define NDEBUG 1
 
@@ -44,7 +44,7 @@ struct ThreadBench {
 	static thread_local Benchmark local_bench;
 
 	static void register_thread() {
-		static thread_local bool registered = []{
+		static thread_local bool registered = [] {
 			std::lock_guard<std::mutex> g(registry_mutex);
 			registry.push_back(&local_bench);
 			return true;
@@ -81,15 +81,9 @@ struct ThreadBench {
 struct TbbBench {
 	static inline tbb::enumerable_thread_specific<Benchmark> ets;
 
-	static inline void hit() {
-		++ets.local().hits;
-	}
-	static inline void miss() {
-		++ets.local().misses;
-	}
-	static inline void eviction() {
-		++ets.local().evictions;
-	}
+	static inline void hit() { ++ets.local().hits; }
+	static inline void miss() { ++ets.local().misses; }
+	static inline void eviction() { ++ets.local().evictions; }
 
 	static Benchmark aggregate() {
 		Benchmark bm{};
@@ -103,56 +97,50 @@ struct TbbBench {
 	}
 };
 
-template <typename BenchT>
-Benchmark getBenchmark() {
+template <typename BenchT> Benchmark getBenchmark() {
 	return BenchT::aggregate();
 }
 
 template <typename K, typename V>
-using ListEntry = std::pair<K, V>;	// cache key, cache value
+using ListEntry = std::pair<K, V>; // cache key, cache value
 
-template <typename T>
-struct Less {
+template <typename T> struct Less {
 	constexpr bool operator()(const T &lhs, const T &rhs) const {
-        // tbb requires strict weak ordering
-        if (lhs->ele.second != rhs->ele.second) {
-            return lhs->ele.second < rhs->ele.second;
-		}
-        if (lhs->ele.first != rhs->ele.first) {
-            return lhs->ele.first < rhs->ele.first;
-		}
-		// tie breaker for strict weak ordering
-        return lhs < rhs;
-	}
-};
-
-template <typename T>
-struct Greater {
-	constexpr bool operator()(const T &lhs, const T &rhs) const {
-        // tbb requires strict weak ordering
+		// tbb requires strict weak ordering
 		if (lhs->ele.second != rhs->ele.second) {
-            return lhs->ele.second > rhs->ele.second;
+			return lhs->ele.second < rhs->ele.second;
 		}
-        if (lhs->ele.first != rhs->ele.first) {
-            return lhs->ele.first > rhs->ele.first;
+		if (lhs->ele.first != rhs->ele.first) {
+			return lhs->ele.first < rhs->ele.first;
 		}
 		// tie breaker for strict weak ordering
-        return lhs > rhs;
+		return lhs < rhs;
 	}
 };
 
-template <
-	typename K,
-	typename V,
-	typename BenchT = NoneBench,
-	typename ConcurrentListT = CoarseConcurrentList<ListEntry<K, V>>,
-	typename ListNodePtrT = const CoarseListNode<ListEntry<K, V>> *,
-	typename Cmp = Less<ListNodePtrT>,
-	typename ConcurrentHashMapT = tbb::concurrent_unordered_map<K, ListNodePtrT>,
-	typename ConcurrentBstT = tbb::concurrent_set<ListNodePtrT, Cmp>
->
+template <typename T> struct Greater {
+	constexpr bool operator()(const T &lhs, const T &rhs) const {
+		// tbb requires strict weak ordering
+		if (lhs->ele.second != rhs->ele.second) {
+			return lhs->ele.second > rhs->ele.second;
+		}
+		if (lhs->ele.first != rhs->ele.first) {
+			return lhs->ele.first > rhs->ele.first;
+		}
+		// tie breaker for strict weak ordering
+		return lhs > rhs;
+	}
+};
+
+template <typename K, typename V, typename BenchT = NoneBench,
+		  typename ConcurrentListT = CoarseConcurrentList<ListEntry<K, V>>,
+		  typename ListNodePtrT = const CoarseListNode<ListEntry<K, V>> *,
+		  typename Cmp = Less<ListNodePtrT>,
+		  typename ConcurrentHashMapT =
+			  tbb::concurrent_unordered_map<K, ListNodePtrT>,
+		  typename ConcurrentBstT = tbb::concurrent_set<ListNodePtrT, Cmp>>
 class CacheManager {
-private:
+  private:
 	size_t _capacity;
 
 	mutable std::mutex _mutex;
@@ -160,14 +148,12 @@ private:
 	ConcurrentListT _cache;
 	ConcurrentHashMapT _map;
 	ConcurrentBstT _sorted;
-public:
+
+  public:
 	using ListNodePtr = ListNodePtrT;
 
-	explicit CacheManager(size_t capacity, Cmp cmp = Cmp()) :
-		_capacity(capacity),
-		_map(capacity),
-		_sorted(cmp)
-	{}
+	explicit CacheManager(size_t capacity, Cmp cmp = Cmp())
+		: _capacity(capacity), _map(capacity), _sorted(cmp) {}
 
 	void unsafeWarmCache(std::vector<std::pair<K, V>> data) {
 		size_t size = data.size();
@@ -176,15 +162,15 @@ public:
 		}
 	}
 
-	std::optional<V> getItem(const K& key) {
+	std::optional<V> getItem(const K &key) {
 		std::lock_guard<std::mutex> g(_mutex);
-		
+
 		auto it = _map.find(key);
 		if (it == _map.end()) {
 			BenchT::miss();
 			return std::nullopt;
 		}
-		
+
 		auto node = it->second;
 
 		if (!_cache.removeAndPushFront(node)) {
@@ -196,16 +182,18 @@ public:
 		return node->ele.second;
 	}
 
-	bool add(const K& key, const V& value) {
+	bool add(const K &key, const V &value) {
 		// xxx can be more fine-grained. was causing races
 		{
 			std::lock_guard<std::mutex> g(_mutex);
 			auto it = _map.find(key);
 			if (it != _map.end()) {
 				// update
-				auto node = const_cast<CoarseListNode<ListEntry<K, V>> *>(it->second);
+				auto node =
+					const_cast<CoarseListNode<ListEntry<K, V>> *>(it->second);
 				node->ele.second = value;
-				_cache.removeAndPushFront(const_cast<const CoarseListNode<ListEntry<K , V>> *>(node));
+				_cache.removeAndPushFront(
+					const_cast<const CoarseListNode<ListEntry<K, V>> *>(node));
 				BenchT::hit();
 				return true;
 			}
@@ -229,12 +217,12 @@ public:
 #ifndef NDEBUG
 		std::lock_guard<std::mutex> g(_mutex);
 		assert(_cache.isEmpty() == _map.empty() &&
-			_map.empty() == _sorted.empty());
+			   _map.empty() == _sorted.empty());
 #endif
 		return _cache.isEmpty();
 	}
 
-	bool contains(const K& key) const {
+	bool contains(const K &key) const {
 #ifndef NDEBUG
 		std::lock_guard<std::mutex> g(_mutex);
 		auto it = _map.find(key);
@@ -257,12 +245,12 @@ public:
 #ifndef NDEBUG
 		std::lock_guard<std::mutex> g(_mutex);
 		assert(_cache.unsafeSize() == _map.unsafe_size() &&
-			_map.unsafe_size() == _sorted.unsafe_size());
+			   _map.unsafe_size() == _sorted.unsafe_size());
 #endif
 		return _cache.size();
 	}
 
-	bool remove(const K&key) {
+	bool remove(const K &key) {
 		auto it = _map.find(key);
 		if (it == _map.end()) {
 			BenchT::miss();
@@ -271,7 +259,7 @@ public:
 		BenchT::hit();
 
 		auto node = it->second;
-		
+
 		// atomic synchronization of containers
 		std::lock_guard<std::mutex> lk(_mutex);
 
@@ -282,14 +270,13 @@ public:
 		assert(!_sorted.contains(node));
 
 		if (!_cache.remove(node)) {
-			throw std::runtime_error(std::format(
-				"Cache failed to pop (key, value): ({}, {})",
-				key, node->ele.second));
+			throw std::runtime_error(
+				std::format("Cache failed to pop (key, value): ({}, {})", key,
+							node->ele.second));
 		}
 		assert(!_cache.contains(node));
 
-		assert(_cache.size() == _map.size() &&
-			_map.size() == _sorted.size());
+		assert(_cache.size() == _map.size() && _map.size() == _sorted.size());
 
 		return true;
 	}
@@ -307,10 +294,9 @@ public:
 		assert(_sorted.empty());
 	}
 
-	static Benchmark benchmark() {
-		return BenchT::aggregate();
-	}
-private:
+	static Benchmark benchmark() { return BenchT::aggregate(); }
+
+  private:
 	void evict() {
 		// atomic synchronization of containers
 		std::lock_guard<std::mutex> lk(_mutex);

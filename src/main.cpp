@@ -1,40 +1,39 @@
+#include <atomic>
+#include <chrono>
 #include <climits>
 #include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
+#include <latch>
+#include <limits>
+#include <mutex>
 #include <oneapi/tbb/concurrent_unordered_map.h>
-#include <tbb/concurrent_unordered_map.h>
-#include <chrono>
 #include <random>
+#include <set>
+#include <tbb/concurrent_unordered_map.h>
 #include <thread>
 #include <vector>
-#include <iostream>
-#include <set>
-#include <mutex>
-#include <atomic>
-#include <iomanip>
-#include <limits>
-#include <latch>
 
-#include "concurrent-list.hpp"
 #include "cache-manager.hpp"
+#include "concurrent-list.hpp"
 
 namespace cm {
 
 static const int LEN = std::numeric_limits<int>::max() >> 12;
 
 class CoarseTest : public testing::Test {
-protected:
-	CoarseTest() 
-	{
+  protected:
+	CoarseTest() {
 		std::random_device rd;
 
 		std::mt19937 genInt(rd());
 		std::uniform_int_distribution<int> distInt(0, 9);
-		
+
 		std::mt19937 genStr(rd());
-		std::string charset = 
+		std::string charset =
 			"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		std::uniform_int_distribution<std::string::size_type> distStr(0,
-			charset.length() - 1);
+		std::uniform_int_distribution<std::string::size_type> distStr(
+			0, charset.length() - 1);
 
 		for (int i = 0; i < LEN; ++i) {
 			int randInt = distInt(genInt);
@@ -81,7 +80,7 @@ TEST_F(CoarseTest, pushBack) {
 
 				_coarseIntEmpty.contains(*node);
 				_coarseIntEmpty.get(*node);
-				
+
 				_coarseIntEmpty.popBack();
 			}
 		});
@@ -95,7 +94,7 @@ TEST_F(CoarseTest, pushBack) {
 }
 
 class CacheManagerTest : public ::testing::Test {
-protected:
+  protected:
 	static constexpr size_t CACHE_CAPACITY = 100;
 	static constexpr size_t NUM_THREADS = 4;
 	static constexpr size_t OPERATIONS_PER_THREAD = 1000;
@@ -105,33 +104,33 @@ protected:
 
 // Test 1: Concurrent puts and gets (safe for raw pointer cache)
 TEST_F(CacheManagerTest, ConcurrentPutsAndGets) {
-    std::latch sync_point(NUM_THREADS);
+	std::latch sync_point(NUM_THREADS);
 
-    auto worker = [&](int thread_id) {
-        sync_point.arrive_and_wait();
+	auto worker = [&](int thread_id) {
+		sync_point.arrive_and_wait();
 
-        size_t base_key = thread_id * OPERATIONS_PER_THREAD;
-        for (size_t i = 0; i < OPERATIONS_PER_THREAD; ++i) {
-            int key = base_key + i;
-            std::string value = "value_" + std::to_string(key);
+		size_t base_key = thread_id * OPERATIONS_PER_THREAD;
+		for (size_t i = 0; i < OPERATIONS_PER_THREAD; ++i) {
+			int key = base_key + i;
+			std::string value = "value_" + std::to_string(key);
 
-            cache.add(key, value);
+			cache.add(key, value);
 
-            auto result = cache.getItem(key);
-            if (result) {
-                EXPECT_EQ(*result, value);
-            }
-        }
-    };
+			auto result = cache.getItem(key);
+			if (result) {
+				EXPECT_EQ(*result, value);
+			}
+		}
+	};
 
-    std::vector<std::thread> threads;
-    for (size_t i = 0; i < NUM_THREADS; ++i) {
-        threads.emplace_back(worker, i);
-    }
+	std::vector<std::thread> threads;
+	for (size_t i = 0; i < NUM_THREADS; ++i) {
+		threads.emplace_back(worker, i);
+	}
 
-    for (auto &th : threads) {
-        th.join();
-    }
+	for (auto &th : threads) {
+		th.join();
+	}
 }
 
 int main(int argc, char **argv) {

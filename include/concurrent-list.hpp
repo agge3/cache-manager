@@ -17,61 +17,60 @@
 #include <shared_mutex>
 
 /**
-* @namespace cm
-* Namespace for CacheManager-specific packages.
-*/
+ * @namespace cm
+ * Namespace for CacheManager-specific packages.
+ */
 namespace cm {
 
 /**
  * @class ListIterator<T, DerivedNode>
  * IConcurrentList Iterator.
- * 
+ *
  * ListIterators are invalidated on any (read|write) operation of
  * ConcurrentList. Thread safety is only guaranteed if the entire ConcurrentList
  * is locked before iteration.
  *
  */
-template <typename T, typename DerivedNode>
-class ListIterator {
-public:
+template <typename T, typename DerivedNode> class ListIterator {
+  public:
 	using ListNodeT = DerivedNode;
 
 	using iterator_category = std::bidirectional_iterator_tag;
 	using value_type = T;
 	using difference_type = std::ptrdiff_t;
-	using pointer = T*;
-	using reference = T&;
-	using const_reference = const T&;
+	using pointer = T *;
+	using reference = T &;
+	using const_reference = const T &;
 
 	explicit ListIterator(ListNodeT *node) : _node(node) {}
 
 	const_reference operator*();
 	pointer operator->();
-	ListIterator& operator++();
+	ListIterator &operator++();
 	ListIterator operator++(int);
-    ListIterator& operator--();
-    ListIterator operator--(int);
-    bool operator==(const ListIterator& other) const;
-    bool operator!=(const ListIterator& other) const;
-protected:
-private:
+	ListIterator &operator--();
+	ListIterator operator--(int);
+	bool operator==(const ListIterator &other) const;
+	bool operator!=(const ListIterator &other) const;
+
+  protected:
+  private:
 	ListNodeT *_node;
 };
 
 // Forward declaration for overloaded insertion operator with template class.
+template <typename T, typename DerivedNode> class IConcurrentList;
 template <typename T, typename DerivedNode>
-class IConcurrentList;
-template <typename T, typename DerivedNode>
-std::ostream& operator<<(std::ostream&, const IConcurrentList<T, DerivedNode>&);
+std::ostream &operator<<(std::ostream &,
+						 const IConcurrentList<T, DerivedNode> &);
 
 /**
-* @class ConcurrentList<T>
-* ConcurrentList, specialized as a Queue to be used for keeping track of order
-* in LRU CacheManager.
-*/
-template <typename T, typename DerivedNode>
-class IConcurrentList {
-public:
+ * @class ConcurrentList<T>
+ * ConcurrentList, specialized as a Queue to be used for keeping track of order
+ * in LRU CacheManager.
+ */
+template <typename T, typename DerivedNode> class IConcurrentList {
+  public:
 	using ListNodeT = DerivedNode;
 
 	/**
@@ -82,22 +81,24 @@ public:
 	/**
 	 * Copy constructor.
 	 */
-	IConcurrentList(const IConcurrentList<T, DerivedNode>& other);
+	IConcurrentList(const IConcurrentList<T, DerivedNode> &other);
 
 	/*
 	 * Move constructor.
 	 */
-	IConcurrentList(IConcurrentList<T, DerivedNode>&& other) noexcept;
+	IConcurrentList(IConcurrentList<T, DerivedNode> &&other) noexcept;
 
 	/**
 	 * Assignment operator.
 	 */
-	IConcurrentList<T, DerivedNode>& operator=(const IConcurrentList<T, DerivedNode>& rhs);
+	IConcurrentList<T, DerivedNode> &
+	operator=(const IConcurrentList<T, DerivedNode> &rhs);
 
 	/**
 	 * Move assignment operator.
 	 */
-	IConcurrentList<T, DerivedNode>& operator=(IConcurrentList<T, DerivedNode>&& rhs) noexcept;
+	IConcurrentList<T, DerivedNode> &
+	operator=(IConcurrentList<T, DerivedNode> &&rhs) noexcept;
 
 	/**
 	 * Friend declaration of ListIterator.
@@ -107,8 +108,9 @@ public:
 	/**
 	 * Overloaded insertion operator<<.
 	 */
-	friend std::ostream& operator<< <>(std::ostream& out,
-		const IConcurrentList<T, DerivedNode>& list);
+	friend std::ostream &
+	operator<< <>(std::ostream &out,
+				  const IConcurrentList<T, DerivedNode> &list);
 
 	/**
 	 * Returns the first element of ConcurrentList.
@@ -147,7 +149,7 @@ public:
 	 *
 	 * @return const ListNode<T> *ptr A const pointer to the inserted element.
 	 */
-	virtual const ListNodeT* pushFront(const T& element) = 0;
+	virtual const ListNodeT *pushFront(const T &element) = 0;
 
 	/**
 	 * Inserts an element at the unsafeEnd of ConcurrentList.
@@ -156,7 +158,7 @@ public:
 	 *
 	 * @return const ListNode<T> *ptr A const pointer to the inserted element.
 	 */
-	virtual const ListNodeT* pushBack(const T& element) = 0;
+	virtual const ListNodeT *pushBack(const T &element) = 0;
 
 	/**
 	 * Gets the element contained in the ListNode.
@@ -176,7 +178,7 @@ public:
 	 * @return const ListNode<T> *node The node that contains the element, or
 	 * nullptr if the element was not in the list.
 	 */
-	virtual const ListNodeT* get(const T& element) = 0;
+	virtual const ListNodeT *get(const T &element) = 0;
 
 	/**
 	 * Removes an element from ConcurrentList.
@@ -186,7 +188,7 @@ public:
 	 * @return TRUE, the element was removed; FALSE, the element was not in the
 	 * list.
 	 */
-	virtual bool remove(const T& element) = 0;
+	virtual bool remove(const T &element) = 0;
 
 	/**
 	 * Removes an a ListNode from ConcurrentList.
@@ -220,7 +222,7 @@ public:
 	 * @return TRUE, the list contains the element; FALSE, the list does not
 	 * contain the element.
 	 */
-	virtual bool contains(const T& element) const = 0;
+	virtual bool contains(const T &element) const = 0;
 
 	/**
 	 * Checks if ConcurrentList contains a ListNode.
@@ -249,10 +251,10 @@ public:
 	ListIterator<T, DerivedNode> unsafeEnd() const;
 
 	/**
-	* Returns the size of ConcurrentList.
-	*
-	* @return std::size_t The size.
-	*/
+	 * Returns the size of ConcurrentList.
+	 *
+	 * @return std::size_t The size.
+	 */
 	virtual size_t size() const = 0;
 
 	/**
@@ -263,50 +265,51 @@ public:
 	size_t unsafeSize() const;
 
 	/**
-	* Check whether ConcurrentList is empty or not.
-	*
-	* @return TRUE if empty; FALSE if not empty.
-	*/
+	 * Check whether ConcurrentList is empty or not.
+	 *
+	 * @return TRUE if empty; FALSE if not empty.
+	 */
 	bool isEmpty() const;
-	
+
 	virtual void clear() = 0;
 
 	/**
-	* Clears all ConcurrentList's ListNodes and deallocates their memory.
-	*/
+	 * Clears all ConcurrentList's ListNodes and deallocates their memory.
+	 */
 	void unsafeClear();
-	
+
 	/**
 	 * Destructor.
 	 */
 	~IConcurrentList() { unsafeClear(); }
-protected:
+
+  protected:
 	/**
 	 * Copy constructor helper for empty calling ConcurrentList.
 	 */
-	void copyCallingListEmpty(const IConcurrentList<T, DerivedNode>& other);
+	void copyCallingListEmpty(const IConcurrentList<T, DerivedNode> &other);
 
 	/**
 	 * Copy constructor helper for same length ConcurrentLists.
 	 */
-	void copyListsSameLength(const IConcurrentList<T, DerivedNode>& other);
+	void copyListsSameLength(const IConcurrentList<T, DerivedNode> &other);
 
 	/**
 	 * Copy constructor helper for longer calling ConcurrentList.
 	 */
-	void copyCallingListLonger(const IConcurrentList<T, DerivedNode>& other);
+	void copyCallingListLonger(const IConcurrentList<T, DerivedNode> &other);
 
 	/**
 	 * Copy constructor helper for shorter calling ConcurrentList.
 	 */
-	void copyCallingListShorter(const IConcurrentList<T, DerivedNode>& other);
+	void copyCallingListShorter(const IConcurrentList<T, DerivedNode> &other);
 
 	virtual bool unlink(const ListNodeT *node) = 0;
 
 	/**
-	* Searches for an element and returns the node that contains it.
-	*/
-	virtual const ListNodeT* search(const T& element) const = 0;
+	 * Searches for an element and returns the node that contains it.
+	 */
+	virtual const ListNodeT *search(const T &element) const = 0;
 
 	ListNodeT *_head;
 	ListNodeT *_tail;
@@ -317,99 +320,97 @@ protected:
 };
 
 /**
-* @class ListNode<T>
-* IConcurrentList Node.
-*
-* CoarseConcurrentList Node - relies on global list lock.
-*/
-template <typename T>
-struct CoarseListNode {
+ * @class ListNode<T>
+ * IConcurrentList Node.
+ *
+ * CoarseConcurrentList Node - relies on global list lock.
+ */
+template <typename T> struct CoarseListNode {
 	T ele;
 	CoarseListNode *next;
 	CoarseListNode *prev;
-	
-	CoarseListNode(const T& ele) :
-	   ele(ele), next(nullptr), prev(nullptr) {}
-	CoarseListNode(const T& ele, CoarseListNode<T> *next, CoarseListNode *prev) :
-		ele(ele), next(next), prev(prev) {}
-	~CoarseListNode() = default;	
+
+	CoarseListNode(const T &ele) : ele(ele), next(nullptr), prev(nullptr) {}
+	CoarseListNode(const T &ele, CoarseListNode<T> *next, CoarseListNode *prev)
+		: ele(ele), next(next), prev(prev) {}
+	~CoarseListNode() = default;
 };
 
 /**
-* @class ConcurrentList<T>
-* CoarseConcurrentList, specialized as a Queue to be used for keeping track of order
-* in LRU CacheManager.
-*/
+ * @class ConcurrentList<T>
+ * CoarseConcurrentList, specialized as a Queue to be used for keeping track of
+ * order in LRU CacheManager.
+ */
 template <typename T>
 class CoarseConcurrentList : public IConcurrentList<T, CoarseListNode<T>> {
-public:
+  public:
 	using ListNodeT = CoarseListNode<T>;
 	CoarseConcurrentList() : IConcurrentList<T, CoarseListNode<T>>() {}
 	std::optional<T> popFront() override;
 	std::optional<T> popBack() override;
-	const CoarseListNode<T>* pushFront(const T& element) override;
-	const CoarseListNode<T>* pushBack(const T& element) override;
+	const CoarseListNode<T> *pushFront(const T &element) override;
+	const CoarseListNode<T> *pushBack(const T &element) override;
 	std::optional<T> get(const ListNodeT *node) override;
-	const ListNodeT* get(const T& element) override;
-	bool remove(const T& element) override;
+	const ListNodeT *get(const T &element) override;
+	bool remove(const T &element) override;
 	bool remove(const ListNodeT *node) override;
 	bool removeAndPushFront(const ListNodeT *node) override;
-	bool contains(const T& element) const override;
+	bool contains(const T &element) const override;
 	bool contains(const ListNodeT *node) const override;
 	size_t size() const override;
 	void clear() override;
-protected:
+
+  protected:
 	bool unlink(const ListNodeT *node) override;
-	const ListNodeT* search(const T& element) const override;
+	const ListNodeT *search(const T &element) const override;
 };
 
 /**
-* @class ListNode<T>
-*
-* FineConcurrentList Node - hand-over-hand per node lock.
-*/
-template <typename T>
-struct FineListNode {
+ * @class ListNode<T>
+ *
+ * FineConcurrentList Node - hand-over-hand per node lock.
+ */
+template <typename T> struct FineListNode {
 	T ele;
 	FineListNode *next;
 	FineListNode *prev;
 	mutable std::shared_mutex mtx;
-	
-	FineListNode(const T& ele) :
-	   ele(ele), next(nullptr), prev(nullptr) {}
-	FineListNode(const T& ele, FineListNode<T> *next, FineListNode *prev) :
-		ele(ele), next(next), prev(prev) {}
-	~FineListNode() = default;	
+
+	FineListNode(const T &ele) : ele(ele), next(nullptr), prev(nullptr) {}
+	FineListNode(const T &ele, FineListNode<T> *next, FineListNode *prev)
+		: ele(ele), next(next), prev(prev) {}
+	~FineListNode() = default;
 };
 
 /**
-* @class ConcurrentList<T>
-* CoarseConcurrentList, specialized as a Queue to be used for keeping track of order
-* in LRU CacheManager.
-*/
+ * @class ConcurrentList<T>
+ * CoarseConcurrentList, specialized as a Queue to be used for keeping track of
+ * order in LRU CacheManager.
+ */
 template <typename T>
 class FineConcurrentList : public IConcurrentList<T, FineListNode<T>> {
-public:
+  public:
 	using ListNodeT = FineListNode<T>;
 	FineConcurrentList() : IConcurrentList<T, FineListNode<T>>() {}
 	std::optional<T> popFront() override;
 	std::optional<T> popBack() override;
-	const FineListNode<T>* pushFront(const T& element) override;
-	const FineListNode<T>* pushBack(const T& element) override;
+	const FineListNode<T> *pushFront(const T &element) override;
+	const FineListNode<T> *pushBack(const T &element) override;
 	std::optional<T> get(const ListNodeT *node) override;
-	const FineListNode<T>* get(const T& element) override;
-	bool remove(const T& element) override;
+	const FineListNode<T> *get(const T &element) override;
+	bool remove(const T &element) override;
 	bool remove(const ListNodeT *node) override;
 	bool removeAndPushFront(const ListNodeT *node) override;
-	bool contains(const T& element) const override;
+	bool contains(const T &element) const override;
 	bool contains(const ListNodeT *node) const override;
 	size_t size() const override;
 	void clear() override;
-protected:
+
+  protected:
 	bool unlink(const ListNodeT *node) override;
-	const ListNodeT* search(const T& element) const override;
+	const ListNodeT *search(const T &element) const override;
 };
-}
-#include "concurrent-list-impl.hpp"
+} // namespace cm
 #include "coarse-concurrent-list-impl.hpp"
+#include "concurrent-list-impl.hpp"
 #include "fine-concurrent-list-impl.hpp"

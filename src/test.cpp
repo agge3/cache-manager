@@ -9,15 +9,15 @@
  * Tests correctness and performance under various concurrent workloads.
  */
 
-#include <gtest/gtest.h>
 #include <chrono>
+#include <gtest/gtest.h>
+#include <iomanip>
+#include <iostream>
+#include <mutex>
 #include <random>
+#include <set>
 #include <thread>
 #include <vector>
-#include <iostream>
-#include <set>
-#include <mutex>
-#include <iomanip>
 
 import concurrent_list;
 
@@ -33,7 +33,7 @@ struct PerfMetrics {
 };
 
 class HandOverHandListTest : public ::testing::Test {
-protected:
+  protected:
 	HandOverHandList<int> list;
 	int initialSize = 1000;
 	int opsPerThread = 500;
@@ -43,18 +43,19 @@ protected:
 	std::mutex expectedMutex;
 
 	void populateList(int n) {
-		std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+		std::mt19937 rng(
+			std::chrono::steady_clock::now().time_since_epoch().count());
 		std::uniform_int_distribution<int> dist(1, n * 10);
 		for (int i = 0; i < n; ++i) {
 			int val = dist(rng);
-			if (this->list.insert(val)) {  // Only count successful inserts
+			if (this->list.insert(val)) { // Only count successful inserts
 				std::lock_guard<std::mutex> lock(this->expectedMutex);
 				this->expectedValues.insert(val);
 			}
 		}
 	}
 
-	void PrintMetrics(const std::string& testName) {
+	void PrintMetrics(const std::string &testName) {
 		std::cout << "\n" << std::string(70, '=') << "\n";
 		std::cout << "Test: " << testName << "\n";
 		std::cout << std::string(70, '=') << "\n";
@@ -64,10 +65,14 @@ protected:
 				  << " (success: " << metrics.insertSuccessCount << ")\n";
 		std::cout << "Remove operations: " << metrics.removeCount
 				  << " (success: " << metrics.removeSuccessCount << ")\n";
-		double insertSuccessRate = metrics.insertCount > 0
-			? (100.0 * metrics.insertSuccessCount / metrics.insertCount) : 0;
-		double removeSuccessRate = metrics.removeCount > 0
-			? (100.0 * metrics.removeSuccessCount / metrics.removeCount) : 0;
+		double insertSuccessRate =
+			metrics.insertCount > 0
+				? (100.0 * metrics.insertSuccessCount / metrics.insertCount)
+				: 0;
+		double removeSuccessRate =
+			metrics.removeCount > 0
+				? (100.0 * metrics.removeSuccessCount / metrics.removeCount)
+				: 0;
 		std::cout << "Insert success rate: " << insertSuccessRate << "%\n";
 		std::cout << "Remove success rate: " << removeSuccessRate << "%\n";
 		std::cout << "Final list size: " << list.size() << "\n";
@@ -106,7 +111,9 @@ TEST_F(HandOverHandListTest, ConcurrentRandomInsertRemoveWithVerification) {
 
 	for (int t = 0; t < this->numThreads; ++t) {
 		threads.emplace_back([&, t]() {
-			std::mt19937 rng(t + std::chrono::steady_clock::now().time_since_epoch().count());
+			std::mt19937 rng(
+				t +
+				std::chrono::steady_clock::now().time_since_epoch().count());
 			std::uniform_int_distribution<int> dist(1, this->initialSize * 2);
 
 			for (int i = 0; i < this->opsPerThread; ++i) {
@@ -119,7 +126,8 @@ TEST_F(HandOverHandListTest, ConcurrentRandomInsertRemoveWithVerification) {
 					if (success) {
 						this->metrics.insertSuccessCount++;
 						{
-							std::lock_guard<std::mutex> lock(this->expectedMutex);
+							std::lock_guard<std::mutex> lock(
+								this->expectedMutex);
 							this->expectedValues.insert(val);
 						}
 					}
@@ -130,7 +138,8 @@ TEST_F(HandOverHandListTest, ConcurrentRandomInsertRemoveWithVerification) {
 					if (success) {
 						this->metrics.removeSuccessCount++;
 						{
-							std::lock_guard<std::mutex> lock(this->expectedMutex);
+							std::lock_guard<std::mutex> lock(
+								this->expectedMutex);
 							this->expectedValues.erase(val);
 						}
 					}
@@ -139,9 +148,11 @@ TEST_F(HandOverHandListTest, ConcurrentRandomInsertRemoveWithVerification) {
 		});
 	}
 
-	for (auto &th : threads) th.join();
+	for (auto &th : threads)
+		th.join();
 	auto end = std::chrono::steady_clock::now();
-	this->metrics.totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	this->metrics.totalTime =
+		std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
 	// Critical: Verify final state matches expected
 	EXPECT_EQ(this->list.size(), this->expectedValues.size())
@@ -183,7 +194,8 @@ TEST_F(HandOverHandListTest, HighContentionSameRange) {
 					if (success) {
 						this->metrics.insertSuccessCount++;
 						{
-							std::lock_guard<std::mutex> lock(this->expectedMutex);
+							std::lock_guard<std::mutex> lock(
+								this->expectedMutex);
 							this->expectedValues.insert(val);
 						}
 					}
@@ -193,7 +205,8 @@ TEST_F(HandOverHandListTest, HighContentionSameRange) {
 					if (success) {
 						this->metrics.removeSuccessCount++;
 						{
-							std::lock_guard<std::mutex> lock(this->expectedMutex);
+							std::lock_guard<std::mutex> lock(
+								this->expectedMutex);
 							this->expectedValues.erase(val);
 						}
 					}
@@ -202,9 +215,11 @@ TEST_F(HandOverHandListTest, HighContentionSameRange) {
 		});
 	}
 
-	for (auto &th : threads) th.join();
+	for (auto &th : threads)
+		th.join();
 	auto end = std::chrono::steady_clock::now();
-	this->metrics.totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	this->metrics.totalTime =
+		std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
 	EXPECT_EQ(this->list.size(), this->expectedValues.size())
 		<< "Final list size must match expected values under high contention";
@@ -228,8 +243,11 @@ TEST_F(HandOverHandListTest, InsertHeavyWorkload) {
 
 	for (int t = 0; t < this->numThreads; ++t) {
 		threads.emplace_back([&, t]() {
-			std::mt19937 rng(t + std::chrono::steady_clock::now().time_since_epoch().count());
-			std::uniform_int_distribution<int> dist(this->initialSize, this->initialSize * 100);
+			std::mt19937 rng(
+				t +
+				std::chrono::steady_clock::now().time_since_epoch().count());
+			std::uniform_int_distribution<int> dist(this->initialSize,
+													this->initialSize * 100);
 
 			for (int i = 0; i < this->opsPerThread; ++i) {
 				int val = dist(rng);
@@ -246,9 +264,11 @@ TEST_F(HandOverHandListTest, InsertHeavyWorkload) {
 		});
 	}
 
-	for (auto &th : threads) th.join();
+	for (auto &th : threads)
+		th.join();
 	auto end = std::chrono::steady_clock::now();
-	this->metrics.totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	this->metrics.totalTime =
+		std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
 	EXPECT_EQ(this->list.size(), this->expectedValues.size());
 	EXPECT_GT(this->list.size(), (size_t)this->initialSize);
@@ -266,7 +286,9 @@ TEST_F(HandOverHandListTest, RemoveHeavyWorkload) {
 
 	for (int t = 0; t < this->numThreads; ++t) {
 		threads.emplace_back([&, t]() {
-			std::mt19937 rng(t + std::chrono::steady_clock::now().time_since_epoch().count());
+			std::mt19937 rng(
+				t +
+				std::chrono::steady_clock::now().time_since_epoch().count());
 			std::uniform_int_distribution<int> dist(1, this->initialSize * 2);
 
 			for (int i = 0; i < this->opsPerThread; ++i) {
@@ -284,9 +306,11 @@ TEST_F(HandOverHandListTest, RemoveHeavyWorkload) {
 		});
 	}
 
-	for (auto &th : threads) th.join();
+	for (auto &th : threads)
+		th.join();
 	auto end = std::chrono::steady_clock::now();
-	this->metrics.totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	this->metrics.totalTime =
+		std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
 	EXPECT_EQ(this->list.size(), this->expectedValues.size());
 	EXPECT_LT(this->list.size(), (size_t)(this->initialSize * 2));
@@ -324,7 +348,9 @@ TEST_F(HandOverHandListTest, StressTestMaxConcurrency) {
 
 	for (int t = 0; t < stressThreads; ++t) {
 		threads.emplace_back([&, t]() {
-			std::mt19937 rng(t + std::chrono::steady_clock::now().time_since_epoch().count());
+			std::mt19937 rng(
+				t +
+				std::chrono::steady_clock::now().time_since_epoch().count());
 			std::uniform_int_distribution<int> dist(1, this->initialSize * 3);
 
 			for (int i = 0; i < stressOpsPerThread; ++i) {
@@ -340,9 +366,11 @@ TEST_F(HandOverHandListTest, StressTestMaxConcurrency) {
 		});
 	}
 
-	for (auto &th : threads) th.join();
+	for (auto &th : threads)
+		th.join();
 	auto end = std::chrono::steady_clock::now();
-	this->metrics.totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	this->metrics.totalTime =
+		std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
 	// Just verify it didn't crash and size is reasonable
 	EXPECT_GE(this->list.size(), 0);
@@ -355,13 +383,15 @@ TEST_F(HandOverHandListTest, StressTestMaxConcurrency) {
 TEST_F(HandOverHandListTest, ListConsistency) {
 	this->ResetMetrics();
 	this->populateList(this->initialSize);
-	
+
 	auto start = std::chrono::steady_clock::now();
 	std::vector<std::thread> threads;
 
 	for (int t = 0; t < this->numThreads; ++t) {
 		threads.emplace_back([&, t]() {
-			std::mt19937 rng(t + std::chrono::steady_clock::now().time_since_epoch().count());
+			std::mt19937 rng(
+				t +
+				std::chrono::steady_clock::now().time_since_epoch().count());
 			std::uniform_int_distribution<int> dist(1, this->initialSize * 2);
 
 			for (int i = 0; i < this->opsPerThread; ++i) {
@@ -375,9 +405,11 @@ TEST_F(HandOverHandListTest, ListConsistency) {
 		});
 	}
 
-	for (auto &th : threads) th.join();
+	for (auto &th : threads)
+		th.join();
 	auto end = std::chrono::steady_clock::now();
-	this->metrics.totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	this->metrics.totalTime =
+		std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
 	// Verify list structure is valid
 	EXPECT_TRUE(this->list.isConsistent())

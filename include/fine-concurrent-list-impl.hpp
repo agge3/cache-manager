@@ -10,8 +10,8 @@
 
 #include <algorithm>
 #include <atomic>
-#include <iostream>
 #include <exception>
+#include <iostream>
 #include <mutex>
 #include <shared_mutex>
 
@@ -19,56 +19,54 @@ using namespace cm;
 
 // need to inline to not lose lock, while reusing code (like a function call)
 // wrapper in a lamda, so it's an expression.
-#define POP_FRONT \
-	([&]() -> std::optional<T> {	\
-		if (!this->_head) {	\
-			return std::nullopt;	\
-		}	\
-			\
-		if (this->_head == this->_tail) {	\
-			T ele = this->_head->ele;	\
-			delete this->_head;	\
-			this->_head = this->_tail = nullptr;	\
-			this->_size = 0;	\
-			return std::optional<T>(ele);	\
-		}	\
-	\
-		T ele = this->_head->ele;	\
-		auto tmp = this->_head;	\
-		this->_head = this->_head->next;	\
-		this->_head->prev = nullptr;	\
-		delete tmp;	\
-		tmp = nullptr;	\
-		--this->_size;	\
-		return std::optional<T>(ele);	\
+#define POP_FRONT                                                              \
+	([&]() -> std::optional<T> {                                               \
+		if (!this->_head) {                                                    \
+			return std::nullopt;                                               \
+		}                                                                      \
+                                                                               \
+		if (this->_head == this->_tail) {                                      \
+			T ele = this->_head->ele;                                          \
+			delete this->_head;                                                \
+			this->_head = this->_tail = nullptr;                               \
+			this->_size = 0;                                                   \
+			return std::optional<T>(ele);                                      \
+		}                                                                      \
+                                                                               \
+		T ele = this->_head->ele;                                              \
+		auto tmp = this->_head;                                                \
+		this->_head = this->_head->next;                                       \
+		this->_head->prev = nullptr;                                           \
+		delete tmp;                                                            \
+		tmp = nullptr;                                                         \
+		--this->_size;                                                         \
+		return std::optional<T>(ele);                                          \
 	})()
-#define POP_BACK	\
-	([&]() -> std::optional<T> {	\
-		if (!this->_tail) {	\
-			return std::nullopt;	\
-		}	\
-			\
-		if (this->_head == this->_tail) {	\
-			T ele = this->_tail->ele;	\
-			delete this->_tail;	\
-			this->_head = this->_tail = nullptr;	\
-			this->_size = 0;	\
-			return std::optional<T>(ele);	\
-		}	\
-		\
-		T ele = this->_tail->ele;	\
-		auto tmp = this->_tail;	\
-		this->_tail = this->_tail->prev;	\
-		this->_tail->next = nullptr;	\
-		delete tmp;	\
-		tmp = nullptr;	\
-		--this->_size;	\
-		return std::optional<T>(ele);	\
+#define POP_BACK                                                               \
+	([&]() -> std::optional<T> {                                               \
+		if (!this->_tail) {                                                    \
+			return std::nullopt;                                               \
+		}                                                                      \
+                                                                               \
+		if (this->_head == this->_tail) {                                      \
+			T ele = this->_tail->ele;                                          \
+			delete this->_tail;                                                \
+			this->_head = this->_tail = nullptr;                               \
+			this->_size = 0;                                                   \
+			return std::optional<T>(ele);                                      \
+		}                                                                      \
+                                                                               \
+		T ele = this->_tail->ele;                                              \
+		auto tmp = this->_tail;                                                \
+		this->_tail = this->_tail->prev;                                       \
+		this->_tail->next = nullptr;                                           \
+		delete tmp;                                                            \
+		tmp = nullptr;                                                         \
+		--this->_size;                                                         \
+		return std::optional<T>(ele);                                          \
 	})()
 
-template <typename T>
-std::size_t FineConcurrentList<T>::size() const
-{
+template <typename T> std::size_t FineConcurrentList<T>::size() const {
 	std::shared_lock<std::shared_mutex> rg(this->_mutex);
 
 	size_t size = 0;
@@ -87,8 +85,8 @@ std::size_t FineConcurrentList<T>::size() const
 }
 
 template <typename T>
-const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::pushFront(const T& element)
-{
+const typename FineConcurrentList<T>::ListNodeT *
+FineConcurrentList<T>::pushFront(const T &element) {
 	// heap allocate before write lock to optimize allocation out of
 	// critical section
 	auto *ptr = new typename FineConcurrentList<T>::ListNodeT(element);
@@ -116,16 +114,14 @@ const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::pushFron
 	return this->_head;
 }
 
-template <typename T>
-std::optional<T> FineConcurrentList<T>::popFront()
-{
+template <typename T> std::optional<T> FineConcurrentList<T>::popFront() {
 	std::unique_lock<std::shared_mutex> wg(this->_mutex);
 	return POP_FRONT;
 }
 
 template <typename T>
-const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::pushBack(const T& element)
-{
+const typename FineConcurrentList<T>::ListNodeT *
+FineConcurrentList<T>::pushBack(const T &element) {
 	// heap allocate before write lock to optimize allocation out of
 	// critical section
 	auto *ptr = new typename FineConcurrentList<T>::ListNodeT(element);
@@ -133,7 +129,7 @@ const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::pushBack
 	std::unique_lock<std::shared_mutex> wg(this->_mutex);
 	if (!this->_head) {
 		this->_head = this->_tail = ptr;
-		++this->_size;	// Increment this->_size, node has been added.
+		++this->_size; // Increment this->_size, node has been added.
 		return this->_head;
 	}
 
@@ -141,34 +137,30 @@ const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::pushBack
 	ptr->prev = this->_tail;
 	this->_tail = ptr;
 
-	++this->_size;	// Increment this->_size, node has been added.
+	++this->_size; // Increment this->_size, node has been added.
 
 	ptr = nullptr;
 	return this->_tail;
 }
 
-template <typename T>
-std::optional<T> FineConcurrentList<T>::popBack()
-{
+template <typename T> std::optional<T> FineConcurrentList<T>::popBack() {
 	std::unique_lock<std::shared_mutex> wg(this->_mutex);
 	return POP_BACK;
 }
 
 template <typename T>
-const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::get(const T& element)
-{
+const typename FineConcurrentList<T>::ListNodeT *
+FineConcurrentList<T>::get(const T &element) {
 	return search(element);
 }
 
 template <typename T>
-std::optional<T> FineConcurrentList<T>::get(const typename FineConcurrentList<T>::ListNodeT *ptr)
-{
+std::optional<T> FineConcurrentList<T>::get(
+	const typename FineConcurrentList<T>::ListNodeT *ptr) {
 	return !ptr ? std::nullopt : std::optional<T>(ptr->ele);
 }
 
-template <typename T>
-bool FineConcurrentList<T>::remove(const T& element)
-{
+template <typename T> bool FineConcurrentList<T>::remove(const T &element) {
 	// fast checks under global lock (write lock because head/tail check is
 	// cheap and modification can occur in same operation):
 	{
@@ -192,7 +184,9 @@ bool FineConcurrentList<T>::remove(const T& element)
 	// NOTE: Handled head and tail, so safe to assume `size() > 2`.
 
 	// General case:
-	typename FineConcurrentList<T>::ListNodeT *node = const_cast<typename FineConcurrentList<T>::ListNodeT*>(search(element));
+	typename FineConcurrentList<T>::ListNodeT *node =
+		const_cast<typename FineConcurrentList<T>::ListNodeT *>(
+			search(element));
 	if (!node) {
 		return false;
 	}
@@ -208,8 +202,8 @@ bool FineConcurrentList<T>::remove(const T& element)
 }
 
 template <typename T>
-bool FineConcurrentList<T>::remove(const typename FineConcurrentList<T>::ListNodeT *node)
-{
+bool FineConcurrentList<T>::remove(
+	const typename FineConcurrentList<T>::ListNodeT *node) {
 	if (!node) {
 		return false;
 	}
@@ -239,7 +233,8 @@ bool FineConcurrentList<T>::remove(const typename FineConcurrentList<T>::ListNod
 
 	// General case:
 	// Already handled head and tail, so safe to assume `size() > 2`.
-	typename FineConcurrentList<T>::ListNodeT *n = const_cast<typename FineConcurrentList<T>::ListNodeT*>(node);
+	typename FineConcurrentList<T>::ListNodeT *n =
+		const_cast<typename FineConcurrentList<T>::ListNodeT *>(node);
 
 	unlink(n);
 	delete n;
@@ -252,12 +247,13 @@ bool FineConcurrentList<T>::remove(const typename FineConcurrentList<T>::ListNod
 }
 
 template <typename T>
-bool FineConcurrentList<T>::removeAndPushFront(const typename FineConcurrentList<T>::ListNodeT *node) {
+bool FineConcurrentList<T>::removeAndPushFront(
+	const typename FineConcurrentList<T>::ListNodeT *node) {
 	if (!node) {
 		return false;
 	}
 
-	auto *mut = const_cast<typename FineConcurrentList<T>::ListNodeT*>(node);
+	auto *mut = const_cast<typename FineConcurrentList<T>::ListNodeT *>(node);
 	// check if already at front under read lock, before releasing to rely on
 	// hand-over-hand locks in middle of list:
 	// xxx does this actually increase performance? these operations might be so
@@ -287,20 +283,20 @@ bool FineConcurrentList<T>::removeAndPushFront(const typename FineConcurrentList
 }
 
 template <typename T>
-bool FineConcurrentList<T>::unlink(const typename FineConcurrentList<T>::ListNodeT *node)
-{
+bool FineConcurrentList<T>::unlink(
+	const typename FineConcurrentList<T>::ListNodeT *node) {
 	// Validate node before locking:
 	if (!node) {
 		return false;
 	}
 
 	// Cast away the client's const, we're in our owned instance.
-	auto *mut = const_cast<typename FineConcurrentList<T>::ListNodeT*>(node);
+	auto *mut = const_cast<typename FineConcurrentList<T>::ListNodeT *>(node);
 
 	// Handle head and tail:
 	{
 		std::unique_lock<std::shared_mutex> wg(this->_mutex);
-		if (!this->_head) {	// empty list
+		if (!this->_head) { // empty list
 			return false;
 		}
 		if (!this->_head->next) {
@@ -336,8 +332,8 @@ bool FineConcurrentList<T>::unlink(const typename FineConcurrentList<T>::ListNod
 }
 
 template <typename T>
-const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::search(const T& element) const
-{
+const typename FineConcurrentList<T>::ListNodeT *
+FineConcurrentList<T>::search(const T &element) const {
 	std::shared_lock g{this->_mutex};
 	// Guard if list is empty.
 	if (!this->_head) {
@@ -385,14 +381,13 @@ const typename FineConcurrentList<T>::ListNodeT* FineConcurrentList<T>::search(c
 }
 
 template <typename T>
-bool FineConcurrentList<T>::contains(const T& element) const
-{
+bool FineConcurrentList<T>::contains(const T &element) const {
 	return search(element);
 }
 
 template <typename T>
-bool FineConcurrentList<T>::contains(const typename FineConcurrentList<T>::ListNodeT *ptr) const
-{
+bool FineConcurrentList<T>::contains(
+	const typename FineConcurrentList<T>::ListNodeT *ptr) const {
 	if (!ptr) {
 		return false;
 	}
@@ -430,13 +425,11 @@ bool FineConcurrentList<T>::contains(const typename FineConcurrentList<T>::ListN
 	return false;
 }
 
-template <typename T>
-void FineConcurrentList<T>::clear()
-{
+template <typename T> void FineConcurrentList<T>::clear() {
 	// Need exclusive control over list when modifying
 	std::unique_lock<std::shared_mutex> g{this->_mutex};
 
-	typename FineConcurrentList<T>::ListNodeT* curr = this->_head;
+	typename FineConcurrentList<T>::ListNodeT *curr = this->_head;
 	while (curr) {
 		typename FineConcurrentList<T>::ListNodeT *next = curr->next;
 		delete curr;
