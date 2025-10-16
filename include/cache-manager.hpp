@@ -10,12 +10,12 @@
 #include <exception>
 #include <format>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <utility>
-#include <iostream>
 
 #define NDEBUG 1
 
@@ -98,19 +98,16 @@ struct TbbBench {
 	}
 };
 
-template <typename BenchT> Benchmark benchmark() {
-	return BenchT::aggregate();
-}
+template <typename BenchT> Benchmark benchmark() { return BenchT::aggregate(); }
 
-void printBenchmark(const Benchmark& bm) {
+void printBenchmark(const Benchmark &bm) {
 	std::cout << "hits:\t" << bm.hits << "\n"
-		<< "misses:\t" << bm.misses << "\n"
-		<< "evictions:\t" << bm.evictions << "\n"
-		<< "hit ratio:\t" << bm.hit_ratio << "\n";
+			  << "misses:\t" << bm.misses << "\n"
+			  << "evictions:\t" << bm.evictions << "\n"
+			  << "hit ratio:\t" << bm.hit_ratio << "\n";
 }
 
-void writeBenchmark(const Benchmark &bm) {
-}
+void writeBenchmark(const Benchmark &bm) {}
 
 template <typename K, typename V>
 using ListEntry = std::pair<K, V>; // cache key, cache value
@@ -196,7 +193,7 @@ class CacheManager {
 	bool add(const K &key, const V &value) {
 		// xxx can be more fine-grained. was causing races
 		{
-			std::lock_guard<std::mutex> g(_mutex);	// locked here
+			std::lock_guard<std::mutex> g(_mutex); // locked here
 			auto it = _map.find(key);
 			if (it != _map.end()) {
 				// update
@@ -210,7 +207,7 @@ class CacheManager {
 			}
 
 			auto node = _cache.pushFront(ListEntry<K, V>{key, value});
-			_map.insert({key, node});	// xxx th
+			_map.insert({key, node}); // xxx th
 			_sorted.insert(node);
 			BenchT::miss();
 		}
@@ -243,7 +240,7 @@ class CacheManager {
 		}
 #endif
 		std::lock_guard<std::mutex> g(_mutex);
-		auto it = _map.find(key);	// xxx th
+		auto it = _map.find(key); // xxx th
 		if (it != _map.end()) {
 			BenchT::hit();
 			return true;

@@ -127,8 +127,8 @@ TEST_F(CacheManagerTest, ConcurrentPutsAndGets) {
 				EXPECT_FALSE(empty);
 				EXPECT_TRUE(size > 0);
 
-				//auto remove = cache.remove(key);
-				//EXPECT_EQ(remove, true);
+				// auto remove = cache.remove(key);
+				// EXPECT_EQ(remove, true);
 				EXPECT_FALSE(cache.contains(key));
 			} else {
 				EXPECT_EQ(contains, false);
