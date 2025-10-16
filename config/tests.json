@@ -1,9 +1,10 @@
 {
   "tests": [
     {
-      "name": "basic_operations_single_thread",
+      "name": "basic_single_thread",
       "threads": 1,
-      "iter": 100,
+      "iter": 1000,
+      "capacity": 100,
       "functions": ["add", "get", "contains", "remove"],
       "distr": {
         "type": "int",
@@ -14,10 +15,11 @@
       }
     },
     {
-      "name": "concurrent_reads_low_contention",
+      "name": "read_heavy_low_contention",
       "threads": 4,
-      "iter": 1000,
-      "functions": ["get", "contains"],
+      "iter": 5000,
+      "capacity": 500,
+      "functions": ["get", "get", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "normal",
@@ -27,49 +29,53 @@
       }
     },
     {
-      "name": "concurrent_reads_high_contention",
+      "name": "read_heavy_high_contention",
       "threads": 16,
       "iter": 10000,
-      "functions": ["get", "contains"],
+      "capacity": 100,
+      "functions": ["get", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "normal",
-        "count": 100,
-        "min": 0,
-        "max": 50
-      }
-    },
-    {
-      "name": "concurrent_writes_low_contention",
-      "threads": 4,
-      "iter": 1000,
-      "functions": ["add"],
-      "distr": {
-        "type": "int",
-        "gen": "uniform",
-        "count": 1000,
-        "min": 0,
-        "max": 10000
-      }
-    },
-    {
-      "name": "concurrent_writes_high_contention",
-      "threads": 16,
-      "iter": 5000,
-      "functions": ["add"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 200,
+        "count": 50,
         "min": 0,
         "max": 100
       }
     },
     {
-      "name": "mixed_read_write_balanced",
+      "name": "write_heavy_low_contention",
+      "threads": 4,
+      "iter": 5000,
+      "capacity": 1000,
+      "functions": ["add", "add", "add"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 2000,
+        "min": 0,
+        "max": 20000
+      }
+    },
+    {
+      "name": "write_heavy_high_contention",
+      "threads": 16,
+      "iter": 10000,
+      "capacity": 200,
+      "functions": ["add", "add", "add"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 100,
+        "min": 0,
+        "max": 200
+      }
+    },
+    {
+      "name": "balanced_workload",
       "threads": 8,
       "iter": 5000,
-      "functions": ["add", "get", "contains"],
+      "capacity": 500,
+      "functions": ["add", "get", "contains", "remove"],
       "distr": {
         "type": "int",
         "gen": "normal",
@@ -79,61 +85,66 @@
       }
     },
     {
-      "name": "mixed_read_write_read_heavy",
+      "name": "eviction_pressure_small_cache",
       "threads": 8,
       "iter": 10000,
-      "functions": ["get", "get", "get", "add"],
+      "capacity": 50,
+      "functions": ["add", "add", "get"],
       "distr": {
         "type": "int",
-        "gen": "normal",
-        "count": 300,
+        "gen": "uniform",
+        "count": 200,
         "min": 0,
         "max": 500
       }
     },
     {
-      "name": "mixed_read_write_write_heavy",
-      "threads": 8,
-      "iter": 5000,
-      "functions": ["add", "add", "add", "get"],
+      "name": "eviction_pressure_medium_cache",
+      "threads": 16,
+      "iter": 10000,
+      "capacity": 200,
+      "functions": ["add", "add", "get", "get"],
       "distr": {
         "type": "int",
-        "gen": "uniform",
-        "count": 400,
+        "gen": "normal",
+        "count": 500,
         "min": 0,
-        "max": 2000
+        "max": 1000
       }
     },
     {
-      "name": "eviction_stress_test",
+      "name": "remove_intensive",
       "threads": 8,
+      "iter": 5000,
+      "capacity": 300,
+      "functions": ["add", "remove", "remove", "get"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 300,
+        "min": 0,
+        "max": 600
+      }
+    },
+    {
+      "name": "churn_workload",
+      "threads": 16,
       "iter": 10000,
-      "functions": ["add", "add", "get"],
+      "capacity": 100,
+      "functions": ["add", "remove", "add", "remove"],
       "distr": {
         "type": "int",
         "gen": "uniform",
         "count": 100,
         "min": 0,
-        "max": 50
+        "max": 200
       }
     },
     {
-      "name": "remove_heavy_workload",
+      "name": "string_keys_balanced",
       "threads": 8,
       "iter": 5000,
-      "functions": ["add", "remove", "get"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 300,
-        "min": 0,
-        "max": 500
-      }
-    },
-    {
-      "name": "string_keys_concurrent",
-      "threads": 8,
-      "iter": 5000,
+      "capacity": 500,
       "functions": ["add", "get", "contains"],
       "distr": {
         "type": "string",
@@ -144,35 +155,66 @@
       }
     },
     {
-      "name": "high_thread_count_stress",
-      "threads": 32,
+      "name": "string_keys_high_contention",
+      "threads": 16,
       "iter": 10000,
-      "functions": ["add", "get"],
+      "capacity": 100,
+      "functions": ["add", "get", "get"],
+      "distr": {
+        "type": "string",
+        "gen": "normal",
+        "count": 50,
+        "min": 0,
+        "max": 25
+      }
+    },
+    {
+      "name": "double_values_balanced",
+      "threads": 8,
+      "iter": 5000,
+      "capacity": 500,
+      "functions": ["add", "get", "contains"],
+      "distr": {
+        "type": "double",
+        "gen": "normal",
+        "count": 500,
+        "min": 0,
+        "max": 1000
+      }
+    },
+    {
+      "name": "high_thread_stress",
+      "threads": 32,
+      "iter": 5000,
+      "capacity": 200,
+      "functions": ["add", "get", "get"],
       "distr": {
         "type": "int",
         "gen": "normal",
         "count": 200,
         "min": 0,
-        "max": 300
+        "max": 400
       }
     },
     {
-      "name": "cache_warmup_performance",
-      "threads": 1,
-      "iter": 1,
-      "functions": ["warmup"],
+      "name": "extreme_thread_stress",
+      "threads": 64,
+      "iter": 3000,
+      "capacity": 300,
+      "functions": ["add", "get"],
       "distr": {
         "type": "int",
-        "gen": "uniform",
-        "count": 10000,
+        "gen": "normal",
+        "count": 300,
         "min": 0,
-        "max": 100000
+        "max": 600
       }
     },
     {
-      "name": "sequential_operations",
+      "name": "sequential_heavy",
       "threads": 1,
-      "iter": 10000,
+      "iter": 20000,
+      "capacity": 1000,
       "functions": ["add", "get", "remove"],
       "distr": {
         "type": "int",
@@ -183,16 +225,59 @@
       }
     },
     {
-      "name": "double_values_concurrent",
-      "threads": 8,
-      "iter": 5000,
+      "name": "cache_thrashing_tiny",
+      "threads": 16,
+      "iter": 20000,
+      "capacity": 10,
       "functions": ["add", "get"],
       "distr": {
-        "type": "double",
+        "type": "int",
+        "gen": "uniform",
+        "count": 100,
+        "min": 0,
+        "max": 50
+      }
+    },
+    {
+      "name": "large_cache_light_load",
+      "threads": 4,
+      "iter": 5000,
+      "capacity": 10000,
+      "functions": ["add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 5000,
+        "min": 0,
+        "max": 50000
+      }
+    },
+    {
+      "name": "zipf_simulation_hot_keys",
+      "threads": 16,
+      "iter": 10000,
+      "capacity": 100,
+      "functions": ["get", "get", "get", "get", "add"],
+      "distr": {
+        "type": "int",
+        "gen": "normal",
+        "count": 20,
+        "min": 0,
+        "max": 50
+      }
+    },
+    {
+      "name": "mixed_operations_realistic",
+      "threads": 12,
+      "iter": 8000,
+      "capacity": 500,
+      "functions": ["add", "get", "get", "get", "contains", "remove"],
+      "distr": {
+        "type": "int",
         "gen": "normal",
         "count": 500,
         "min": 0,
-        "max": 1000
+        "max": 2000
       }
     }
   ]

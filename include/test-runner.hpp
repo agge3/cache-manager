@@ -52,7 +52,7 @@ template <typename T> class Distribution {
 		if constexpr (std::is_same_v<T, int>) {
 			_type = "int";
 			_emitFn = [this](double val) {
-				_data.push_back(static_cast<int>(val);
+				_data.push_back(static_cast<int>(val));
 			};
 		} else if constexpr (std::is_same_v<T, double>) {
 			_type = "double";
@@ -102,16 +102,18 @@ template <typename T> class Distribution {
 // behind TestCfgHandle.
 // @see makeTestCfg factory to make complete handle.
 struct TestCfg {
+	using TestFns = std::vector<std::string>;
 	size_t threads;
 	size_t iter;
 	size_t capacity;
+	std::string name;
 	DistrCfg distr_cfg;
 	std::any distr_data;
-	std::vector<std::function<void(std::any &)>> fns;
-	TestCfg(size_t threads, size_t iter, size_t capacity,
-			const DistrCfg &distr_cfg)
-		: threads(threads), iter(iter), capacity(capacity),
-		  distr_cfg(distr_cfg) {}
+	TestFns fns;
+	TestCfg(size_t threads, size_t iter, size_t capacity, const std::string &name
+			const DistrCfg &distr_cfg, const TestFns &fns)
+		: threads(threads), iter(iter), capacity(capacity), name(name),
+		  distr_cfg(distr_cfg), fns(fns) {}
 };
 
 // opaque pointer for storing different TestCfg template specializations
@@ -119,54 +121,33 @@ using TestCfgHandle = std::unique_ptr<TestCfg>;
 
 using TestCfgs = std::vector<TestCfgHandle>;
 
-TestCfgHandle makeTestCfg(size_t threads, size_t iter, size_t capacity,
-						  onst DistrCfg &distr_cfg,
+
+TestCfgHandle makeTestCfg(size_t threads, size_t iter, size_t capacity, const std::string &name,
+						  const DistrCfg &distr_cfg,
 						  std::vector<std::string> &fns) {
 	switch (distr_cfg.type) {
 	case DistrType::INT: {
-		std::vector<std::function<void(const std::vector<int> &)>> typed_fns;
-		for (const auto &f : fns) {
-			typed_fns.push_back([f](const std::vector<int> &v) {
-				f(const_cast<std::any &>(v));
-			});
-		}
 		auto test =
-			std::make_unique<TestCfg>(threads, iter, capacity, distr_cfg);
-		Distribution<int> dist(dist_cfg);
+			std::make_unique<TestCfg>(threads, iter, capacity, name, distr_cfg, fns);
+		Distribution<int> dist(distr_cfg);
 		dist.generate();
 		test->distr_data = dist.data();
-		test->fns = typed_fns;
 		return test;
 	}
 	case DistrType::DOUBLE: {
-		std::vector<std::function<void(const std::vector<double> &)>> typed_fns;
-		for (const auto &f : fns) {
-			typed_fns.push_back([f](const std::vector<double> &v) {
-				f(const_cast<std::any &>(v));
-			});
-		}
 		auto test =
-			std::make_unique<TestCfg>(threads, iter, capacity, distr_cfg);
-		Distribution<double> dist(dist_cfg);
+			std::make_unique<TestCfg>(threads, iter, capacity, name, distr_cfg, fns);
+		Distribution<double> dist(distr_cfg);
 		dist.generate();
 		test->distr_data = dist.data();
-		test->fns = typed_fns;
 		return test;
 	}
 	case DistrType::STRING: {
-		std::vector<std::function<void(const std::vector<std::string> &)>>
-			typed_fns;
-		for (const auto &f : fns) {
-			typed_fns.push_back([f](const std::vector<std::string> &v) {
-				f(const_cast<std::any &>(v));
-			});
-		}
 		auto test =
-			std::make_unique<TestCfg>(threads, iter, capacity, distr_cfg);
-		Distribution<std::string> dist(dist_cfg);
+			std::make_unique<TestCfg>(threads, iter, capacity, name, distr_cfg, fns);
+		Distribution<std::string> dist(distr_cfg);
 		dist.generate();
 		test->distr_data = dist.data();
-		test->fns = typed_fns;
 		return test;
 	}
 	default:
@@ -231,7 +212,7 @@ TestCfgs readConfig(const std::string &path) {
 			fns.push_back(f.get<std::string>());
 		}
 		DistrCfg distr_cfg = parseDistrCfg(t);
-		tests.push_back(makeTestCfg(threads, iter, capacity, distr_cfg, fns));
+		tests.push_back(makeTestCfg(threads, iter, capacity, name, distr_cfg, fns));
 	}
 
 	return tests;
@@ -265,29 +246,28 @@ class TestRunner {
 
   private:
 	template <typename T> void runTest(const TestCfg &test) {
-		cm::CacheManager<T, T, cm::TbbBench> cache(test.capacity);
 		const auto &data =
 			std::any_cast<const std::vector<T> &>(test.distr_data);
-		std::vector<T> keys = test.distr_data;
+		std::vector<T> keys = data;
 		size_t size = data.size();
 		std::reverse(keys.begin(), keys.end());
 		for (auto i = 0; i < test.iter; ++i) {
-
+			cm::CacheManager<T, T, cm::TbbBench> cache(test.capacity);
 			std::vector<std::thread> pool;
-			for (auto i = 0; i < test.threads; ++i) {
-				pool.emplace_back([&test]() {
+			for (auto j = 0; j < test.threads; ++j) {
+				pool.emplace_back([&]() {
 					for (const auto &f : test.fns) {
-						for (auto j = 0; j < size; ++j) {
-							T &key = keys[j];
-							T &val = data[j];
+						for (auto k = 0; k < size; ++k) {
+							T &key = keys[k];
+							T &val = data[k];
 							if (f == "add") {
 								auto res = cache.add(key, val);
 							} else if (f == "get") {
-								auto res = cache.get(key);
+								auto res = cache.getItem(key);
 							} else if (f == "contains") {
 								auto res = cache.contains(key);
 							} else if (f == "remove") {
-								auto res = cache.remove(key, val);
+								auto res = cache.remove(key);
 							} else {
 								std::cerr << "ERROR: invalid function in "
 											 "configuration: "
