@@ -6,7 +6,7 @@ project(cache-manager
 	DESCRIPTION "Cache Manager"
     LANGUAGES CXX)
 
-# Use CXX 17+.
+# Use CXX 20+.
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

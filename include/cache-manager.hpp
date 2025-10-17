@@ -17,6 +17,9 @@
 #include <optional>
 #include <unordered_map>
 #include <utility>
+#include <nlohmann/json.hpp>
+#include <fstream>
+#include <filesystem>
 
 #define NDEBUG 1
 
@@ -107,7 +110,35 @@ void printBenchmark(const Benchmark &bm) {
 			  << "hit ratio:\t" << bm.hit_ratio << "\n";
 }
 
-void writeBenchmark(const Benchmark &bm) {}
+void writeBenchmark(const Benchmark &bm) {
+	std::string filename = "benchmark.jsonl";
+	
+	int run_number = 1;
+	if (std::filesystem::exists(filename)) {
+		std::ifstream infile(filename);
+		std::string line;
+		while (std::getline(infile, line)) {
+			if (!line.empty()) {
+				run_number++;
+			}
+		}
+		infile.close();
+	}
+	
+	nlohmann::json bench;
+	
+	bench["run"] = run_number;
+	bench["hits"] = bm.hits;
+	bench["misses"] = bm.misses;
+	bench["evictions"] = bm.evictions;
+	bench["hit_ratio"] = bm.hit_ratio;
+
+	std::ofstream file(filename, std::ios::app);
+	if (file.is_open()) {
+		file << bench.dump() << "\n";
+		file.close();
+	}
+}
 
 template <typename K, typename V>
 using ListEntry = std::pair<K, V>; // cache key, cache value
