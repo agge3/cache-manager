@@ -1,6 +1,7 @@
 #pragma once
 
 #include "concurrent-list.hpp"
+#include "macros.hpp"
 
 #include <tbb/concurrent_set.h>
 #include <tbb/concurrent_unordered_map.h>
@@ -45,12 +46,11 @@ struct ThreadBench {
 	static thread_local Benchmark local_bench;
 
 	static void register_thread() {
-		static thread_local bool registered = [] {
+		[[maybe_unused]] static thread_local bool registered = [] {
 			std::lock_guard<std::mutex> g(registry_mutex);
 			registry.push_back(&local_bench);
 			return true;
 		}();
-		[[maybe_unused]] registered;
 	}
 
 	static inline void hit() {
@@ -101,8 +101,8 @@ struct TbbBench {
 template <typename BenchT> Benchmark benchmark() { return BenchT::aggregate(); }
 
 void printBenchmark(const Benchmark &bm) {
-	std::cout << "hits:\t" << bm.hits << "\n"
-			  << "misses:\t" << bm.misses << "\n"
+	std::cout << "hits:\t\t" << bm.hits << "\n"
+			  << "misses:\t\t" << bm.misses << "\n"
 			  << "evictions:\t" << bm.evictions << "\n"
 			  << "hit ratio:\t" << bm.hit_ratio << "\n";
 }
@@ -194,6 +194,7 @@ class CacheManager {
 		// xxx can be more fine-grained. was causing races
 		{
 			std::lock_guard<std::mutex> g(_mutex); // locked here
+			DPRINT("XXX add: ENTER");
 			auto it = _map.find(key);
 			if (it != _map.end()) {
 				// update
@@ -213,6 +214,9 @@ class CacheManager {
 		}
 
 		// loose lock check
+		std::lock_guard<std::mutex> g(_mutex);
+		DPRINT("_cache.size: {}", _cache.size());
+		DPRINT("_capacity: {}", _capacity);
 		if (_cache.size() >= _capacity) {
 			BenchT::eviction();
 			evict();
@@ -308,6 +312,7 @@ class CacheManager {
 	void evict() {
 		// atomic synchronization of containers
 		std::lock_guard<std::mutex> lk(_mutex);
+		DPRINT("XXX ENTER: evict");
 
 		std::optional<ListEntry<K, V>> opt = _cache.back();
 		if (!opt) {

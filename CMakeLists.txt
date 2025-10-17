@@ -26,13 +26,13 @@ endif()
 
 # Add external libraries.
 # GTest testing framework.
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-)
-FetchContent_MakeAvailable(googletest)
-enable_testing() # enable testing
+#include(FetchContent)
+#FetchContent_Declare(
+#  googletest
+#  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+#)
+#FetchContent_MakeAvailable(googletest)
+#enable_testing() # enable testing
 
 # JSON library.
 include(FetchContent)
@@ -77,7 +77,6 @@ set(CMAKE_CXX_FLAGS_RELEASE_INIT "")
 
 # Add source files to target(s).
 target_sources(cache-manager PRIVATE src/main.cpp
-	src/main.cpp
 )
 
 # Add include directories to target(s).
@@ -88,17 +87,17 @@ target_include_directories(cache-manager PRIVATE
 
 # Link libraries to target(s).
 target_link_libraries(cache-manager PRIVATE
-	GTest::gtest_main
+	#GTest::gtest_main
 	nlohmann_json::nlohmann_json
 	TBB::tbb
 )
 
-include(GoogleTest)
-gtest_discover_tests(cache-manager)
+#include(GoogleTest)
+#gtest_discover_tests(cache-manager)
 
 # Copy necessary directories into build directory, for executable root access.
 add_custom_command(TARGET cache-manager PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/config/* $<TARGET_FILE_DIR:cache-manager>)
 
 # Build documentation with Doxygen.

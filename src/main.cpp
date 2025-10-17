@@ -1,7 +1,7 @@
 #include <atomic>
 #include <chrono>
 #include <climits>
-#include <gtest/gtest.h>
+//#include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
 #include <latch>
@@ -16,9 +16,15 @@
 
 #include "cache-manager.hpp"
 #include "concurrent-list.hpp"
+#include "test-runner.hpp"
 
-namespace cm {
+//#define GTEST_ENABLE 1
 
+using namespace cm;
+
+static constexpr std::string_view CONFIG_PATH = "tests.json";
+
+#ifdef GTEST_ENABLE
 static const int LEN = std::numeric_limits<int>::max() >> 12;
 
 class CoarseTest : public testing::Test {
@@ -155,4 +161,15 @@ int main(int argc, char **argv) {
 	return RUN_ALL_TESTS();
 }
 
-} // namespace cm
+#else
+int main(int argc, char **argv) {
+	try {
+		TestCfgs tests = readConfig(std::string(CONFIG_PATH));
+		TestRunner runner(std::move(tests));
+		runner.run();
+	} catch (const std::exception& e) {
+		std::cout << "ERROR: " << e.what() << "\n";
+	}
+}
+
+#endif

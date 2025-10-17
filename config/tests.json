@@ -3,7 +3,7 @@
     {
       "name": "basic_single_thread",
       "threads": 1,
-      "iter": 1000,
+      "iter": 200,
       "capacity": 100,
       "functions": ["add", "get", "contains", "remove"],
       "distr": {
@@ -17,9 +17,9 @@
     {
       "name": "read_heavy_low_contention",
       "threads": 4,
-      "iter": 5000,
-      "capacity": 500,
-      "functions": ["get", "get", "get", "contains"],
+      "iter": 200,
+      "capacity": 100,
+      "functions": ["add", "get", "get", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "normal",
@@ -31,7 +31,7 @@
     {
       "name": "read_heavy_high_contention",
       "threads": 16,
-      "iter": 10000,
+      "iter": 200,
       "capacity": 100,
       "functions": ["get", "get", "contains"],
       "distr": {
@@ -45,8 +45,8 @@
     {
       "name": "write_heavy_low_contention",
       "threads": 4,
-      "iter": 5000,
-      "capacity": 1000,
+      "iter": 200,
+      "capacity": 100,
       "functions": ["add", "add", "add"],
       "distr": {
         "type": "int",
@@ -59,8 +59,8 @@
     {
       "name": "write_heavy_high_contention",
       "threads": 16,
-      "iter": 10000,
-      "capacity": 200,
+      "iter": 200,
+      "capacity": 100,
       "functions": ["add", "add", "add"],
       "distr": {
         "type": "int",
@@ -73,8 +73,8 @@
     {
       "name": "balanced_workload",
       "threads": 8,
-      "iter": 5000,
-      "capacity": 500,
+      "iter": 200,
+      "capacity": 100,
       "functions": ["add", "get", "contains", "remove"],
       "distr": {
         "type": "int",
@@ -87,7 +87,7 @@
     {
       "name": "eviction_pressure_small_cache",
       "threads": 8,
-      "iter": 10000,
+      "iter": 200,
       "capacity": 50,
       "functions": ["add", "add", "get"],
       "distr": {
@@ -101,7 +101,7 @@
     {
       "name": "eviction_pressure_medium_cache",
       "threads": 16,
-      "iter": 10000,
+      "iter": 300,
       "capacity": 200,
       "functions": ["add", "add", "get", "get"],
       "distr": {

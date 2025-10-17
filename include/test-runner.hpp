@@ -10,6 +10,7 @@
 #pragma once
 
 #include "cache-manager.hpp"
+#include "macros.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -22,6 +23,7 @@
 #include <random>
 #include <thread>
 #include <vector>
+#include <format>
 
 enum class DistrType { INVALID, STRING, INT, DOUBLE };
 
@@ -110,7 +112,7 @@ struct TestCfg {
 	DistrCfg distr_cfg;
 	std::any distr_data;
 	TestFns fns;
-	TestCfg(size_t threads, size_t iter, size_t capacity, const std::string &name
+	TestCfg(size_t threads, size_t iter, size_t capacity, const std::string &name,
 			const DistrCfg &distr_cfg, const TestFns &fns)
 		: threads(threads), iter(iter), capacity(capacity), name(name),
 		  distr_cfg(distr_cfg), fns(fns) {}
@@ -246,20 +248,20 @@ class TestRunner {
 
   private:
 	template <typename T> void runTest(const TestCfg &test) {
+		cm::CacheManager<T, T, cm::TbbBench> cache(test.capacity);
 		const auto &data =
 			std::any_cast<const std::vector<T> &>(test.distr_data);
 		std::vector<T> keys = data;
 		size_t size = data.size();
 		std::reverse(keys.begin(), keys.end());
 		for (auto i = 0; i < test.iter; ++i) {
-			cm::CacheManager<T, T, cm::TbbBench> cache(test.capacity);
 			std::vector<std::thread> pool;
 			for (auto j = 0; j < test.threads; ++j) {
 				pool.emplace_back([&]() {
 					for (const auto &f : test.fns) {
 						for (auto k = 0; k < size; ++k) {
-							T &key = keys[k];
-							T &val = data[k];
+							const T &key = keys[k];
+							const T &val = data[k];
 							if (f == "add") {
 								auto res = cache.add(key, val);
 							} else if (f == "get") {
@@ -281,11 +283,14 @@ class TestRunner {
 			for (auto &th : pool) {
 				th.join();
 			}
-
-			auto bm = cache.benchmark();
-			cm::printBenchmark(bm);
-			cm::writeBenchmark(bm);
 		}
+
+		DPRINT("XXX END BENCHMARK");
+		DPRINT("XXX BEGIN BENCHMARK PRINT");
+		auto bm = cache.benchmark();
+		cm::printBenchmark(bm);
+		cm::writeBenchmark(bm);
+		DPRINT("XXX END BENCHMARK PRINT");
 	}
 
 	TestCfgs _tests;
