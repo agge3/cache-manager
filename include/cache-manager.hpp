@@ -203,7 +203,7 @@ class CacheManager {
 
 	std::optional<V> getItem(const K &key) {
 		std::lock_guard<std::mutex> g(_mutex);
-
+		DPRINT("XXX get: ENTER");
 		auto it = _map.find(key);
 		if (it == _map.end()) {
 			BenchT::miss();
@@ -275,6 +275,7 @@ class CacheManager {
 		}
 #endif
 		std::lock_guard<std::mutex> g(_mutex);
+		DPRINT("XXX contains: ENTER");
 		auto it = _map.find(key); // xxx th
 		if (it != _map.end()) {
 			BenchT::hit();
@@ -297,6 +298,7 @@ class CacheManager {
 	bool remove(const K &key) {
 		// xxx better granularity
 		std::lock_guard<std::mutex> g(_mutex);
+		DPRINT("XXX remove: enter");
 		auto it = _map.find(key);
 		if (it == _map.end()) {
 			BenchT::miss();
@@ -341,8 +343,9 @@ class CacheManager {
 
   private:
 	void evict() {
-		// atomic synchronization of containers
-		std::lock_guard<std::mutex> lk(_mutex);
+		// NO lock, creates deadlock. Assume caller has lock already.
+		// Explanation: Thread A needs evict lock and has add lock -> 
+		// Thread B has evict lock but needs add lock once finished = deadlock
 		DPRINT("XXX ENTER: evict");
 
 		std::optional<ListEntry<K, V>> opt = _cache.back();

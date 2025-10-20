@@ -266,10 +266,28 @@ class TestRunner {
 								auto res = cache.add(key, val);
 							} else if (f == "get") {
 								auto res = cache.getItem(key);
+								if (res == std::nullopt) {
+									std::cerr << "Failed to get key: " << key
+											  << "\n";
+								} else {
+									DPRINT("Key found");
+								}
 							} else if (f == "contains") {
 								auto res = cache.contains(key);
+								
+								if (res) {
+									DPRINT("Contains key");
+								} else {
+									DPRINT("Does not contain key");
+								}
 							} else if (f == "remove") {
 								auto res = cache.remove(key);
+								
+								if (res) {
+									DPRINT("Removed key");
+								} else {
+									DPRINT("Did not remove key");
+								}
 							} else {
 								std::cerr << "ERROR: invalid function in "
 											 "configuration: "
