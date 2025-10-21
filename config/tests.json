@@ -1,11 +1,11 @@
 {
   "tests": [
     {
-      "name": "basic_single_thread",
+      "name": "1_thread_500_capacity_uniform_unique",
       "threads": 1,
       "iter": 100000,
       "capacity": 500,
-      "functions": ["add", "get", "add", "remove", "add", "get", "contains", "remove", "add", "add", "add"],
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "uniform",
@@ -15,11 +15,11 @@
       }
     },
 	{
-      "name": "basic_multi_thread_2",
+      "name": "2_threads_500_capacity_uniform_unique",
       "threads": 2,
       "iter": 100000,
       "capacity": 500,
-      "functions": ["add", "get", "add", "remove", "add", "get", "contains", "remove", "add", "add", "add"],
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "uniform",
@@ -29,11 +29,11 @@
       }
     },
 	{
-      "name": "basic_multi_thread_4",
+      "name": "4_threads_500_capacity_uniform_unique",
       "threads": 4,
       "iter": 100000,
       "capacity": 500,
-      "functions": ["add", "get", "add", "remove", "add", "get", "contains", "remove", "add", "add", "add"],
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "uniform",
@@ -43,11 +43,11 @@
       }
     },
 	{
-      "name": "basic_multi_thread_8",
+      "name": "8_threads_500_capacity_uniform_unique",
       "threads": 8,
       "iter": 100000,
       "capacity": 500,
-      "functions": ["add", "get", "add", "remove", "add", "get", "contains", "remove", "add", "add", "add"],
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "uniform",
