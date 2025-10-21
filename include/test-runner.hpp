@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <any>
+#include <format>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -23,7 +24,6 @@
 #include <random>
 #include <thread>
 #include <vector>
-#include <format>
 
 enum class DistrType { INVALID, STRING, INT, DOUBLE };
 
@@ -112,8 +112,9 @@ struct TestCfg {
 	DistrCfg distr_cfg;
 	std::any distr_data;
 	TestFns fns;
-	TestCfg(size_t threads, size_t iter, size_t capacity, const std::string &name,
-			const DistrCfg &distr_cfg, const TestFns &fns)
+	TestCfg(size_t threads, size_t iter, size_t capacity,
+			const std::string &name, const DistrCfg &distr_cfg,
+			const TestFns &fns)
 		: threads(threads), iter(iter), capacity(capacity), name(name),
 		  distr_cfg(distr_cfg), fns(fns) {}
 };
@@ -123,30 +124,29 @@ using TestCfgHandle = std::unique_ptr<TestCfg>;
 
 using TestCfgs = std::vector<TestCfgHandle>;
 
-
-TestCfgHandle makeTestCfg(size_t threads, size_t iter, size_t capacity, const std::string &name,
-						  const DistrCfg &distr_cfg,
+TestCfgHandle makeTestCfg(size_t threads, size_t iter, size_t capacity,
+						  const std::string &name, const DistrCfg &distr_cfg,
 						  std::vector<std::string> &fns) {
 	switch (distr_cfg.type) {
 	case DistrType::INT: {
-		auto test =
-			std::make_unique<TestCfg>(threads, iter, capacity, name, distr_cfg, fns);
+		auto test = std::make_unique<TestCfg>(threads, iter, capacity, name,
+											  distr_cfg, fns);
 		Distribution<int> dist(distr_cfg);
 		dist.generate();
 		test->distr_data = dist.data();
 		return test;
 	}
 	case DistrType::DOUBLE: {
-		auto test =
-			std::make_unique<TestCfg>(threads, iter, capacity, name, distr_cfg, fns);
+		auto test = std::make_unique<TestCfg>(threads, iter, capacity, name,
+											  distr_cfg, fns);
 		Distribution<double> dist(distr_cfg);
 		dist.generate();
 		test->distr_data = dist.data();
 		return test;
 	}
 	case DistrType::STRING: {
-		auto test =
-			std::make_unique<TestCfg>(threads, iter, capacity, name, distr_cfg, fns);
+		auto test = std::make_unique<TestCfg>(threads, iter, capacity, name,
+											  distr_cfg, fns);
 		Distribution<std::string> dist(distr_cfg);
 		dist.generate();
 		test->distr_data = dist.data();
@@ -214,7 +214,8 @@ TestCfgs readConfig(const std::string &path) {
 			fns.push_back(f.get<std::string>());
 		}
 		DistrCfg distr_cfg = parseDistrCfg(t);
-		tests.push_back(makeTestCfg(threads, iter, capacity, name, distr_cfg, fns));
+		tests.push_back(
+			makeTestCfg(threads, iter, capacity, name, distr_cfg, fns));
 	}
 
 	return tests;
@@ -246,7 +247,7 @@ class TestRunner {
 
 	void expect() {}
 
-private:
+  private:
 	template <typename T> void runTestFull(const TestCfg &test) {
 		cm::CacheManager<T, T, cm::TbbBench> cache(test.capacity);
 		const auto &data =
@@ -274,7 +275,7 @@ private:
 								}
 							} else if (f == "contains") {
 								auto res = cache.contains(key);
-								
+
 								if (res) {
 									DPRINT("Contains key");
 								} else {
@@ -282,7 +283,7 @@ private:
 								}
 							} else if (f == "remove") {
 								auto res = cache.remove(key);
-								
+
 								if (res) {
 									DPRINT("Removed key");
 								} else {
@@ -303,11 +304,11 @@ private:
 			}
 		}
 
-	    auto test_end = std::chrono::steady_clock::now(); // end timing
-	    std::chrono::duration<double> elapsed = test_end - test_start;
-	
-	    std::cout << std::format("Test '{}' completed in {:.6f} seconds\n", 
-	                             test.name, elapsed.count());
+		auto test_end = std::chrono::steady_clock::now(); // end timing
+		std::chrono::duration<double> elapsed = test_end - test_start;
+
+		std::cout << std::format("Test '{}' completed in {:.6f} seconds\n",
+								 test.name, elapsed.count());
 
 		DPRINT("END BENCHMARK");
 
@@ -316,138 +317,152 @@ private:
 		cm::writeBenchmark(bm);
 	}
 
-
 	std::vector<std::string> fn_map = {"add", "get", "contains", "remove"};
 
-	template <typename T>
-	void runTest(const TestCfg &test) {
+	template <typename T> void runTest(const TestCfg &test) {
 		size_t shard = (test.capacity + test.threads - 1) / test.threads;
-	    cm::CacheManager<T, T, cm::TbbBench> cache(shard, test.capacity);
-	    const auto &data = std::any_cast<const std::vector<T> &>(test.distr_data);
-	    std::vector<T> keys = data;
-	    std::reverse(keys.begin(), keys.end());
-	    size_t size = data.size();
+		cm::CacheManager<T, T, cm::TbbBench> cache(shard, test.capacity);
+		const auto &data =
+			std::any_cast<const std::vector<T> &>(test.distr_data);
+		std::vector<T> keys = data;
+		std::reverse(keys.begin(), keys.end());
+		size_t size = data.size();
 		auto test_start = std::chrono::steady_clock::now();
-	    std::vector<std::thread> pool;
+		std::vector<std::thread> pool;
 		size_t total = size * test.iter;
 		size_t ops = (total + test.threads - 1) / test.threads;
 		std::cout << std::format("XXX OPS PER THREAD: {}", ops) << "\n";
-	    for (auto j = 0; j < test.threads; ++j) {
-	        pool.emplace_back([&]() {
-        		std::mt19937 gen(std::random_device{}() + j); // thread-local RNG
-        		std::uniform_int_distribution<size_t> dist_key(0, size - 1);
-        		std::uniform_int_distribution<size_t> dist_fn(0, fn_map.size() - 1);
+		for (auto j = 0; j < test.threads; ++j) {
+			pool.emplace_back([&]() {
+				std::mt19937 gen(std::random_device{}() +
+								 j); // thread-local RNG
+				std::uniform_int_distribution<size_t> dist_key(0, size - 1);
+				std::uniform_int_distribution<size_t> dist_fn(0, fn_map.size() -
+																	 1);
 
 				for (auto k = 0; k < ops; ++k) {
 					size_t idx = dist_key(gen);
 					const std::string &f = fn_map[dist_fn(gen)];
-	                const T &key = keys[idx];
-	                const T &val = data[idx];
-	
-	                if (f == "add") {
-	                    cache.add(key, val);
-	                } else if (f == "get") {
-	                    auto res = cache.getItem(key);
-	                    if (res == std::nullopt) DPRINT("Key not found");
-	                    else DPRINT("Key found");
-	                } else if (f == "contains") {
-	                    auto res = cache.contains(key);
-	                    DPRINT(res ? "Contains key" : "Does not contain key");
-	                } else if (f == "remove") {
-	                    auto res = cache.remove(key);
-	                    DPRINT(res ? "Removed key" : "Did not remove key");
-	                } else {
-	                    std::cerr << "ERROR: invalid function in configuration: " << f << "\n";
-	                }
-	            }
-	        });
-	    }
-	
-	    for (auto &th : pool) {
-	        th.join();
-	    }
+					const T &key = keys[idx];
+					const T &val = data[idx];
 
-	    auto test_end = std::chrono::steady_clock::now(); // end timing
-	    std::chrono::duration<double> elapsed = test_end - test_start;
-	
-	    std::cout << std::format("Test '{}' completed in {:.6f} seconds\n", 
-	                             test.name, elapsed.count());
+					if (f == "add") {
+						cache.add(key, val);
+					} else if (f == "get") {
+						auto res = cache.getItem(key);
+						if (res == std::nullopt)
+							DPRINT("Key not found");
+						else
+							DPRINT("Key found");
+					} else if (f == "contains") {
+						auto res = cache.contains(key);
+						DPRINT(res ? "Contains key" : "Does not contain key");
+					} else if (f == "remove") {
+						auto res = cache.remove(key);
+						DPRINT(res ? "Removed key" : "Did not remove key");
+					} else {
+						std::cerr
+							<< "ERROR: invalid function in configuration: " << f
+							<< "\n";
+					}
+				}
+			});
+		}
 
-	    DPRINT("END BENCHMARK");
+		for (auto &th : pool) {
+			th.join();
+		}
 
-	    auto bm = cache.benchmark();
-	    cm::printBenchmark(bm);
-	    cm::writeBenchmark(bm);
+		auto test_end = std::chrono::steady_clock::now(); // end timing
+		std::chrono::duration<double> elapsed = test_end - test_start;
+
+		std::cout << std::format("Test '{}' completed in {:.6f} seconds\n",
+								 test.name, elapsed.count());
+
+		DPRINT("END BENCHMARK");
+
+		auto bm = cache.benchmark();
+		cm::printBenchmark(bm);
+		cm::writeBenchmark(bm);
 	}
 
-	template <typename T>
-	void runTestChunks(const TestCfg &test) {
-	    cm::CacheManager<T, T, cm::TbbBench> cache(test.capacity);
-	    const auto &data = std::any_cast<const std::vector<T> &>(test.distr_data);
-	    std::vector<T> keys = data;
-	    std::reverse(keys.begin(), keys.end());
-	    size_t size = data.size();
+	template <typename T> void runTestChunks(const TestCfg &test) {
+		cm::CacheManager<T, T, cm::TbbBench> cache(test.capacity);
+		const auto &data =
+			std::any_cast<const std::vector<T> &>(test.distr_data);
+		std::vector<T> keys = data;
+		std::reverse(keys.begin(), keys.end());
+		size_t size = data.size();
 		auto test_start = std::chrono::steady_clock::now();
-	    for (auto i = 0; i < test.iter; ++i) {
-	    std::vector<std::thread> pool;
-	
-	    // calculate per-thread work
-	    size_t chunk_size = (size + test.threads - 1) / test.threads; // ceil division
-	
-	    for (auto j = 0; j < test.threads; ++j) {
-	        size_t start = j * chunk_size;
-	        size_t end = std::min(start + chunk_size, size);
-	
-	        pool.emplace_back([&, start, end]() {
-        		std::mt19937 gen(std::random_device{}() + t); // thread-local RNG
-        		std::uniform_int_distribution<size_t> dist_key(0, size - 1);
-        		std::uniform_int_distribution<size_t> dist_fn(0, fn_map.size() - 1);
+		for (auto i = 0; i < test.iter; ++i) {
+			std::vector<std::thread> pool;
 
-				for (auto k = 0; k < ops; ++k) {
+			// calculate per-thread work
+			size_t chunk_size =
+				(size + test.threads - 1) / test.threads; // ceil division
+
+			for (auto j = 0; j < test.threads; ++j) {
+				size_t start = j * chunk_size;
+				size_t end = std::min(start + chunk_size, size);
+
+			pool.emplace_back([&, start, end]() {
+					std::mt19937 gen(std::random_device{}() +
+									 t); // thread-local RNG
+					std::uniform_int_distribution<size_t> dist_key(0, size - 1);
+					std::uniform_int_distribution<size_t> dist_fn(
+						0, fn_map.size() - 1);
+
+					for (auto k = 0; k < ops; ++k) {
 						size_t idx = dist_key(gen);
 						std::string &f = fn_map[dist_fn(gen)];
-	                    const T &key = keys[idx];
-	                    const T &val = data[idx];
-	
-	                    if (f == "add") {
-	                        cache.add(key, val);
-	                    } else if (f == "get") {
-	                        auto res = cache.getItem(key);
-	                        if (res == std::nullopt) DPRINT("Key not found");
-	                        else DPRINT("Key found");
-	                    } else if (f == "contains") {
-	                        auto res = cache.contains(key);
-	                        DPRINT(res ? "Contains key" : "Does not contain key");
-	                    } else if (f == "remove") {
-	                        auto res = cache.remove(key);
-	                        DPRINT(res ? "Removed key" : "Did not remove key");
-	                    } else {
-	                        std::cerr << "ERROR: invalid function in configuration: " << f << "\n";
-	                    }
-	                }
+						const T &key = keys[idx];
+						const T &val = data[idx];
+
+						if (f == "add") {
+							cache.add(key, val);
+						} else if (f == "get") {
+							auto res = cache.getItem(key);
+							if (res == std::nullopt)
+								DPRINT("Key not found");
+							else
+								DPRINT("Key found");
+						} else if (f == "contains") {
+							auto res = cache.contains(key);
+							DPRINT(res ? "Contains key"
+									   : "Does not contain key");
+						} else if (f == "remove") {
+							auto res = cache.remove(key);
+							DPRINT(res ? "Removed key" : "Did not remove key");
+						} else {
+							std::cerr
+								<< "ERROR: invalid function in configuration: "
+								<< f << "\n";
+						}
+					}
 	            }
-	        });
-	    }
-	
-	        for (auto &th : pool) {
-	            th.join();
-	        }
-	    }
+			});
+		}
 
-	    auto test_end = std::chrono::steady_clock::now(); // end timing
-	    std::chrono::duration<double> elapsed = test_end - test_start;
-	
-	    std::cout << std::format("Test '{}' completed in {:.6f} seconds\n", 
-	                             test.name, elapsed.count());
-
-	    DPRINT("END BENCHMARK");
-
-	    auto bm = cache.benchmark();
-	    cm::printBenchmark(bm);
-	    cm::writeBenchmark(bm);
+		for (auto &th : pool) {
+			th.join();
+		}
 	}
 
-	TestCfgs _tests;
-};
+	auto test_end = std::chrono::steady_clock::now(); // end timing
+	std::chrono::duration<double> elapsed = test_end - test_start;
+
+	std::cout << std::format("Test '{}' completed in {:.6f} seconds\n",
+							 test.name, elapsed.count());
+
+	DPRINT("END BENCHMARK");
+
+	auto bm = cache.benchmark();
+	cm::printBenchmark(bm);
+	cm::writeBenchmark(bm);
+}
+
+TestCfgs _tests;
+}
+;
 
 // EOF

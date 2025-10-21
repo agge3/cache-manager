@@ -1,25 +1,25 @@
 #pragma once
 
 #include "macros.hpp"
-#include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_queue.h>
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_vector.h>
+#include <tbb/enumerable_thread_specific.h>
 
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <set>
 #include <thread>
-#include <vector>
 #include <unordered_map>
-#include <nlohmann/json.hpp>
-#include <fstream>
-#include <filesystem>
-#include <list>
+#include <vector>
 
 #define NDEBUG 1
 
@@ -112,7 +112,7 @@ void printBenchmark(const Benchmark &bm) {
 
 void writeBenchmark(const Benchmark &bm) {
 	std::string filename = "benchmark.jsonl";
-	
+
 	int run_number = 1;
 	if (std::filesystem::exists(filename)) {
 		std::ifstream infile(filename);
@@ -124,9 +124,9 @@ void writeBenchmark(const Benchmark &bm) {
 		}
 		infile.close();
 	}
-	
+
 	nlohmann::json bench;
-	
+
 	bench["run"] = run_number;
 	bench["hits"] = bm.hits;
 	bench["misses"] = bm.misses;
@@ -140,128 +140,132 @@ void writeBenchmark(const Benchmark &bm) {
 	}
 }
 
-template <typename K, typename V>
-using ListEntry = std::pair<K, V>;
+template <typename K, typename V> using ListEntry = std::pair<K, V>;
 
 template <typename K, typename V, typename BenchT = NoneBench>
 class CacheManager {
-private:
-    struct ThreadShard {
-        size_t capacity;
-        std::list<std::pair<K, V>> lru_list;
-        std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator> map;
+  private:
+	struct ThreadShard {
+		size_t capacity;
+		std::list<std::pair<K, V>> lru_list;
+		std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator>
+			map;
 
-        ThreadShard(size_t cap) : capacity(cap) {}
-    };
+		ThreadShard(size_t cap) : capacity(cap) {}
+	};
 
-    size_t _shard_capacity;
-    size_t _global_capacity;
-    tbb::concurrent_unordered_map<std::thread::id, ThreadShard> _shards;
-    tbb::concurrent_queue<std::pair<K, V>> _global_queue;
-    std::mutex _evict_mutex;
+	size_t _shard_capacity;
+	size_t _global_capacity;
+	tbb::concurrent_unordered_map<std::thread::id, ThreadShard> _shards;
+	tbb::concurrent_queue<std::pair<K, V>> _global_queue;
+	std::mutex _evict_mutex;
 
-public:
-    CacheManager(size_t global_capacity, size_t shard_capacity = 1024)
-        : _global_capacity(global_capacity), _shard_capacity(shard_capacity) {}
+  public:
+	CacheManager(size_t global_capacity, size_t shard_capacity = 1024)
+		: _global_capacity(global_capacity), _shard_capacity(shard_capacity) {}
 
-private:
+  private:
 	/**
-	 * Retrieves a 
+	 * Retrieves a
 	 */
-    ThreadShard& getShard() {
-        auto tid = std::this_thread::get_id();
-        auto it = _shards.find(tid);
-        if (it != _shards.end()) return it->second;
+	ThreadShard &getShard() {
+		auto tid = std::this_thread::get_id();
+		auto it = _shards.find(tid);
+		if (it != _shards.end())
+			return it->second;
 
-        auto [new_it, inserted] = _shards.emplace(tid, ThreadShard(_shard_capacity));
-        return new_it->second;
-    }
-
-	void evictGlobal() {
-	    std::lock_guard<std::mutex> g(_evict_mutex);
-	
-	    while (_global_queue.unsafe_size() > _global_capacity) {
-	        std::pair<K, V> dummy;
-	        _global_queue.try_pop(dummy);
-	        BenchT::eviction();
-	    }
+		auto [new_it, inserted] =
+			_shards.emplace(tid, ThreadShard(_shard_capacity));
+		return new_it->second;
 	}
 
-public:
-    std::optional<V> getItem(const K& key) {
-        auto& shard = getShard();
-        auto it = shard.map.find(key);
-        if (it == shard.map.end()) {
-            BenchT::miss();
-            return std::nullopt;
-        }
+	void evictGlobal() {
+		std::lock_guard<std::mutex> g(_evict_mutex);
 
-        shard.lru_list.splice(shard.lru_list.begin(), shard.lru_list, it->second);
-        BenchT::hit();
-        return it->second->second;
-    }
+		while (_global_queue.unsafe_size() > _global_capacity) {
+			std::pair<K, V> dummy;
+			_global_queue.try_pop(dummy);
+			BenchT::eviction();
+		}
+	}
 
-    bool add(const K& key, const V& value) {
-        auto& shard = getShard();
-        auto it = shard.map.find(key);
+  public:
+	std::optional<V> getItem(const K &key) {
+		auto &shard = getShard();
+		auto it = shard.map.find(key);
+		if (it == shard.map.end()) {
+			BenchT::miss();
+			return std::nullopt;
+		}
 
-        if (it != shard.map.end()) {
-            it->second->second = value;
-            shard.lru_list.splice(shard.lru_list.begin(), shard.lru_list, it->second);
-            BenchT::hit();
-            return true;
-        }
+		shard.lru_list.splice(shard.lru_list.begin(), shard.lru_list,
+							  it->second);
+		BenchT::hit();
+		return it->second->second;
+	}
 
-        BenchT::miss();
+	bool add(const K &key, const V &value) {
+		auto &shard = getShard();
+		auto it = shard.map.find(key);
 
-        shard.lru_list.push_front({key, value});
-        shard.map[key] = shard.lru_list.begin();
+		if (it != shard.map.end()) {
+			it->second->second = value;
+			shard.lru_list.splice(shard.lru_list.begin(), shard.lru_list,
+								  it->second);
+			BenchT::hit();
+			return true;
+		}
 
-        if (shard.lru_list.size() > shard.capacity) {
-            auto last = shard.lru_list.back();
-            _global_queue.push(last);
-            shard.map.erase(last.first);
-            shard.lru_list.pop_back();
-            evictGlobal();
-        }
+		BenchT::miss();
 
-        return true;
-    }
+		shard.lru_list.push_front({key, value});
+		shard.map[key] = shard.lru_list.begin();
 
-    bool contains(const K& key) {
-        auto& shard = getShard();
-        auto it = shard.map.find(key);
-        if (it != shard.map.end()) {
-            BenchT::hit();
-            return true;
-        }
-        BenchT::miss();
-        return false;
-    }
+		if (shard.lru_list.size() > shard.capacity) {
+			auto last = shard.lru_list.back();
+			_global_queue.push(last);
+			shard.map.erase(last.first);
+			shard.lru_list.pop_back();
+			evictGlobal();
+		}
 
-    bool remove(const K& key) {
-        auto& shard = getShard();
-        auto it = shard.map.find(key);
-        if (it == shard.map.end()) {
-            BenchT::miss();
-            return false;
-        }
+		return true;
+	}
 
-        BenchT::hit();
-        shard.lru_list.erase(it->second);
-        shard.map.erase(it);
-        return true;
-    }
+	bool contains(const K &key) {
+		auto &shard = getShard();
+		auto it = shard.map.find(key);
+		if (it != shard.map.end()) {
+			BenchT::hit();
+			return true;
+		}
+		BenchT::miss();
+		return false;
+	}
 
-    void clear() {
-        for (auto& [tid, shard] : _shards) {
-            shard.lru_list.clear();
-            shard.map.clear();
-        }
-        while (!_global_queue.empty()) _global_queue.try_pop();
-    }
+	bool remove(const K &key) {
+		auto &shard = getShard();
+		auto it = shard.map.find(key);
+		if (it == shard.map.end()) {
+			BenchT::miss();
+			return false;
+		}
 
-    static Benchmark benchmark() { return BenchT::aggregate(); }
+		BenchT::hit();
+		shard.lru_list.erase(it->second);
+		shard.map.erase(it);
+		return true;
+	}
+
+	void clear() {
+		for (auto &[tid, shard] : _shards) {
+			shard.lru_list.clear();
+			shard.map.clear();
+		}
+		while (!_global_queue.empty())
+			_global_queue.try_pop();
+	}
+
+	static Benchmark benchmark() { return BenchT::aggregate(); }
 };
 } // namespace cm
-

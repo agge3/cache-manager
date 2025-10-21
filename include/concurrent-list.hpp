@@ -125,7 +125,7 @@ template <typename T, typename DerivedNode> class IConcurrentList {
 	 * @return T element The last element.
 	 */
 	std::optional<T> back() const;
-	
+
 	/**
 	 * Returns the first element of ConcurrentList and removes it from the
 	 * list.

@@ -168,8 +168,7 @@ std::optional<T> CoarseConcurrentList<T>::get(
 	return ptr ? std::optional<T>(ptr->ele) : std::nullopt;
 }
 
-template <typename T> 
-bool CoarseConcurrentList<T>::remove(const T &element) {
+template <typename T> bool CoarseConcurrentList<T>::remove(const T &element) {
 	// simple O(1) cases (just hold write lock because head check is cheap):
 	{
 		std::unique_lock<std::shared_mutex> wg(this->_mutex);
@@ -230,7 +229,7 @@ template <typename T>
 bool CoarseConcurrentList<T>::remove(
 	const typename CoarseConcurrentList<T>::ListNodeT *node) {
 	if (node) {
-		delete(node);
+		delete (node);
 		node = nullptr;
 	}
 	return true;
@@ -253,19 +252,19 @@ bool CoarseConcurrentList<T>::unlink(
 
 	// Handle head and tail cases.
 	if (this->_head == node) {
-		this->_head = mut->next;	
+		this->_head = mut->next;
 		if (this->_head) {
 			this->_head->prev = nullptr;
 		} else {
 			this->_tail = nullptr;
 		}
 
-		this->_size = 0;                    
+		this->_size = 0;
 		return true;
 	} else if (this->_tail == node) {
 		// else if to lock control flow into size > 1 for tail case.
 		this->_tail = mut->prev;
-		if (this->_tail) {       
+		if (this->_tail) {
 			this->_tail->next = nullptr;
 		} else {
 			this->_head = nullptr;
@@ -273,7 +272,7 @@ bool CoarseConcurrentList<T>::unlink(
 
 		--this->_size;
 		return true;
-	}                                           
+	}
 
 	// General case:
 	// Already handled head and tail, so safe to assume size() > 2.

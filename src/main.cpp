@@ -1,7 +1,7 @@
 #include <atomic>
 #include <chrono>
 #include <climits>
-//#include <gtest/gtest.h>
+// #include <gtest/gtest.h>
 #include <iomanip>
 #include <iostream>
 #include <latch>
@@ -18,7 +18,7 @@
 #include "concurrent-list.hpp"
 #include "test-runner.hpp"
 
-//#define GTEST_ENABLE 1
+// #define GTEST_ENABLE 1
 
 using namespace cm;
 
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
 		TestCfgs tests = readConfig(std::string(CONFIG_PATH));
 		TestRunner runner(std::move(tests));
 		runner.run();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cout << "ERROR: " << e.what() << "\n";
 	}
 }
