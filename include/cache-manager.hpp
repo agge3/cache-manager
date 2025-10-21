@@ -25,17 +25,23 @@
 
 namespace cm {
 
+/**
+ * Metrics produced by the cache manager.
+ */
 struct Benchmark {
-	size_t hits = 0;
-	size_t misses = 0;
-	size_t evictions = 0;
-	float hit_ratio = 0;
+	size_t hits = 0; /* amount of successful hits on the cache */
+	size_t misses = 0; /* amount of failed hits on the cache */
+	size_t evictions = 0; /* amount of evictions in the cache */
+	float hit_ratio = 0; /* percentage of hits on the cache vs misses */
 	float calc_hit_ratio() const {
 		const float total = static_cast<float>(hits) + misses;
 		return total == 0.0f ? 0.0f : static_cast<float>(hits) / total;
 	};
 };
 
+/**
+ * No-op bench for benchless runs.
+ */
 struct NoneBench {
 	static inline void hit() {}
 	static inline void miss() {}
@@ -43,11 +49,22 @@ struct NoneBench {
 	static Benchmark aggregate() { return {}; }
 };
 
+/**
+ * Threaded benchmark.
+ */
 struct ThreadBench {
+	/* mutex for adding to the registry */
 	static inline std::mutex registry_mutex;
+	
+	/* current threads running */
 	static inline std::vector<Benchmark *> registry;
+	
+	/* benchmark per thread */
 	static thread_local Benchmark local_bench;
 
+	/**
+	 * Registers thread to the registry.
+	 */
 	static void register_thread() {
 		[[maybe_unused]] static thread_local bool registered = [] {
 			std::lock_guard<std::mutex> g(registry_mutex);
@@ -56,19 +73,35 @@ struct ThreadBench {
 		}();
 	}
 
+	/**
+	 * Logs if we had a hit.
+	 */
 	static inline void hit() {
 		register_thread();
 		++local_bench.hits;
 	}
+
+	/**
+	 * Logs if we had a miss.
+	 */
 	static inline void miss() {
 		register_thread();
 		++local_bench.misses;
 	}
+
+	/**
+	 * Logs if we had an eviction.
+	 */
 	static inline void eviction() {
 		register_thread();
 		++local_bench.evictions;
 	}
 
+	/**
+	 * Accumulates all metrics for the given thread.
+	 *
+	 * @return The combined benchmark metric.
+	 */
 	static Benchmark aggregate() {
 		std::lock_guard<std::mutex> g(registry_mutex);
 		Benchmark bm{};
@@ -82,13 +115,23 @@ struct ThreadBench {
 	}
 };
 
+/**
+ * Tbb based benchmark.
+ */
 struct TbbBench {
+	/* container for local benchmark metrics */
 	static inline tbb::enumerable_thread_specific<Benchmark> ets;
 
+	/* logs if we had a hit */
 	static inline void hit() { ++ets.local().hits; }
+	/* logs if we had a miss */
 	static inline void miss() { ++ets.local().misses; }
+	/* logs if we had an eviction */
 	static inline void eviction() { ++ets.local().evictions; }
 
+	/**
+	 * Accumulates all benchmark metrics of the current thread.
+	 */
 	static Benchmark aggregate() {
 		Benchmark bm{};
 		for (auto &t : ets) {
@@ -103,6 +146,9 @@ struct TbbBench {
 
 template <typename BenchT> Benchmark benchmark() { return BenchT::aggregate(); }
 
+/**
+ * Prints the current benchmark metrics to std::out.
+ */
 void printBenchmark(const Benchmark &bm) {
 	std::cout << "hits:\t\t" << bm.hits << "\n"
 			  << "misses:\t\t" << bm.misses << "\n"
@@ -110,6 +156,9 @@ void printBenchmark(const Benchmark &bm) {
 			  << "hit ratio:\t" << bm.hit_ratio << "\n";
 }
 
+/**
+ * Writes benchmark to JSON file. Appends to it.
+ */
 void writeBenchmark(const Benchmark &bm) {
 	std::string filename = "benchmark.jsonl";
 
@@ -142,6 +191,9 @@ void writeBenchmark(const Benchmark &bm) {
 
 template <typename K, typename V> using ListEntry = std::pair<K, V>;
 
+/**
+ * LRU Concurrent Cache Manager using TBB.
+ */
 template <typename K, typename V, typename BenchT = NoneBench>
 class CacheManager {
   private:
@@ -154,19 +206,30 @@ class CacheManager {
 		ThreadShard(size_t cap) : capacity(cap) {}
 	};
 
+	/**
+	 * The amount of shards for the cache manager.
+	 */
 	size_t _shard_capacity;
-	size_t _global_capacity;
+	
+	/**
+	 * Hashmap holding the shards of the cache manager.
+	 *
+	 * Each thread gets an assigned shard. Reduces serialization
+	 * and increases parallelization.
+	 */
 	tbb::concurrent_unordered_map<std::thread::id, ThreadShard> _shards;
-	tbb::concurrent_queue<std::pair<K, V>> _global_queue;
-	std::mutex _evict_mutex;
 
   public:
-	CacheManager(size_t global_capacity, size_t shard_capacity = 1024)
-		: _global_capacity(global_capacity), _shard_capacity(shard_capacity) {}
+	CacheManager(size_t shard_capacity = 1024)
+		: _shard_capacity(shard_capacity) {}
 
   private:
+	
 	/**
-	 * Retrieves a
+	 * Retrieves the shard of the current thread, or creates one for it
+	 * if it does not exist already.
+	 *
+	 * @return The shard of the current thread.
 	 */
 	ThreadShard &getShard() {
 		auto tid = std::this_thread::get_id();
@@ -179,17 +242,15 @@ class CacheManager {
 		return new_it->second;
 	}
 
-	void evictGlobal() {
-		std::lock_guard<std::mutex> g(_evict_mutex);
-
-		while (_global_queue.unsafe_size() > _global_capacity) {
-			std::pair<K, V> dummy;
-			_global_queue.try_pop(dummy);
-			BenchT::eviction();
-		}
-	}
-
   public:
+	
+	/**
+	 * Gets an item from the cache.
+	 *
+	 * @param const K &key The requested key to retrieve from the cache.
+	 *
+	 * @return Either the requested key if found, or std::nullopt if not.
+	 */
 	std::optional<V> getItem(const K &key) {
 		auto &shard = getShard();
 		auto it = shard.map.find(key);
@@ -204,6 +265,14 @@ class CacheManager {
 		return it->second->second;
 	}
 
+	/**
+	 * Adds an item into the cache.
+	 *
+	 * @param const K &key The item's key.
+	 * @param const V &value The item's value.
+	 *
+	 * @return True upon success.
+	 */
 	bool add(const K &key, const V &value) {
 		auto &shard = getShard();
 		auto it = shard.map.find(key);
@@ -223,15 +292,22 @@ class CacheManager {
 
 		if (shard.lru_list.size() > shard.capacity) {
 			auto last = shard.lru_list.back();
-			_global_queue.push(last);
+			//_global_queue.push(last);
 			shard.map.erase(last.first);
 			shard.lru_list.pop_back();
-			evictGlobal();
+			//evictGlobal();
 		}
 
 		return true;
 	}
 
+	/**
+	 * Checks whether a given key exists in the cache manager.
+	 *
+	 * @param const K &key The key to look for.
+	 *
+	 * @return True if found, false otherwise.
+	 */
 	bool contains(const K &key) {
 		auto &shard = getShard();
 		auto it = shard.map.find(key);
@@ -243,6 +319,13 @@ class CacheManager {
 		return false;
 	}
 
+	/**
+	 * Removes a given key from the cache manager.
+	 *
+	 * @param const K &key The key to remove.
+	 *
+	 * @return True if removed, false if not removed.
+	 */
 	bool remove(const K &key) {
 		auto &shard = getShard();
 		auto it = shard.map.find(key);
@@ -257,13 +340,14 @@ class CacheManager {
 		return true;
 	}
 
+	/**
+	 * Clears all values in the cache manager.
+	 */
 	void clear() {
 		for (auto &[tid, shard] : _shards) {
 			shard.lru_list.clear();
 			shard.map.clear();
 		}
-		while (!_global_queue.empty())
-			_global_queue.try_pop();
 	}
 
 	static Benchmark benchmark() { return BenchT::aggregate(); }

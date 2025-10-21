@@ -321,7 +321,7 @@ class TestRunner {
 
 	template <typename T> void runTest(const TestCfg &test) {
 		size_t shard = (test.capacity + test.threads - 1) / test.threads;
-		cm::CacheManager<T, T, cm::TbbBench> cache(shard, test.capacity);
+		cm::CacheManager<T, T, cm::TbbBench> cache(shard);
 		const auto &data =
 			std::any_cast<const std::vector<T> &>(test.distr_data);
 		std::vector<T> keys = data;
@@ -406,40 +406,38 @@ class TestRunner {
 				size_t end = std::min(start + chunk_size, size);
 
 			pool.emplace_back([&, start, end]() {
-					std::mt19937 gen(std::random_device{}() +
-									 t); // thread-local RNG
-					std::uniform_int_distribution<size_t> dist_key(0, size - 1);
-					std::uniform_int_distribution<size_t> dist_fn(
-						0, fn_map.size() - 1);
+				std::mt19937 gen(std::random_device{}() + j); // thread-local RNG
+				std::uniform_int_distribution<size_t> dist_key(0, size - 1);
+				std::uniform_int_distribution<size_t> dist_fn(
+					0, fn_map.size() - 1);
 
-					for (auto k = 0; k < ops; ++k) {
-						size_t idx = dist_key(gen);
-						std::string &f = fn_map[dist_fn(gen)];
-						const T &key = keys[idx];
-						const T &val = data[idx];
+				for (auto k = 0; k < chunk_size; ++k) {
+					size_t idx = dist_key(gen);
+					std::string &f = fn_map[dist_fn(gen)];
+					const T &key = keys[idx];
+					const T &val = data[idx];
 
-						if (f == "add") {
-							cache.add(key, val);
-						} else if (f == "get") {
-							auto res = cache.getItem(key);
-							if (res == std::nullopt)
-								DPRINT("Key not found");
-							else
-								DPRINT("Key found");
-						} else if (f == "contains") {
-							auto res = cache.contains(key);
-							DPRINT(res ? "Contains key"
-									   : "Does not contain key");
-						} else if (f == "remove") {
-							auto res = cache.remove(key);
-							DPRINT(res ? "Removed key" : "Did not remove key");
-						} else {
-							std::cerr
-								<< "ERROR: invalid function in configuration: "
-								<< f << "\n";
-						}
+					if (f == "add") {
+						cache.add(key, val);
+					} else if (f == "get") {
+						auto res = cache.getItem(key);
+						if (res == std::nullopt)
+							DPRINT("Key not found");
+						else
+							DPRINT("Key found");
+					} else if (f == "contains") {
+						auto res = cache.contains(key);
+						DPRINT(res ? "Contains key"
+								   : "Does not contain key");
+					} else if (f == "remove") {
+						auto res = cache.remove(key);
+						DPRINT(res ? "Removed key" : "Did not remove key");
+					} else {
+						std::cerr
+							<< "ERROR: invalid function in configuration: "
+							<< f << "\n";
 					}
-	            }
+				}
 			});
 		}
 
