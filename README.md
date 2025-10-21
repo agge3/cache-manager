@@ -16,7 +16,7 @@ index.
 
 - **Language:** C++20  
 - **Concurrency:** [Intel Threading Building Blocks (TBB)](https://github.com/oneapi-src/oneTBB)  
-- **Testing:** GoogleTest / GoogleMock  
+- **Testing:** GoogleTest / GoogleMock / Custom 
 - **Containerization:** Podman  
 - **Build System:** CMake (3.14–3.28)
 
@@ -27,9 +27,6 @@ index.
 Concurrent cache-manager:
 - **LRU Cache Core:**  
   Implements least-recently-used eviction policy with atomic synchronization and TBB concurrent data structures.
-
-- **Coarse-Grained Concurrent List:**  
-  Custom FIFO queue ensuring thread-safe operations across multiple producers and consumers.
 
 Single-threaded cache-manager implements hand-rolled data structures (hashmap, SLL, DLL)
 
@@ -52,11 +49,14 @@ On branch `concurrency`
 
 `include`
  * `cache-manager.hpp` - CacheManager template header and implementation.
- * `concurrent-list.hpp` - ConcurrentList interface and specializations.
- * `concurrent-list-impl.hpp` - ConcurrentList interface concrete
+ * `test-runner.hpp` - Handrolled threaded test runner.
+ * `macros.hpp` - Utility macros.
+    `list` 
+        * `concurrent-list.hpp` - ConcurrentList interface and specializations.
+        * `concurrent-list-impl.hpp` - ConcurrentList interface concrete
                                 implementation.
- * `coarse-concurrent-list-impl.hpp` - CoarseConcurrentList implementation.
- * `fine-concurrent-list-impl.hpp` - FineConcurrentList implementation (WARNING:
+        * `coarse-concurrent-list-impl.hpp` - CoarseConcurrentList implementation. (WARNING: implementation has races).
+        * `fine-concurrent-list-impl.hpp` - FineConcurrentList implementation (WARNING:
                                      has races).
 
 `src`
