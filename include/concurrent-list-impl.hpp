@@ -276,6 +276,7 @@ std::optional<T> IConcurrentList<T, DerivedNode>::back() const {
 	return !_tail ? std::nullopt : std::optional<T>(_tail->ele);
 }
 
+
 template <typename T, typename DerivedNode>
 std::size_t IConcurrentList<T, DerivedNode>::unsafeSize() const {
 	return _size;

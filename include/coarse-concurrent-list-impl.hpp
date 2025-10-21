@@ -31,11 +31,8 @@ using namespace cm;
 		}                                                                      \
                                                                                \
 		T ele = this->_head->ele;                                              \
-		auto tmp = this->_head;                                                \
 		this->_head = this->_head->next;                                       \
 		this->_head->prev = nullptr;                                           \
-		delete tmp;                                                            \
-		tmp = nullptr;                                                         \
 		--this->_size;                                                         \
 		return std::optional<T>(ele);                                          \
 	})()
@@ -54,11 +51,8 @@ using namespace cm;
 		}                                                                      \
                                                                                \
 		T ele = this->_tail->ele;                                              \
-		auto tmp = this->_tail;                                                \
 		this->_tail = this->_tail->prev;                                       \
 		this->_tail->next = nullptr;                                           \
-		delete tmp;                                                            \
-		tmp = nullptr;                                                         \
 		--this->_size;                                                         \
 		return std::optional<T>(ele);                                          \
 	})()
@@ -174,7 +168,8 @@ std::optional<T> CoarseConcurrentList<T>::get(
 	return ptr ? std::optional<T>(ptr->ele) : std::nullopt;
 }
 
-template <typename T> bool CoarseConcurrentList<T>::remove(const T &element) {
+template <typename T> 
+bool CoarseConcurrentList<T>::remove(const T &element) {
 	// simple O(1) cases (just hold write lock because head check is cheap):
 	{
 		std::unique_lock<std::shared_mutex> wg(this->_mutex);
@@ -234,6 +229,16 @@ template <typename T> bool CoarseConcurrentList<T>::remove(const T &element) {
 template <typename T>
 bool CoarseConcurrentList<T>::remove(
 	const typename CoarseConcurrentList<T>::ListNodeT *node) {
+	if (node) {
+		delete(node);
+		node = nullptr;
+	}
+	return true;
+}
+
+template <typename T>
+bool CoarseConcurrentList<T>::unlink(
+	const typename CoarseConcurrentList<T>::ListNodeT *node) {
 	if (!node) {
 		return false;
 	}
@@ -241,20 +246,34 @@ bool CoarseConcurrentList<T>::remove(
 	std::unique_lock<std::shared_mutex> wg(this->_mutex);
 	// Cast away the client's const, we're in our owned instance.
 	auto *mut = const_cast<typename CoarseConcurrentList<T>::ListNodeT *>(node);
-	// Only remove if list has nodes.
+	// Only unlink if list has nodes.
 	if (!this->_head) {
 		return false;
 	}
 
 	// Handle head and tail cases.
 	if (this->_head == node) {
-		POP_FRONT;
+		this->_head = mut->next;	
+		if (this->_head) {
+			this->_head->prev = nullptr;
+		} else {
+			this->_tail = nullptr;
+		}
+
+		this->_size = 0;                    
 		return true;
 	} else if (this->_tail == node) {
 		// else if to lock control flow into size > 1 for tail case.
-		POP_BACK;
+		this->_tail = mut->prev;
+		if (this->_tail) {       
+			this->_tail->next = nullptr;
+		} else {
+			this->_head = nullptr;
+		}
+
+		--this->_size;
 		return true;
-	}
+	}                                           
 
 	// General case:
 	// Already handled head and tail, so safe to assume size() > 2.
@@ -262,14 +281,6 @@ bool CoarseConcurrentList<T>::remove(
 	mut->prev->next = mut->next;
 	--this->_size;
 
-	delete mut;
-	mut = nullptr;
-	return true;
-}
-
-template <typename T>
-bool CoarseConcurrentList<T>::unlink(
-	const typename CoarseConcurrentList<T>::ListNodeT *node) {
 	return true;
 }
 

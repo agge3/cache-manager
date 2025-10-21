@@ -1,0 +1,12 @@
+hits:           430987
+misses:         1649013
+evictions:      369133
+hit ratio:      0.207205
+INFO: completed test: read_heavy_low_contention
+INFO: running test: read_heavy_high_contention
+hits:           430987
+misses:         2129013
+evictions:      369133
+hit ratio:      0.168354
+INFO: completed test: read_heavy_high_contention
+INFO: running test: write_heavy_low_contention

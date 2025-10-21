@@ -3,13 +3,55 @@
     {
       "name": "basic_single_thread",
       "threads": 1,
-      "iter": 200,
-      "capacity": 100,
-      "functions": ["add", "get", "contains", "remove"],
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains", "remove", "add", "add", "add"],
       "distr": {
         "type": "int",
         "gen": "uniform",
-        "count": 100,
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
+	{
+      "name": "basic_multi_thread_2",
+      "threads": 2,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains", "remove", "add", "add", "add"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
+	{
+      "name": "basic_multi_thread_4",
+      "threads": 4,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains", "remove", "add", "add", "add"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
+	{
+      "name": "basic_multi_thread_8",
+      "threads": 8,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains", "remove", "add", "add", "add"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
         "min": 0,
         "max": 1000
       }
@@ -268,7 +310,7 @@
     },
     {
       "name": "mixed_operations_realistic",
-      "threads": 12,
+      "threads": 1,
       "iter": 8000,
       "capacity": 500,
       "functions": ["add", "get", "get", "get", "contains", "remove"],

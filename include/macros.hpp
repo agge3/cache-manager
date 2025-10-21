@@ -8,9 +8,9 @@
 
 #pragma once
 
-#define DEBUG 1
+#define DEBUG 0
 
-#ifdef DEBUG
+#if DEBUG
 #define DPRINT(fmt, ...) \
 	std::cout	\
 		<< std::format("DEBUG: {}: {}: {}: ", __FILE__, __func__, __LINE__)	\

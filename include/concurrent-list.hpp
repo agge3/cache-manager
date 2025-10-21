@@ -125,7 +125,7 @@ template <typename T, typename DerivedNode> class IConcurrentList {
 	 * @return T element The last element.
 	 */
 	std::optional<T> back() const;
-
+	
 	/**
 	 * Returns the first element of ConcurrentList and removes it from the
 	 * list.
@@ -359,9 +359,9 @@ class CoarseConcurrentList : public IConcurrentList<T, CoarseListNode<T>> {
 	bool contains(const ListNodeT *node) const override;
 	size_t size() const override;
 	void clear() override;
+	bool unlink(const ListNodeT *node) override;
 
   protected:
-	bool unlink(const ListNodeT *node) override;
 	const ListNodeT *search(const T &element) const override;
 };
 

@@ -1,30 +1,31 @@
 #pragma once
 
-#include "concurrent-list.hpp"
 #include "macros.hpp"
-
-#include <tbb/concurrent_set.h>
 #include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_queue.h>
 #include <tbb/enumerable_thread_specific.h>
+#include <tbb/concurrent_vector.h>
 
-#include <cassert>
-#include <exception>
-#include <format>
+#include <chrono>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
+#include <thread>
+#include <vector>
 #include <unordered_map>
-#include <utility>
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <filesystem>
+#include <list>
 
 #define NDEBUG 1
 
 namespace cm {
 
+// ------------------------- Benchmark Types -------------------------
 struct Benchmark {
 	size_t hits = 0;
 	size_t misses = 0;
@@ -142,230 +143,126 @@ void writeBenchmark(const Benchmark &bm) {
 
 template <typename K, typename V>
 using ListEntry = std::pair<K, V>; // cache key, cache value
-
-template <typename T> struct Less {
-	constexpr bool operator()(const T &lhs, const T &rhs) const {
-		// tbb requires strict weak ordering
-		if (lhs->ele.second != rhs->ele.second) {
-			return lhs->ele.second < rhs->ele.second;
-		}
-		if (lhs->ele.first != rhs->ele.first) {
-			return lhs->ele.first < rhs->ele.first;
-		}
-		// tie breaker for strict weak ordering
-		return lhs < rhs;
-	}
-};
-
-template <typename T> struct Greater {
-	constexpr bool operator()(const T &lhs, const T &rhs) const {
-		// tbb requires strict weak ordering
-		if (lhs->ele.second != rhs->ele.second) {
-			return lhs->ele.second > rhs->ele.second;
-		}
-		if (lhs->ele.first != rhs->ele.first) {
-			return lhs->ele.first > rhs->ele.first;
-		}
-		// tie breaker for strict weak ordering
-		return lhs > rhs;
-	}
-};
-
-template <typename K, typename V, typename BenchT = NoneBench,
-		  typename ConcurrentListT = CoarseConcurrentList<ListEntry<K, V>>,
-		  typename ListNodePtrT = const CoarseListNode<ListEntry<K, V>> *,
-		  typename Cmp = Less<ListNodePtrT>,
-		  typename ConcurrentHashMapT =
-			  tbb::concurrent_unordered_map<K, ListNodePtrT>,
-		  typename ConcurrentBstT = tbb::concurrent_set<ListNodePtrT, Cmp>>
+// ------------------------- CacheManager -------------------------
+template <typename K, typename V, typename BenchT = NoneBench>
 class CacheManager {
-  private:
-	size_t _capacity;
+private:
+    struct ThreadShard {
+        size_t capacity;
+        std::list<std::pair<K, V>> lru_list;
+        std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator> map;
 
-	mutable std::mutex _mutex;
+        ThreadShard(size_t cap) : capacity(cap) {}
+    };
 
-	ConcurrentListT _cache;
-	ConcurrentHashMapT _map;
-	ConcurrentBstT _sorted;
+    size_t _shard_capacity;
+    size_t _global_capacity;
+    tbb::concurrent_unordered_map<std::thread::id, ThreadShard> _shards;
+    tbb::concurrent_queue<std::pair<K, V>> _global_queue;
+    std::mutex _evict_mutex;
 
-  public:
-	using ListNodePtr = ListNodePtrT;
+public:
+    CacheManager(size_t global_capacity, size_t shard_capacity = 1024)
+        : _global_capacity(global_capacity), _shard_capacity(shard_capacity) {}
 
-	explicit CacheManager(size_t capacity, Cmp cmp = Cmp())
-		: _capacity(capacity), _map(capacity), _sorted(cmp) {}
+private:
+    ThreadShard& getShard() {
+        auto tid = std::this_thread::get_id();
+        auto it = _shards.find(tid);
+        if (it != _shards.end()) return it->second;
 
-	void unsafeWarmCache(std::vector<std::pair<K, V>> data) {
-		size_t size = data.size();
-		for (auto i = 0; i < 2 * size; ++i) {
-			add(data[i % size].first, data[i % size].second);
-		}
+        // lazily construct shard
+        auto [new_it, inserted] = _shards.emplace(tid, ThreadShard(_shard_capacity));
+        return new_it->second;
+    }
+
+	void evictGlobal() {
+	    std::lock_guard<std::mutex> g(_evict_mutex);
+	
+	    while (_global_queue.unsafe_size() > _global_capacity) {
+	        std::pair<K, V> dummy;
+	        _global_queue.try_pop(dummy); // ✅ provide a reference
+	        BenchT::eviction();
+	    }
 	}
 
-	std::optional<V> getItem(const K &key) {
-		std::lock_guard<std::mutex> g(_mutex);
-		DPRINT("XXX get: ENTER");
-		auto it = _map.find(key);
-		if (it == _map.end()) {
-			BenchT::miss();
-			return std::nullopt;
-		}
+public:
+    std::optional<V> getItem(const K& key) {
+        auto& shard = getShard();
+        auto it = shard.map.find(key);
+        if (it == shard.map.end()) {
+            BenchT::miss();
+            return std::nullopt;
+        }
+        // move to front for LRU
+        shard.lru_list.splice(shard.lru_list.begin(), shard.lru_list, it->second);
+        BenchT::hit();
+        return it->second->second;
+    }
 
-		auto node = it->second;
+    bool add(const K& key, const V& value) {
+        auto& shard = getShard();
+        auto it = shard.map.find(key);
 
-		if (!_cache.removeAndPushFront(node)) {
-			BenchT::miss();
-			return std::nullopt;
-		}
+        if (it != shard.map.end()) {
+            // update value & move to front
+            it->second->second = value;
+            shard.lru_list.splice(shard.lru_list.begin(), shard.lru_list, it->second);
+            BenchT::hit();
+            return true;
+        }
 
-		BenchT::hit();
-		return node->ele.second;
-	}
+        BenchT::miss();
 
-	bool add(const K &key, const V &value) {
-		// xxx can be more fine-grained. was causing races
-		{
-			std::lock_guard<std::mutex> g(_mutex); // locked here
-			DPRINT("XXX add: ENTER");
-			auto it = _map.find(key);
-			if (it != _map.end()) {
-				// update
-				auto node =
-					const_cast<CoarseListNode<ListEntry<K, V>> *>(it->second);
-				node->ele.second = value;
-				_cache.removeAndPushFront(
-					const_cast<const CoarseListNode<ListEntry<K, V>> *>(node));
-				BenchT::hit();
-				return true;
-			}
+        // insert new
+        shard.lru_list.push_front({key, value});
+        shard.map[key] = shard.lru_list.begin();
 
-			auto node = _cache.pushFront(ListEntry<K, V>{key, value});
-			_map.insert({key, node}); // xxx th
-			_sorted.insert(node);
-			BenchT::miss();
-		}
+        if (shard.lru_list.size() > shard.capacity) {
+            auto last = shard.lru_list.back();
+            _global_queue.push(last); // push evicted item to global queue
+            shard.map.erase(last.first);
+            shard.lru_list.pop_back();
+            evictGlobal();
+        }
 
-		// loose lock check
-		std::lock_guard<std::mutex> g(_mutex);
-		DPRINT("_cache.size: {}", _cache.size());
-		DPRINT("_capacity: {}", _capacity);
-		if (_cache.size() >= _capacity) {
-			BenchT::eviction();
-			evict();
-		}
+        return true;
+    }
 
-		return true;
-	}
+    bool contains(const K& key) {
+        auto& shard = getShard();
+        auto it = shard.map.find(key);
+        if (it != shard.map.end()) {
+            BenchT::hit();
+            return true;
+        }
+        BenchT::miss();
+        return false;
+    }
 
-	bool isEmpty() const {
-#ifndef NDEBUG
-		std::lock_guard<std::mutex> g(_mutex);
-		assert(_cache.isEmpty() == _map.empty() &&
-			   _map.empty() == _sorted.empty());
-#endif
-		return _cache.isEmpty();
-	}
+    bool remove(const K& key) {
+        auto& shard = getShard();
+        auto it = shard.map.find(key);
+        if (it == shard.map.end()) {
+            BenchT::miss();
+            return false;
+        }
 
-	bool contains(const K &key) const {
-#ifndef NDEBUG
-		std::lock_guard<std::mutex> g(_mutex);
-		auto it = _map.find(key);
-		if (it != _map.end()) {
-			assert(_cache.contains(it->second));
-			assert(_sorted.contains(it->second));
-		}
-#endif
-		std::lock_guard<std::mutex> g(_mutex);
-		DPRINT("XXX contains: ENTER");
-		auto it = _map.find(key); // xxx th
-		if (it != _map.end()) {
-			BenchT::hit();
-			return true;
-		} else {
-			BenchT::miss();
-			return false;
-		}
-	}
+        BenchT::hit();
+        shard.lru_list.erase(it->second);
+        shard.map.erase(it);
+        return true;
+    }
 
-	size_t getNumberOfItems() const {
-#ifndef NDEBUG
-		std::lock_guard<std::mutex> g(_mutex);
-		assert(_cache.unsafeSize() == _map.unsafe_size() &&
-			   _map.unsafe_size() == _sorted.unsafe_size());
-#endif
-		return _cache.size();
-	}
+    void clear() {
+        for (auto& [tid, shard] : _shards) {
+            shard.lru_list.clear();
+            shard.map.clear();
+        }
+        while (!_global_queue.empty()) _global_queue.try_pop();
+    }
 
-	bool remove(const K &key) {
-		// xxx better granularity
-		std::lock_guard<std::mutex> g(_mutex);
-		DPRINT("XXX remove: enter");
-		auto it = _map.find(key);
-		if (it == _map.end()) {
-			BenchT::miss();
-			return false;
-		}
-		BenchT::hit();
-
-		auto node = it->second;
-
-		_map.unsafe_erase(key);
-		assert(!_map.contains(key));
-
-		_sorted.unsafe_erase(node);
-		assert(!_sorted.contains(node));
-
-		if (!_cache.remove(node)) {
-			throw std::runtime_error(
-				std::format("Cache failed to pop (key, value): ({}, {})", key,
-							node->ele.second));
-		}
-		assert(!_cache.contains(node));
-
-		assert(_cache.size() == _map.size() && _map.size() == _sorted.size());
-
-		return true;
-	}
-
-	void clear() {
-		// atomic synchronization of containers
-		std::lock_guard<std::mutex> g(_mutex);
-
-		_cache.clear();
-		_map.clear();
-		_sorted.clear();
-
-		assert(_cache.isEmpty());
-		assert(_map.empty());
-		assert(_sorted.empty());
-	}
-
-	static Benchmark benchmark() { return BenchT::aggregate(); }
-
-  private:
-	void evict() {
-		// NO lock, creates deadlock. Assume caller has lock already.
-		// Explanation: Thread A needs evict lock and has add lock -> 
-		// Thread B has evict lock but needs add lock once finished = deadlock
-		DPRINT("XXX ENTER: evict");
-
-		std::optional<ListEntry<K, V>> opt = _cache.back();
-		if (!opt) {
-			throw std::runtime_error(
-				"Cache expected to evict, but nothing to evict");
-		}
-		ListEntry<K, V> lentry = *opt;
-
-		auto it = _map.find(lentry.first);
-		if (it == _map.end()) {
-			throw std::runtime_error(std::format(
-				"Cache attempted to evict key {}, but not found in map",
-				lentry.first));
-		}
-
-		_sorted.unsafe_erase(it->second);
-		_map.unsafe_erase(it);
-		_cache.popBack();
-	}
+    static Benchmark benchmark() { return BenchT::aggregate(); }
 };
+} // namespace cm
 
-} // end namespace cm
