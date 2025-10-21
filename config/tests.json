@@ -57,270 +57,228 @@
       }
     },
     {
-      "name": "read_heavy_low_contention",
-      "threads": 4,
-      "iter": 200,
-      "capacity": 100,
-      "functions": ["add", "get", "get", "get", "contains"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 500,
-        "min": 0,
-        "max": 10000
-      }
-    },
-    {
-      "name": "read_heavy_high_contention",
-      "threads": 16,
-      "iter": 200,
-      "capacity": 100,
-      "functions": ["get", "get", "contains"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 50,
-        "min": 0,
-        "max": 100
-      }
-    },
-    {
-      "name": "write_heavy_low_contention",
-      "threads": 4,
-      "iter": 200,
-      "capacity": 100,
-      "functions": ["add", "add", "add"],
-      "distr": {
-        "type": "int",
-        "gen": "uniform",
-        "count": 2000,
-        "min": 0,
-        "max": 20000
-      }
-    },
-    {
-      "name": "write_heavy_high_contention",
-      "threads": 16,
-      "iter": 200,
-      "capacity": 100,
-      "functions": ["add", "add", "add"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 100,
-        "min": 0,
-        "max": 200
-      }
-    },
-    {
-      "name": "balanced_workload",
-      "threads": 8,
-      "iter": 200,
-      "capacity": 100,
-      "functions": ["add", "get", "contains", "remove"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 500,
-        "min": 0,
-        "max": 1000
-      }
-    },
-    {
-      "name": "eviction_pressure_small_cache",
-      "threads": 8,
-      "iter": 200,
-      "capacity": 50,
-      "functions": ["add", "add", "get"],
-      "distr": {
-        "type": "int",
-        "gen": "uniform",
-        "count": 200,
-        "min": 0,
-        "max": 500
-      }
-    },
-    {
-      "name": "eviction_pressure_medium_cache",
-      "threads": 16,
-      "iter": 300,
-      "capacity": 200,
-      "functions": ["add", "add", "get", "get"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 500,
-        "min": 0,
-        "max": 1000
-      }
-    },
-    {
-      "name": "remove_intensive",
-      "threads": 8,
-      "iter": 5000,
-      "capacity": 300,
-      "functions": ["add", "remove", "remove", "get"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 300,
-        "min": 0,
-        "max": 600
-      }
-    },
-    {
-      "name": "churn_workload",
-      "threads": 16,
-      "iter": 10000,
-      "capacity": 100,
-      "functions": ["add", "remove", "add", "remove"],
-      "distr": {
-        "type": "int",
-        "gen": "uniform",
-        "count": 100,
-        "min": 0,
-        "max": 200
-      }
-    },
-    {
-      "name": "string_keys_balanced",
-      "threads": 8,
-      "iter": 5000,
-      "capacity": 500,
-      "functions": ["add", "get", "contains"],
-      "distr": {
-        "type": "string",
-        "gen": "uniform",
-        "count": 500,
-        "min": 0,
-        "max": 25
-      }
-    },
-    {
-      "name": "string_keys_high_contention",
-      "threads": 16,
-      "iter": 10000,
-      "capacity": 100,
-      "functions": ["add", "get", "get"],
-      "distr": {
-        "type": "string",
-        "gen": "normal",
-        "count": 50,
-        "min": 0,
-        "max": 25
-      }
-    },
-    {
-      "name": "double_values_balanced",
-      "threads": 8,
-      "iter": 5000,
-      "capacity": 500,
-      "functions": ["add", "get", "contains"],
-      "distr": {
-        "type": "double",
-        "gen": "normal",
-        "count": 500,
-        "min": 0,
-        "max": 1000
-      }
-    },
-    {
-      "name": "high_thread_stress",
-      "threads": 32,
-      "iter": 5000,
-      "capacity": 200,
-      "functions": ["add", "get", "get"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 200,
-        "min": 0,
-        "max": 400
-      }
-    },
-    {
-      "name": "extreme_thread_stress",
-      "threads": 64,
-      "iter": 3000,
-      "capacity": 300,
-      "functions": ["add", "get"],
-      "distr": {
-        "type": "int",
-        "gen": "normal",
-        "count": 300,
-        "min": 0,
-        "max": 600
-      }
-    },
-    {
-      "name": "sequential_heavy",
+      "name": "1_thread_50_capacity_uniform_unique",
       "threads": 1,
-      "iter": 20000,
-      "capacity": 1000,
-      "functions": ["add", "get", "remove"],
+      "iter": 100000,
+      "capacity": 50,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "uniform",
         "count": 1000,
         "min": 0,
-        "max": 5000
+        "max": 1000
       }
     },
-    {
-      "name": "cache_thrashing_tiny",
-      "threads": 16,
-      "iter": 20000,
-      "capacity": 10,
-      "functions": ["add", "get"],
+	{
+      "name": "2_threads_50_capacity_uniform_unique",
+      "threads": 2,
+      "iter": 100000,
+      "capacity": 50,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "uniform",
-        "count": 100,
+        "count": 1000,
         "min": 0,
-        "max": 50
+        "max": 1000
       }
     },
-    {
-      "name": "large_cache_light_load",
+	{
+      "name": "4_threads_50_capacity_uniform_unique",
       "threads": 4,
-      "iter": 5000,
-      "capacity": 10000,
-      "functions": ["add", "get", "contains"],
+      "iter": 100000,
+      "capacity": 50,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",
         "gen": "uniform",
-        "count": 5000,
+        "count": 1000,
         "min": 0,
-        "max": 50000
+        "max": 1000
+      }
+    },
+	{
+      "name": "8_threads_50_capacity_uniform_unique",
+      "threads": 8,
+      "iter": 100000,
+      "capacity": 50,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
       }
     },
     {
-      "name": "zipf_simulation_hot_keys",
-      "threads": 16,
-      "iter": 10000,
-      "capacity": 100,
-      "functions": ["get", "get", "get", "get", "add"],
+      "name": "1_thread_500_capacity_uniform_overlap",
+      "threads": 1,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",
-        "gen": "normal",
-        "count": 20,
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 50
+      }
+    },
+	{
+      "name": "2_threads_500_capacity_uniform_overlap",
+      "threads": 2,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 50
+      }
+    },
+	{
+      "name": "4_threads_500_capacity_uniform_overlap",
+      "threads": 4,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 50
+      }
+    },
+	{
+      "name": "8_threads_500_capacity_uniform_overlap",
+      "threads": 8,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
         "min": 0,
         "max": 50
       }
     },
     {
-      "name": "mixed_operations_realistic",
+      "name": "1_thread_500_capacity_normal",
       "threads": 1,
-      "iter": 8000,
+      "iter": 100000,
       "capacity": 500,
-      "functions": ["add", "get", "get", "get", "contains", "remove"],
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",
-        "gen": "normal",
-        "count": 500,
+        "gen": "uniform",
+        "count": 1000,
         "min": 0,
-        "max": 2000
+        "max": 1000
       }
-    }
+    },
+	{
+      "name": "2_threads_500_capacity_normal",
+      "threads": 2,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
+	{
+      "name": "4_threads_500_capacity_normal",
+      "threads": 4,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
+	{
+      "name": "8_threads_500_capacity_normal",
+      "threads": 8,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
+    {
+      "name": "1_thread_1000_capacity_normal",
+      "threads": 1,
+      "iter": 100000,
+      "capacity": 1000,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
+	{
+      "name": "2_threads_1000_capacity_normal",
+      "threads": 2,
+      "iter": 100000,
+      "capacity": 1000,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
+	{
+      "name": "4_threads_1000_capacity_normal",
+      "threads": 4,
+      "iter": 100000,
+      "capacity": 1000,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
+	{
+      "name": "8_threads_1000_capacity_normal",
+      "threads": 8,
+      "iter": 100000,
+      "capacity": 500,
+      "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
+      "distr": {
+        "type": "int",
+        "gen": "uniform",
+        "count": 1000,
+        "min": 0,
+        "max": 1000
+      }
+    },
   ]
 }

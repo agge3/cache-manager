@@ -8,8 +8,14 @@
 
 #pragma once
 
+#include <format>
+
 #define DEBUG 0
 
+/**
+ * Debug print (no-op if DEBUG is turned off). Prints the file, line, function,
+ * and user-supplied string with variadic format.
+ */
 #if DEBUG
 #define DPRINT(fmt, ...)                                                       \
 	std::cout << std::format("DEBUG: {}: {}: {}: ", __FILE__, __func__,        \
