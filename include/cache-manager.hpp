@@ -25,7 +25,6 @@
 
 namespace cm {
 
-// ------------------------- Benchmark Types -------------------------
 struct Benchmark {
 	size_t hits = 0;
 	size_t misses = 0;
@@ -142,8 +141,8 @@ void writeBenchmark(const Benchmark &bm) {
 }
 
 template <typename K, typename V>
-using ListEntry = std::pair<K, V>; // cache key, cache value
-// ------------------------- CacheManager -------------------------
+using ListEntry = std::pair<K, V>;
+
 template <typename K, typename V, typename BenchT = NoneBench>
 class CacheManager {
 private:
@@ -166,12 +165,14 @@ public:
         : _global_capacity(global_capacity), _shard_capacity(shard_capacity) {}
 
 private:
+	/**
+	 * Retrieves a 
+	 */
     ThreadShard& getShard() {
         auto tid = std::this_thread::get_id();
         auto it = _shards.find(tid);
         if (it != _shards.end()) return it->second;
 
-        // lazily construct shard
         auto [new_it, inserted] = _shards.emplace(tid, ThreadShard(_shard_capacity));
         return new_it->second;
     }
@@ -181,7 +182,7 @@ private:
 	
 	    while (_global_queue.unsafe_size() > _global_capacity) {
 	        std::pair<K, V> dummy;
-	        _global_queue.try_pop(dummy); // ✅ provide a reference
+	        _global_queue.try_pop(dummy);
 	        BenchT::eviction();
 	    }
 	}
@@ -194,7 +195,7 @@ public:
             BenchT::miss();
             return std::nullopt;
         }
-        // move to front for LRU
+
         shard.lru_list.splice(shard.lru_list.begin(), shard.lru_list, it->second);
         BenchT::hit();
         return it->second->second;
@@ -205,7 +206,6 @@ public:
         auto it = shard.map.find(key);
 
         if (it != shard.map.end()) {
-            // update value & move to front
             it->second->second = value;
             shard.lru_list.splice(shard.lru_list.begin(), shard.lru_list, it->second);
             BenchT::hit();
@@ -214,13 +214,12 @@ public:
 
         BenchT::miss();
 
-        // insert new
         shard.lru_list.push_front({key, value});
         shard.map[key] = shard.lru_list.begin();
 
         if (shard.lru_list.size() > shard.capacity) {
             auto last = shard.lru_list.back();
-            _global_queue.push(last); // push evicted item to global queue
+            _global_queue.push(last);
             shard.map.erase(last.first);
             shard.lru_list.pop_back();
             evictGlobal();
