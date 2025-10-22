@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "cache-manager.hpp"
-#include "concurrent-list.hpp"
 #include "test-runner.hpp"
 
 // #define GTEST_ENABLE 1
