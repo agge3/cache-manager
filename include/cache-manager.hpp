@@ -292,10 +292,9 @@ class CacheManager {
 
 		if (shard.lru_list.size() > shard.capacity) {
 			auto last = shard.lru_list.back();
-			//_global_queue.push(last);
 			shard.map.erase(last.first);
 			shard.lru_list.pop_back();
-			//evictGlobal();
+			BenchT::eviction();
 		}
 
 		return true;
@@ -337,6 +336,7 @@ class CacheManager {
 		BenchT::hit();
 		shard.lru_list.erase(it->second);
 		shard.map.erase(it);
+		BenchT::eviction();
 		return true;
 	}
 

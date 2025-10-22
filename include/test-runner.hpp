@@ -331,7 +331,7 @@ class TestRunner {
 		std::vector<std::thread> pool;
 		size_t total = size * test.iter;
 		size_t ops = (total + test.threads - 1) / test.threads;
-		std::cout << std::format("XXX OPS PER THREAD: {}", ops) << "\n";
+		std::cout << std::format("INFO: ops per thread: {}", ops) << "\n";
 		for (auto j = 0; j < test.threads; ++j) {
 			pool.emplace_back([&]() {
 				std::mt19937 gen(std::random_device{}() +
