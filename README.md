@@ -48,16 +48,17 @@ Single-threaded cache-manager implements hand-rolled data structures (hashmap, S
 On branch `concurrency`
 
 `include`
- * `cache-manager.hpp` - CacheManager template header and implementation.
- * `test-runner.hpp` - Handrolled threaded test runner.
- * `macros.hpp` - Utility macros.
-    `list` 
-        * `concurrent-list.hpp` - ConcurrentList interface and specializations.
-        * `concurrent-list-impl.hpp` - ConcurrentList interface concrete
-                                implementation.
-        * `coarse-concurrent-list-impl.hpp` - CoarseConcurrentList implementation. (WARNING: implementation has races).
-        * `fine-concurrent-list-impl.hpp` - FineConcurrentList implementation (WARNING:
-                                     has races).
+ * `cache-manager.hpp` - CacheManager template header and implementation.  
+ * `test-runner.hpp` - Handrolled threaded test runner with benchmark metrics.  
+ * `macros.hpp` - Utility macros.  
+
+ * `list`
+   * `concurrent-list.hpp` - ConcurrentList interface and specializations.  
+   * `concurrent-list-impl.hpp` - ConcurrentList interface concrete
+                                implementation.  
+   * `coarse-concurrent-list-impl.hpp` - CoarseConcurrentList implementation. (WARNING: has races).  
+   * `fine-concurrent-list-impl.hpp` - FineConcurrentList implementation (WARNING:
+                                     has races).  
 
 `src`
  * `main.cpp` - Main driver and test runner.
