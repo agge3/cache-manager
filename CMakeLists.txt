@@ -1,5 +1,5 @@
 # Tested CMake versions:
-cmake_minimum_required(VERSION 3.14...3.28)
+cmake_minimum_required(VERSION 3.28...4.1.2)
 
 # Project name, description, language, etc.
 project(cache-manager
@@ -65,8 +65,10 @@ FetchContent_MakeAvailable(tbb)
 
 # Executable(s):
 add_executable(cache-manager)
+add_library(cache-manager-lib OBJECT)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fno-diagnostics-color")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -O2")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fno-diagnostics-color")
 
 # Debug build compiler flags.
 #set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g -Wall -fsanitize=address -fno-diagnostics-color")
@@ -75,8 +77,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O1 -fno-diagnostics-color")
 # Release build compiler flags.
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "")
 
+# CXX version features.
+target_compile_features(cache-manager PRIVATE cxx_std_20)
+target_compile_features(cache-manager-lib PUBLIC cxx_std_20)
+
 # Add source files to target(s).
 target_sources(cache-manager PRIVATE src/main.cpp
+)
+target_sources(cache-manager-lib PRIVATE src/cache-manager.cpp
 )
 
 # Add include directories to target(s).
@@ -84,9 +92,18 @@ target_sources(cache-manager PRIVATE src/main.cpp
 target_include_directories(cache-manager PRIVATE 
 	${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
+target_include_directories(cache-manager-lib PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/include/
+)
 
 # Link libraries to target(s).
 target_link_libraries(cache-manager PRIVATE
+	#GTest::gtest_main
+	cache-manager-lib
+	nlohmann_json::nlohmann_json
+	TBB::tbb
+)
+target_link_libraries(cache-manager-lib PUBLIC
 	#GTest::gtest_main
 	nlohmann_json::nlohmann_json
 	TBB::tbb

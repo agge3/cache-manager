@@ -14,16 +14,18 @@
 #include <thread>
 #include <vector>
 
-#include "cache-manager.hpp"
 #include "test-runner.hpp"
+
+import cache_manager;
 
 // #define GTEST_ENABLE 1
 
-using namespace cm;
+using namespace cache;
+using namespace bench;
 
 static constexpr std::string_view CONFIG_PATH = "tests.json";
 
-#ifdef GTEST_ENABLE
+#if defined(GTEST_ENABLE)
 static const int LEN = std::numeric_limits<int>::max() >> 12;
 
 class CoarseTest : public testing::Test {
@@ -160,7 +162,7 @@ int main(int argc, char **argv) {
 	return RUN_ALL_TESTS();
 }
 
-#else
+#elif defined(TRUNNER_ENABLE)
 int main(int argc, char **argv) {
 	try {
 		TestCfgs tests = readConfig(std::string(CONFIG_PATH));
@@ -169,6 +171,11 @@ int main(int argc, char **argv) {
 	} catch (const std::exception &e) {
 		std::cout << "ERROR: " << e.what() << "\n";
 	}
+}
+
+#else
+int main(int argc, char **argv) {
+	return 0;
 }
 
 #endif

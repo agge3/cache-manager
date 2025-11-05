@@ -1,0 +1,35 @@
+# Force x86_64 for cross-platform compatibility
+FROM --platform=linux/amd64 ubuntu:24.04
+
+# Install build tools
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# Copy project
+COPY . .
+
+# Build the library target
+RUN cmake -B build \
+    && cmake --build build --target cache-manager-lib
+
+# Extract artifacts to /dist
+RUN mkdir -p /dist/lib /dist/include && \
+    cp build/CMakeFiles/cache-manager-lib.dir/src/cache-manager.cpp.o /dist/lib/cache-manager.cpp.o && \
+	cp include/cache-manager.hpp /dist/include && \
+	cp include/benchmark.hpp /dist/include && \
+	cp include/macros.hpp /dist/include && \
+    find -name "*.so*" -exec cp {} /dist/lib/ \; && \
+    cp -r build/_deps/tbb-src/include/tbb /dist/include/ && \
+    cp -r build/_deps/tbb-src/include/oneapi /dist/include/ && \
+    cp -r build/_deps/json-src/include/nlohmann /dist/include/
+
+# Create tarball for distribution
+RUN cd /dist && tar czf /cache-manager-dist.tar.gz .
+
+# Keep the tarball accessible
+CMD ["cp", "/cache-manager-dist.tar.gz", "/output/"]
