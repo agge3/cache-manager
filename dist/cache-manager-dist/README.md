@@ -19,13 +19,14 @@ implementation (or `NoneBench`) and print/write results.
 
 ## Running
  1. Install Docker CLI on Linux or Docker Desktop on macOS/Windows.
- 2. On Linux/macOS:
+ 2.
+   a. On Linux/macOS:
 ```bash
 # builds docker image, runs docker container, and compiles dist with Makefile
 # and runs executable in container
 ./build.sh
 ```
-On Windows:  
-Use WSL2 and run build script. OR write your own with powershell and refer to
-build script.  
+   b. On Windows:  
+   Use WSL2 and run build script. OR write your own with powershell and refer to
+   build script.  
  3. SUCCESS!
