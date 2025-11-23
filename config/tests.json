@@ -270,7 +270,7 @@
       "name": "8_threads_1000_capacity_normal",
       "threads": 8,
       "iter": 100000,
-      "capacity": 500,
+      "capacity": 1000,
       "functions": ["add", "get", "add", "remove", "add", "get", "contains"],
       "distr": {
         "type": "int",

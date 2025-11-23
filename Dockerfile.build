@@ -15,7 +15,7 @@ COPY . .
 
 # Build the library target
 RUN cmake -B build \
-    && cmake --build build --target cache-manager-lib
+    && cmake --build build --verbose --target cache-manager-lib
 
 # Extract artifacts to /dist
 RUN mkdir -p /dist/lib /dist/include && \

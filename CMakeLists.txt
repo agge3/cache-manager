@@ -39,6 +39,8 @@ include(FetchContent)
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
+configure_file(${CMAKE_SOURCE_DIR}/milestone3_config.json ${CMAKE_BINARY_DIR}/milestone3_config.json COPYONLY)
+
 # TBB
 include(FetchContent)
 FetchContent_Declare(
@@ -82,7 +84,7 @@ target_compile_features(cache-manager PRIVATE cxx_std_20)
 target_compile_features(cache-manager-lib PUBLIC cxx_std_20)
 
 # Add source files to target(s).
-target_sources(cache-manager PRIVATE src/main.cpp
+target_sources(cache-manager PRIVATE src/milestone3.cpp
 )
 target_sources(cache-manager-lib PRIVATE src/cache-manager.cpp
 )

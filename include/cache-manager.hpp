@@ -1,5 +1,5 @@
 /**
- * @file cache-manager.cppm
+ * @file cache-manager.hpp
  * @class CacheManager<K, V>
  *
  * @author agge3, kpowkitty
@@ -8,7 +8,7 @@
  *
  * CacheManager API.
  */
-
+#pragma once
 #include "benchmark.hpp"
 #include "macros.hpp"
 
@@ -37,6 +37,12 @@ template <typename K, typename V, typename BenchT = bench::NoneBench>
 class CacheManager {
 public:
 	CacheManager(size_t shard_capacity = 1024);
+	~CacheManager();
+
+	CacheManager(CacheManager&&) noexcept;
+	CacheManager& operator=(CacheManager&&) noexcept;
+	CacheManager(const CacheManager&) = delete;
+	CacheManager& operator=(const CacheManager&) = delete;
 	
 	/**
 	 * Gets an item from the cache.
@@ -82,34 +88,7 @@ public:
 
 	static bench::Benchmark benchmark();
 private:
-	struct ThreadShard {
-		size_t capacity;
-		std::list<std::pair<K, V>> lru_list;
-		std::unordered_map<K, typename std::list<std::pair<K, V>>::iterator>
-			map;
-
-		ThreadShard(size_t cap) : capacity(cap) {}
-	};
-
-	/**
-	 * The amount of shards for the cache manager.
-	 */
-	size_t _shard_capacity;
-	
-	/**
-	 * Hashmap holding the shards of the cache manager.
-	 *
-	 * Each thread gets an assigned shard. Reduces serialization
-	 * and increases parallelization.
-	 */
-	tbb::concurrent_unordered_map<std::thread::id, ThreadShard> _shards;
-
-	/**
-	 * Retrieves the shard of the current thread, or creates one for it
-	 * if it does not exist already.
-	 *
-	 * @return The shard of the current thread.
-	 */
-	ThreadShard &getShard();
+	struct Impl;
+	std::unique_ptr<Impl> pImpl;
   };
 } // namespace cache
